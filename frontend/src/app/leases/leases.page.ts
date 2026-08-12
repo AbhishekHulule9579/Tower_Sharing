@@ -190,9 +190,7 @@ export class LeasesPage implements OnInit {
         this.leases = leases || [];
         this.operators = operators || [];
         this.leaseTowers = leaseTowers || [];
-        setTimeout(() => {
-          this.leaseLoaded = true;
-        }, 0);
+        this.leaseLoaded = true;
       },
       error: () => {
         this.snackBar.open('Unable to load lease data.', 'Close', { duration: 3000 });

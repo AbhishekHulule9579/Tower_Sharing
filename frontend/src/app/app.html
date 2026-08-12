@@ -22,10 +22,16 @@
       </button>
       <div class="topbar-title">TowerSync Platform</div>
       <span class="topbar-fill"></span>
-      <div class="topbar-user">
-        <mat-icon>account_circle</mat-icon>
-        <span>Admin User</span>
-      </div>
+      <ng-container *ngIf="currentUser$ | async as user; else loginButton">
+        <div class="topbar-user">
+          <mat-icon>account_circle</mat-icon>
+          <span>{{ user.username }} ({{ user.role }})</span>
+        </div>
+        <button mat-button color="accent" (click)="logout()">Logout</button>
+      </ng-container>
+      <ng-template #loginButton>
+        <button mat-button color="accent" routerLink="/login">Login</button>
+      </ng-template>
     </mat-toolbar>
 
     <div class="content-shell">

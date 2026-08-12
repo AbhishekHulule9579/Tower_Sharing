@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { forkJoin } from 'rxjs';
 import { DisasterService } from '../services/disaster.service';
 import { MaintenanceService } from '../services/maintenance.service';
 import { OperatorService } from '../services/operator.service';
@@ -299,6 +300,7 @@ export class MaintenancePage implements OnInit {
   repairRequests: any[] = [];
   towers: any[] = [];
   siteManagers: any[] = [];
+  dataLoaded = false;
 
   inventoryColumns = ['itemCode', 'itemName', 'quantity', 'location', 'threshold'];
   repairColumns = ['tower', 'priority', 'status', 'siteManager', 'actions'];
@@ -344,10 +346,23 @@ export class MaintenancePage implements OnInit {
   }
 
   private loadData(): void {
-    this.maintenanceService.getInventory().subscribe((data) => (this.inventoryItems = data || []));
-    this.maintenanceService.getRepairRequests().subscribe((data) => (this.repairRequests = data || []));
-    this.towerService.getAll().subscribe((data) => (this.towers = data || []));
-    this.operatorService.getSiteManagers().subscribe((data) => (this.siteManagers = data || []));
+    forkJoin({
+      inventory: this.maintenanceService.getInventory(),
+      repairRequests: this.maintenanceService.getRepairRequests(),
+      towers: this.towerService.getAll(),
+      siteManagers: this.operatorService.getSiteManagers()
+    }).subscribe({
+      next: ({ inventory, repairRequests, towers, siteManagers }) => {
+        this.inventoryItems = inventory || [];
+        this.repairRequests = repairRequests || [];
+        this.towers = towers || [];
+        this.siteManagers = siteManagers || [];
+        this.dataLoaded = true;
+      },
+      error: () => {
+        this.snackBar.open('Unable to load maintenance data.', 'Close', { duration: 3000 });
+      }
+    });
   }
 
   public createInventoryItem(): void {

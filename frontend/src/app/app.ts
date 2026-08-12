@@ -15,6 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 import { BackendStatusService } from './core/backend-status.service';
 import { LoadingService } from './core/loading.service';
+import { AuthService } from './services/auth.service';
 import { DisasterService } from './services/disaster.service';
 import { LeaseService } from './services/lease.service';
 import { MaintenanceService } from './services/maintenance.service';
@@ -53,12 +54,14 @@ export class App {
   private readonly leaseService = inject(LeaseService);
   private readonly disasterService = inject(DisasterService);
   private readonly maintenanceService = inject(MaintenanceService);
+  private readonly authService = inject(AuthService);
   protected readonly loadingService = inject(LoadingService);
   protected readonly backendStatus = inject(BackendStatusService);
 
   protected readonly loading$ = this.loadingService.loading$;
   protected readonly offline$ = this.backendStatus.offline$;
   protected readonly apiBaseUrl = environment.apiBaseUrl;
+  protected readonly currentUser$ = this.authService.currentUser$;
 
   protected navItems: AppNavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
@@ -72,6 +75,10 @@ export class App {
 
   constructor() {
     this.loadSidebarCounts();
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 
   private async loadSidebarCounts(): Promise<void> {

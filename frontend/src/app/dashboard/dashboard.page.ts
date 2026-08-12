@@ -6,6 +6,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 import { DashboardService } from '../services/dashboard.service';
 import { DisasterService } from '../services/disaster.service';
 import { LeaseService } from '../services/lease.service';
@@ -131,6 +132,7 @@ export class DashboardPage implements OnInit {
     { label: 'Total Towers', value: 0, icon: 'apartment', description: 'All registered tower assets' },
     { label: 'Active Incidents', value: 0, icon: 'warning', description: 'Ongoing disaster incidents' },
     { label: 'Pending Lease Requests', value: 0, icon: 'hourglass_top', description: 'Leases awaiting approval' },
+    { label: 'Site Manager Requests', value: 0, icon: 'account_box', description: 'Pending registration approvals' },
     { label: 'Low Inventory Alerts', value: 0, icon: 'inventory_2', description: 'Stock running below threshold' }
   ];
 
@@ -146,6 +148,7 @@ export class DashboardPage implements OnInit {
     private readonly leaseService: LeaseService,
     private readonly maintenanceService: MaintenanceService,
     private readonly towerService: TowerService,
+    private readonly authService: AuthService,
     private readonly snackBar: MatSnackBar
   ) {}
 
@@ -177,7 +180,7 @@ export class DashboardPage implements OnInit {
         this.statCards[0].value = towerUtil?.totalTowers ?? 0;
         this.statCards[1].value = disasterMonitoring?.openIncidentsCount ?? 0;
         this.statCards[2].value = revenueLease?.activeLeasesCount ?? 0;
-        this.statCards[3].value = maintenanceReport?.lowStockInventoryCount ?? 0;
+        this.statCards[4].value = maintenanceReport?.lowStockInventoryCount ?? 0;
 
         this.disasterSummary =
           disasterMonitoring?.openIncidentsCount !== undefined
@@ -192,9 +195,16 @@ export class DashboardPage implements OnInit {
             ? `Open repairs: ${maintenanceReport.openRepairsCount}, low stock items: ${maintenanceReport.lowStockInventoryCount}.`
             : 'Repair workflow data and inventory health are being monitored.';
         this.marketSummary = `Available for lease: ${availableLease.length}, available for sale: ${availableSale.length}`;
-        setTimeout(() => {
-          this.dashboardLoaded = true;
-        }, 0);
+        this.authService.getPendingSiteManagerRequests().subscribe({
+          next: (requests) => {
+            this.statCards[3].value = Array.isArray(requests) ? requests.length : 0;
+            this.dashboardLoaded = true;
+          },
+          error: () => {
+            this.statCards[3].value = 0;
+            this.dashboardLoaded = true;
+          }
+        });
       },
       error: () => {
         this.snackBar.open('Unable to load dashboard data. Please refresh after the backend is available.', 'Close', {
