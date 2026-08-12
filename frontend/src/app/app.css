@@ -1,0 +1,135 @@
+:host {
+  min-height: 100vh;
+  display: block;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.18), transparent 22%),
+    #020617;
+  color: #e2e8f0;
+}
+
+.layout-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.sidebar {
+  width: 270px;
+  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.sidebar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px 20px;
+}
+
+.sidebar-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.sidebar-subtitle {
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.95rem;
+}
+
+.mat-nav-list .mat-list-item {
+  color: #e2e8f0;
+}
+
+.mat-nav-list .mat-list-item.active-link {
+  background: rgba(59, 130, 246, 0.16);
+  color: #fff;
+  border-radius: 8px;
+}
+
+.sidebar-icon {
+  width: 24px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.sidebar-spacer {
+  flex: 1 1 auto;
+}
+
+.topbar {
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(12px);
+  color: #f8fafc;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.topbar-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.topbar-fill {
+  flex: 1 1 auto;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.content-shell {
+  padding: 28px;
+  min-height: calc(100vh - 64px);
+}
+
+.mat-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  color: #e2e8f0;
+}
+
+.mat-card-title {
+  font-weight: 700;
+}
+
+.mat-list-item {
+  color: #e2e8f0;
+}
+
+.mat-list-item .mat-line {
+  color: #cbd5e1;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(2, 6, 23, 0.55);
+  z-index: 999;
+}
+
+.offline-card mat-card {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  color: rgba(148, 163, 184, 0.25);
+}
+
+button.mat-raised-button {
+  text-transform: none;
+}
+
+@media (max-width: 960px) {
+  .sidebar {
+    width: 220px;
+  }
+  .content-shell {
+    padding: 16px;
+  }
+}
