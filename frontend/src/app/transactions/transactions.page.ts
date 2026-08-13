@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { afterNextRender, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -175,17 +175,28 @@ export class TransactionsPage implements OnInit {
     private readonly transactionService: TransactionService,
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
-    private readonly snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit(): void {
-    this.loadData();
+    private readonly snackBar: MatSnackBar,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {
+    // Defer one task beyond hydration's dev-mode verification pass.
+    afterNextRender(() => setTimeout(() => this.loadData()));
   }
 
+  ngOnInit(): void {}
+
   private loadData(): void {
-    this.transactionService.getAll().subscribe((data) => (this.transactions = data || []));
-    this.towerService.getAvailableForSale().subscribe((data) => (this.saleTowers = data || []));
-    this.operatorService.getAllOperators().subscribe((data) => (this.buyers = data || []));
+    this.transactionService.getAll().subscribe((data) => {
+      this.transactions = data || [];
+      this.changeDetector.detectChanges();
+    });
+    this.towerService.getAvailableForSale().subscribe((data) => {
+      this.saleTowers = data || [];
+      this.changeDetector.detectChanges();
+    });
+    this.operatorService.getAllOperators().subscribe((data) => {
+      this.buyers = data || [];
+      this.changeDetector.detectChanges();
+    });
   }
 
   public buyTower(): void {

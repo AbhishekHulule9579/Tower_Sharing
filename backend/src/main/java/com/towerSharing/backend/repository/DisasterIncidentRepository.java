@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface DisasterIncidentRepository extends JpaRepository<DisasterIncident, Long> {
     Optional<DisasterIncident> findByIncidentCode(String incidentCode);
     List<DisasterIncident> findByStatus(IncidentStatus status);
+    long countByStatus(IncidentStatus status);
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { afterNextRender, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -338,12 +338,14 @@ export class MaintenancePage implements OnInit {
     private readonly towerService: TowerService,
     private readonly disasterService: DisasterService,
     private readonly operatorService: OperatorService,
-    private readonly snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit(): void {
-    this.loadData();
+    private readonly snackBar: MatSnackBar,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {
+    // Defer one task beyond hydration's dev-mode verification pass.
+    afterNextRender(() => setTimeout(() => this.loadData()));
   }
+
+  ngOnInit(): void {}
 
   private loadData(): void {
     forkJoin({
@@ -358,6 +360,7 @@ export class MaintenancePage implements OnInit {
         this.towers = towers || [];
         this.siteManagers = siteManagers || [];
         this.dataLoaded = true;
+        this.changeDetector.detectChanges();
       },
       error: () => {
         this.snackBar.open('Unable to load maintenance data.', 'Close', { duration: 3000 });

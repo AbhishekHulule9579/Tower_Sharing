@@ -18,6 +18,11 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<DashboardSummaryDto> getSummary() {
+        return ResponseEntity.ok(dashboardService.getSummary());
+    }
+
     @GetMapping("/tower-utilization")
     public ResponseEntity<TowerUtilizationDashboardDto> getTowerUtilizationDashboard() {
         return ResponseEntity.ok(dashboardService.getTowerUtilizationDashboard());

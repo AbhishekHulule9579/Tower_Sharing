@@ -266,6 +266,34 @@ import { TowerService } from '../services/tower.service';
       .form-actions {
         margin-top: 18px;
       }
+      :host-context(html:not(.light-theme)) .page-shell,
+      :host-context(html:not(.light-theme)) .mat-mdc-table,
+      :host-context(html:not(.light-theme)) .mat-mdc-header-cell,
+      :host-context(html:not(.light-theme)) .mat-mdc-cell,
+      :host-context(html:not(.light-theme)) .mat-mdc-form-field,
+      :host-context(html:not(.light-theme)) .mdc-floating-label,
+      :host-context(html:not(.light-theme)) .mat-mdc-select-value,
+      :host-context(html:not(.light-theme)) input {
+        color: #e2e8f0 !important;
+      }
+      :host-context(html:not(.light-theme)) .mat-mdc-table {
+        background: #0f172a !important;
+      }
+      :host-context(html.light-theme) .page-header p {
+        color: #475569 !important;
+      }
+      :host-context(html.light-theme) .mat-mdc-table,
+      :host-context(html.light-theme) .mat-mdc-header-cell,
+      :host-context(html.light-theme) .mat-mdc-cell,
+      :host-context(html.light-theme) .mat-mdc-form-field,
+      :host-context(html.light-theme) .mdc-floating-label,
+      :host-context(html.light-theme) .mat-mdc-select-value,
+      :host-context(html.light-theme) input {
+        color: #0f172a !important;
+      }
+      :host-context(html.light-theme) .mat-mdc-table {
+        background: #ffffff !important;
+      }
     `
   ]
 })

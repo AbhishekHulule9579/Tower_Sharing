@@ -4,6 +4,7 @@ import com.towerSharing.backend.model.RepairPriority;
 import com.towerSharing.backend.model.RepairRequest;
 import com.towerSharing.backend.model.RepairStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
     List<RepairRequest> findByAssignedSiteManagerId(Long siteManagerId);
     List<RepairRequest> findByStatus(RepairStatus status);
     List<RepairRequest> findByPriority(RepairPriority priority);
+    @Query("select count(r) from RepairRequest r where r.status <> com.towerSharing.backend.model.RepairStatus.COMPLETED")
+    long countOpenRequests();
 }

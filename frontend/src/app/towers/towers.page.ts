@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { afterNextRender, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -271,25 +271,23 @@ export class TowersPage implements OnInit {
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
     private readonly snackBar: MatSnackBar
-  ) {}
+  ) {
+    afterNextRender(() => setTimeout(() => this.loadData()));
+  }
 
   dataLoaded = false;
 
-  ngOnInit(): void {
-    this.loadData();
-  }
+  ngOnInit(): void {}
 
   private loadData(): void {
     forkJoin({
       towers: this.towerService.getAll(),
-      availableForLease: this.towerService.getAvailableForLease(),
-      availableForSale: this.towerService.getAvailableForSale(),
       operators: this.operatorService.getAllOperators()
     }).subscribe({
       next: (result) => {
         this.towers = result.towers || [];
-        this.availableForLease = result.availableForLease || [];
-        this.availableForSale = result.availableForSale || [];
+        this.availableForLease = this.towers.filter((tower) => tower.sharingStatus === 'AVAILABLE_FOR_LEASE');
+        this.availableForSale = this.towers.filter((tower) => tower.sharingStatus === 'AVAILABLE_FOR_SALE');
         this.operators = result.operators || [];
         Promise.resolve().then(() => {
           this.dataLoaded = true;

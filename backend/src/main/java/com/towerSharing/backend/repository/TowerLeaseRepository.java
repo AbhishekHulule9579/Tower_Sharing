@@ -12,5 +12,6 @@ public interface TowerLeaseRepository extends JpaRepository<TowerLease, Long> {
     List<TowerLease> findByLessorOperatorId(Long operatorId);
     List<TowerLease> findByLesseeOperatorId(Long operatorId);
     List<TowerLease> findByStatus(LeaseStatus status);
+    long countByStatus(LeaseStatus status);
     List<TowerLease> findByTowerId(Long towerId);
 }

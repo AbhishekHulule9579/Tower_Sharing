@@ -5,13 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { forkJoin } from 'rxjs';
-import { AuthService } from '../services/auth.service';
 import { DashboardService } from '../services/dashboard.service';
-import { DisasterService } from '../services/disaster.service';
-import { LeaseService } from '../services/lease.service';
-import { MaintenanceService } from '../services/maintenance.service';
-import { TowerService } from '../services/tower.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -144,11 +138,6 @@ export class DashboardPage implements OnInit {
 
   constructor(
     private readonly dashboardService: DashboardService,
-    private readonly disasterService: DisasterService,
-    private readonly leaseService: LeaseService,
-    private readonly maintenanceService: MaintenanceService,
-    private readonly towerService: TowerService,
-    private readonly authService: AuthService,
     private readonly snackBar: MatSnackBar
   ) {}
 
@@ -157,56 +146,21 @@ export class DashboardPage implements OnInit {
   }
 
   private loadStats(): void {
-    forkJoin({
-      towerUtil: this.dashboardService.getTowerUtilization(),
-      disasterMonitoring: this.dashboardService.getDisasterMonitoring(),
-      revenueLease: this.dashboardService.getRevenueLease(),
-      maintenanceReport: this.dashboardService.getMaintenanceReport(),
-      availableLease: this.towerService.getAvailableForLease(),
-      availableSale: this.towerService.getAvailableForSale(),
-      allLeases: this.leaseService.getAll(),
-      inventory: this.maintenanceService.getInventory()
-    }).subscribe({
-      next: ({
-        towerUtil,
-        disasterMonitoring,
-        revenueLease,
-        maintenanceReport,
-        availableLease,
-        availableSale,
-        allLeases,
-        inventory
-      }) => {
-        this.statCards[0].value = towerUtil?.totalTowers ?? 0;
-        this.statCards[1].value = disasterMonitoring?.openIncidentsCount ?? 0;
-        this.statCards[2].value = revenueLease?.activeLeasesCount ?? 0;
-        this.statCards[4].value = maintenanceReport?.lowStockInventoryCount ?? 0;
-
-        this.disasterSummary =
-          disasterMonitoring?.openIncidentsCount !== undefined
-            ? `Open incidents: ${disasterMonitoring.openIncidentsCount}, affected towers: ${disasterMonitoring.totalAffectedTowersCount}.`
-            : 'Disaster tracking is active and reporting details.';
-        this.leaseSummary =
-          revenueLease?.activeLeasesCount !== undefined
-            ? `Active leases: ${revenueLease.activeLeasesCount}, completed transactions: ${revenueLease.completedTransactionsCount}.`
-            : 'Lease revenue and utilization are available from backend analytics.';
-        this.maintenanceSummary =
-          maintenanceReport?.openRepairsCount !== undefined
-            ? `Open repairs: ${maintenanceReport.openRepairsCount}, low stock items: ${maintenanceReport.lowStockInventoryCount}.`
-            : 'Repair workflow data and inventory health are being monitored.';
-        this.marketSummary = `Available for lease: ${availableLease.length}, available for sale: ${availableSale.length}`;
-        this.authService.getPendingSiteManagerRequests().subscribe({
-          next: (requests) => {
-            this.statCards[3].value = Array.isArray(requests) ? requests.length : 0;
-            this.dashboardLoaded = true;
-          },
-          error: () => {
-            this.statCards[3].value = 0;
-            this.dashboardLoaded = true;
-          }
-        });
+    this.dashboardService.getSummary().subscribe({
+      next: (summary) => {
+        this.statCards[0].value = summary.totalTowers ?? 0;
+        this.statCards[1].value = summary.activeIncidents ?? 0;
+        this.statCards[2].value = summary.pendingLeaseRequests ?? 0;
+        this.statCards[3].value = summary.pendingRegistrationRequests ?? 0;
+        this.statCards[4].value = summary.lowInventoryAlerts ?? 0;
+        this.disasterSummary = `Open incidents: ${summary.activeIncidents ?? 0}.`;
+        this.leaseSummary = `Pending lease requests: ${summary.pendingLeaseRequests ?? 0}; completed transactions: ${summary.completedTransactions ?? 0}.`;
+        this.maintenanceSummary = `Open repairs: ${summary.openRepairs ?? 0}; low stock items: ${summary.lowInventoryAlerts ?? 0}.`;
+        this.marketSummary = `Available for lease: ${summary.availableForLease ?? 0}, available for sale: ${summary.availableForSale ?? 0}.`;
+        this.dashboardLoaded = true;
       },
       error: () => {
+        this.dashboardLoaded = true;
         this.snackBar.open('Unable to load dashboard data. Please refresh after the backend is available.', 'Close', {
           duration: 5000
         });

@@ -13,8 +13,8 @@ import { AuthService } from '../services/auth.service';
   template: `
     <div class="requests-shell">
       <div class="requests-header">
-        <h2>Site Manager Registration Requests</h2>
-        <p *ngIf="userRole !== 'ADMIN'">Only platform administrators may approve registration requests.</p>
+        <h2>Registration Requests</h2>
+        <p>{{ isAdmin ? 'Approve pending Operations Manager registrations.' : 'Approve pending Site Manager registrations for your operator.' }}</p>
       </div>
 
       <ng-container *ngIf="requests.length > 0; else noRequests">
@@ -23,10 +23,17 @@ import { AuthService } from '../services/auth.service';
             <div class="request-content">
               <div>
                 <strong>{{ request.username }}</strong> • {{ request.email }}
-                <div class="secondary">Operator: {{ request.operatorName || request.operator.code }}</div>
+                <div class="secondary">{{ request.requestedRole === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager' }} · Operator: {{ request.operator?.name || request.operator?.code }}</div>
               </div>
               <div class="request-actions">
-                <button mat-flat-button color="primary" *ngIf="isAdmin" (click)="approve(request.id)" [disabled]="request.status !== 'PENDING'">Approve</button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  *ngIf="canApprove(request)"
+                  (click)="approve(request.id)"
+                  [disabled]="request.status !== 'PENDING' || approvingRequestId === request.id">
+                  {{ approvingRequestId === request.id ? 'Approving...' : 'Approve' }}
+                </button>
                 <span class="status-chip" [class.pending]="request.status === 'PENDING'">{{ request.status }}</span>
               </div>
             </div>
@@ -34,11 +41,13 @@ import { AuthService } from '../services/auth.service';
         </mat-list>
       </ng-container>
 
+      <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
       <ng-template #noRequests>
         <mat-card>
           <mat-card-title>No pending site manager requests</mat-card-title>
           <mat-card-content>
-            There are no current pending approvals. Site managers can request registration from the login page.
+            There are no registration requests awaiting your approval.
           </mat-card-content>
         </mat-card>
       </ng-template>
@@ -83,6 +92,12 @@ import { AuthService } from '../services/auth.service';
         background: rgba(251, 191, 36, 0.16);
         color: #fde68a;
       }
+      .error-message {
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(239, 68, 68, 0.12);
+        color: #fecaca;
+      }
     `
   ]
 })
@@ -90,6 +105,8 @@ export class SiteManagerRequestsPage implements OnInit {
   requests: any[] = [];
   userRole = '';
   isAdmin = false;
+  approvingRequestId: number | null = null;
+  errorMessage = '';
 
   constructor(private readonly authService: AuthService) {}
 
@@ -100,14 +117,39 @@ export class SiteManagerRequestsPage implements OnInit {
   }
 
   loadRequests(): void {
-    this.authService.getPendingSiteManagerRequests().subscribe((data) => {
-      this.requests = data || [];
+    this.errorMessage = '';
+    this.authService.getPendingSiteManagerRequests().subscribe({
+      next: (data) => {
+        this.requests = data || [];
+      },
+      error: () => {
+        this.requests = [];
+        this.errorMessage = 'Unable to load registration requests. Please sign in again and retry.';
+      }
     });
   }
 
+  canApprove(request: any): boolean {
+    return (
+      (this.isAdmin && request.requestedRole === 'OPERATOR_MANAGER') ||
+      (this.userRole === 'OPERATOR_MANAGER' && request.requestedRole === 'SITE_MANAGER')
+    );
+  }
+
   approve(id: number): void {
-    this.authService.approveSiteManagerRequest(id).subscribe(() => {
-      this.loadRequests();
+    this.errorMessage = '';
+    this.approvingRequestId = id;
+    this.authService.approveSiteManagerRequest(id).subscribe({
+      next: () => {
+        this.approvingRequestId = null;
+        this.loadRequests();
+      },
+      error: (error) => {
+        this.approvingRequestId = null;
+        this.errorMessage = typeof error?.error === 'string'
+          ? error.error
+          : 'Unable to approve this registration request. Please try again.';
+      }
     });
   }
 }

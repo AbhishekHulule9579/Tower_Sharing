@@ -37,6 +37,10 @@ public class SiteManagerRequest {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "requested_role", nullable = false, columnDefinition = "varchar(255) default 'SITE_MANAGER'")
+    private UserRole requestedRole = UserRole.SITE_MANAGER;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "operator_id")
     private Operator operator;
@@ -51,12 +55,17 @@ public class SiteManagerRequest {
     public SiteManagerRequest() {}
 
     public SiteManagerRequest(String username, String password, String email, String fullName, String phoneNumber, Operator operator) {
+        this(username, password, email, fullName, phoneNumber, operator, UserRole.SITE_MANAGER);
+    }
+
+    public SiteManagerRequest(String username, String password, String email, String fullName, String phoneNumber, Operator operator, UserRole requestedRole) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.operator = operator;
+        this.requestedRole = requestedRole;
         this.status = SiteManagerRequestStatus.PENDING;
         this.requestedDate = LocalDate.now();
     }
@@ -108,6 +117,9 @@ public class SiteManagerRequest {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+
+    public UserRole getRequestedRole() { return requestedRole; }
+    public void setRequestedRole(UserRole requestedRole) { this.requestedRole = requestedRole; }
 
     public Operator getOperator() {
         return operator;

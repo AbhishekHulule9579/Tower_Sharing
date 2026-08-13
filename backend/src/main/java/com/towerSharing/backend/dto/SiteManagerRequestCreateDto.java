@@ -7,6 +7,7 @@ public class SiteManagerRequestCreateDto {
     private String fullName;
     private String phoneNumber;
     private Long operatorId;
+    private String requestedRole;
 
     public SiteManagerRequestCreateDto() {}
 
@@ -66,4 +67,7 @@ public class SiteManagerRequestCreateDto {
     public void setOperatorId(Long operatorId) {
         this.operatorId = operatorId;
     }
+
+    public String getRequestedRole() { return requestedRole; }
+    public void setRequestedRole(String requestedRole) { this.requestedRole = requestedRole; }
 }

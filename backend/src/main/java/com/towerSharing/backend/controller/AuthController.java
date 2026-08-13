@@ -81,13 +81,24 @@ public class AuthController {
         Operator operator = operatorRepository.findById(request.getOperatorId())
                 .orElseThrow(() -> new RuntimeException("Operator not found."));
 
+        UserRole requestedRole;
+        try {
+            requestedRole = UserRole.valueOf(request.getRequestedRole() == null ? "SITE_MANAGER" : request.getRequestedRole());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body("Choose either Site Manager or Operations Manager.");
+        }
+        if (requestedRole == UserRole.ADMIN) {
+            return ResponseEntity.badRequest().body("Administrator registration is not available.");
+        }
+
         SiteManagerRequest newRequest = new SiteManagerRequest(
                 request.getUsername(),
                 request.getPassword(),
                 request.getEmail(),
                 request.getFullName(),
                 request.getPhoneNumber(),
-                operator
+                operator,
+                requestedRole
         );
         return ResponseEntity.ok(siteManagerRequestRepository.save(newRequest));
     }
@@ -100,10 +111,10 @@ public class AuthController {
         }
 
         if (actor.getRole() == UserRole.OPERATOR_MANAGER) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndStatus(actor.getOperator(), SiteManagerRequestStatus.PENDING));
+            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         if (actor.getRole() == UserRole.ADMIN) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByStatus(SiteManagerRequestStatus.PENDING));
+            return ResponseEntity.ok(siteManagerRequestRepository.findByRequestedRoleAndStatus(UserRole.OPERATOR_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins or operator managers can view pending site manager requests.");
     }
@@ -116,15 +127,17 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid authorization token.");
         }
 
-        if (actor.getRole() != UserRole.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only platform admins can approve site manager requests.");
-        }
-
         SiteManagerRequest request = siteManagerRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Request not found."));
 
         if (request.getStatus() != SiteManagerRequestStatus.PENDING) {
             return ResponseEntity.badRequest().body("Request has already been processed.");
+        }
+        boolean canApprove = (actor.getRole() == UserRole.ADMIN && request.getRequestedRole() == UserRole.OPERATOR_MANAGER)
+                || (actor.getRole() == UserRole.OPERATOR_MANAGER && request.getRequestedRole() == UserRole.SITE_MANAGER
+                    && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()));
+        if (!canApprove) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to approve this registration request.");
         }
 
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -137,7 +150,7 @@ public class AuthController {
                 request.getEmail(),
                 request.getFullName(),
                 request.getPhoneNumber(),
-                UserRole.SITE_MANAGER,
+                request.getRequestedRole(),
                 request.getOperator()
         );
         userRepository.save(siteManager);

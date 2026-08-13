@@ -9,6 +9,10 @@ export class DashboardService {
 
   constructor(private readonly http: HttpClient) {}
 
+  getSummary(): Observable<any> {
+    return this.http.get<any>(`${this.api}/summary`);
+  }
+
   getTowerUtilization(): Observable<any> {
     return this.http.get<any>(`${this.api}/tower-utilization`);
   }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { afterNextRender, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -174,11 +174,11 @@ export class LeasesPage implements OnInit {
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
     private readonly snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit(): void {
-    this.loadData();
+  ) {
+    afterNextRender(() => setTimeout(() => this.loadData()));
   }
+
+  ngOnInit(): void {}
 
   private loadData(): void {
     forkJoin({

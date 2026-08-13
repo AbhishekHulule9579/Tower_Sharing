@@ -1,3 +1,62 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import "tailwindcss";
+
+/* Global theme overrides must be outside component style encapsulation. */
+html.light-theme .layout-shell,
+html.light-theme .main-content {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+html.light-theme .sidebar,
+html.light-theme .topbar {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .sidebar-brand,
+html.light-theme .navigation-list a,
+html.light-theme .topbar,
+html.light-theme .user-details,
+html.light-theme .mat-card,
+html.light-theme .panel-card {
+  color: #0f172a !important;
+}
+html.light-theme .mat-card,
+html.light-theme .panel-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .sidebar-subtitle,
+html.light-theme .status-text small {
+  color: #64748b !important;
+}
+
+/* Some page-level styles and Material MDC controls set their own foreground
+   colour. Keep all content readable after a theme switch. */
+html:not(.light-theme) .main-content,
+html:not(.light-theme) .main-content :is(h1, h2, h3, h4, p, span, strong, td, th, label, .mat-mdc-card-title, .mat-mdc-card-content, .mat-mdc-table, .mdc-text-field__input, .mat-mdc-select-value-text) {
+  color: #e2e8f0 !important;
+}
+html:not(.light-theme) .main-content .mat-mdc-form-field,
+html:not(.light-theme) .main-content .mdc-text-field__input {
+  color: #f8fafc !important;
+}
+html:not(.light-theme) .main-content .mdc-text-field--filled,
+html:not(.light-theme) .main-content .mdc-text-field--outlined {
+  background-color: rgba(15, 23, 42, .82) !important;
+}
+
+html.light-theme .main-content,
+html.light-theme .main-content :is(h1, h2, h3, h4, p, span, strong, td, th, label, .mat-mdc-card-title, .mat-mdc-card-content, .mat-mdc-table, .mdc-text-field__input, .mat-mdc-select-value-text) {
+  color: #0f172a !important;
+}
+html.light-theme .main-content .page-header p,
+html.light-theme .main-content .secondary,
+html.light-theme .main-content .hint {
+  color: #475569 !important;
+}
+html.light-theme .main-content .mdc-text-field--filled,
+html.light-theme .main-content .mdc-text-field--outlined {
+  background-color: #ffffff !important;
+}

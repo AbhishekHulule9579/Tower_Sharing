@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -19,6 +20,7 @@ export interface AuthUser {
 export class AuthService {
   private readonly api = `${environment.apiBaseUrl}/api/auth`;
   private readonly storageKey = 'tower-sharing-user';
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly userSubject = new BehaviorSubject<AuthUser | null>(this.readUserFromStorage());
 
   readonly currentUser$ = this.userSubject.asObservable();
@@ -35,7 +37,9 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(this.storageKey);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(this.storageKey);
+    }
     this.userSubject.next(null);
   }
 
@@ -51,7 +55,7 @@ export class AuthService {
     return this.userSubject.value?.role ?? null;
   }
 
-  registerSiteManagerRequest(data: { username: string; password: string; email: string; fullName: string; phoneNumber: string; operatorId: number }): Observable<any> {
+  registerSiteManagerRequest(data: { username: string; password: string; email: string; fullName: string; phoneNumber: string; operatorId: number; requestedRole: string }): Observable<any> {
     return this.http.post<any>(`${this.api}/site-manager-requests`, data);
   }
 
@@ -76,10 +80,15 @@ export class AuthService {
   }
 
   private saveUserToStorage(user: AuthUser): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(user));
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.storageKey, JSON.stringify(user));
+    }
   }
 
   private readUserFromStorage(): AuthUser | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
     try {
       const raw = localStorage.getItem(this.storageKey);
       return raw ? JSON.parse(raw) : null;

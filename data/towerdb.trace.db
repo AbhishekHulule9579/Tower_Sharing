@@ -1,0 +1,25 @@
+2026-08-12 22:54:56.053170+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]
+2026-08-12 23:00:02.335609+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]
+2026-08-12 23:00:07.883802+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]
+2026-08-12 23:00:12.028570+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]
+2026-08-13 06:56:26.916192+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]

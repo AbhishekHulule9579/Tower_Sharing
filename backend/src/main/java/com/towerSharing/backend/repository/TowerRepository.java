@@ -15,5 +15,6 @@ public interface TowerRepository extends JpaRepository<Tower, Long> {
     List<Tower> findByOwnerOperatorId(Long operatorId);
     List<Tower> findByStatus(TowerStatus status);
     List<Tower> findBySharingStatus(SharingStatus sharingStatus);
+    long countBySharingStatus(SharingStatus sharingStatus);
     List<Tower> findByCity(String city);
 }

@@ -22,6 +22,7 @@ public class DashboardService {
     private final InventoryItemRepository inventoryRepository;
     private final RepairRequestRepository repairRequestRepository;
     private final RepairInventoryUsageRepository usageRepository;
+    private final SiteManagerRequestRepository registrationRequestRepository;
 
     @Autowired
     public DashboardService(TowerRepository towerRepository, 
@@ -32,7 +33,8 @@ public class DashboardService {
                             EmergencySharingRepository emergencySharingRepository, 
                             InventoryItemRepository inventoryRepository, 
                             RepairRequestRepository repairRequestRepository, 
-                            RepairInventoryUsageRepository usageRepository) {
+                            RepairInventoryUsageRepository usageRepository,
+                            SiteManagerRequestRepository registrationRequestRepository) {
         this.towerRepository = towerRepository;
         this.operatorRepository = operatorRepository;
         this.leaseRepository = leaseRepository;
@@ -42,6 +44,20 @@ public class DashboardService {
         this.inventoryRepository = inventoryRepository;
         this.repairRequestRepository = repairRequestRepository;
         this.usageRepository = usageRepository;
+        this.registrationRequestRepository = registrationRequestRepository;
+    }
+
+    public DashboardSummaryDto getSummary() {
+        return new DashboardSummaryDto(
+                towerRepository.count(),
+                incidentRepository.countByStatus(IncidentStatus.ACTIVE),
+                leaseRepository.countByStatus(LeaseStatus.PENDING_APPROVAL),
+                registrationRequestRepository.countByStatus(SiteManagerRequestStatus.PENDING),
+                inventoryRepository.countLowStockItems(),
+                towerRepository.countBySharingStatus(SharingStatus.AVAILABLE_FOR_LEASE),
+                towerRepository.countBySharingStatus(SharingStatus.AVAILABLE_FOR_SALE),
+                repairRequestRepository.countOpenRequests(),
+                transactionRepository.countByStatus(TransactionStatus.COMPLETED));
     }
 
     public TowerUtilizationDashboardDto getTowerUtilizationDashboard() {

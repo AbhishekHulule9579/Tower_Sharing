@@ -1,54 +1,1098 @@
 ﻿<mat-drawer-container class="layout-shell">
-  <mat-drawer #drawer="matDrawer" class="sidebar" mode="side" opened>
+
+  <!-- ================================================= -->
+  <!-- SIDEBAR -->
+  <!-- ================================================= -->
+
+  <mat-drawer
+    #drawer
+    class="sidebar"
+    mode="side"
+    opened>
+
+    <!-- BRAND -->
     <div class="sidebar-brand">
-      <div class="sidebar-logo">TowerSync</div>
-      <div class="sidebar-subtitle">Disaster Recovery Command</div>
-    </div>
 
-    <mat-nav-list>
-      <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.path" routerLinkActive="active-link">
-        <span class="sidebar-icon">{{ item.icon }}</span>
-        <span>{{ item.label }}</span>
-        <span class="sidebar-spacer"></span>
-        <mat-chip *ngIf="item.badge" [color]="item.badgeColor || 'primary'" selected>{{ item.badge }}</mat-chip>
-      </a>
-    </mat-nav-list>
-  </mat-drawer>
-
-  <mat-drawer-content>
-    <mat-toolbar class="topbar" color="primary">
-      <button mat-icon-button class="mobile-menu-button" (click)="drawer.toggle()">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <div class="topbar-title">TowerSync Platform</div>
-      <span class="topbar-fill"></span>
-      <ng-container *ngIf="currentUser$ | async as user; else loginButton">
-        <div class="topbar-user">
-          <mat-icon>account_circle</mat-icon>
-          <span>{{ user.username }} ({{ user.role }})</span>
-        </div>
-        <button mat-button color="accent" (click)="logout()">Logout</button>
-      </ng-container>
-      <ng-template #loginButton>
-        <button mat-button color="accent" routerLink="/login">Login</button>
-      </ng-template>
-    </mat-toolbar>
-
-    <div class="content-shell">
-      <div class="offline-card" *ngIf="offline$">
-        <mat-card>
-          <mat-card-title>Backend Offline</mat-card-title>
-          <mat-card-content>
-            <p>Unable to reach the API server at {{ apiBaseUrl }}. Please start the backend or check your connection.</p>
-          </mat-card-content>
-        </mat-card>
+      <div class="sidebar-logo">
+        <span class="logo-icon">📡</span>
+        <span>TowerSync</span>
       </div>
 
-      <router-outlet></router-outlet>
+      <div class="sidebar-subtitle">
+        Disaster Recovery Command
+      </div>
+
     </div>
+
+
+    <!-- NAVIGATION -->
+    <mat-nav-list class="navigation-list">
+
+      <a
+        mat-list-item
+        *ngFor="let item of navItems"
+        [routerLink]="item.path"
+        routerLinkActive="active-link">
+
+        <span class="sidebar-icon">
+          {{ item.icon }}
+        </span>
+
+        <span class="nav-label">
+          {{ item.label }}
+        </span>
+
+        <span class="sidebar-spacer"></span>
+
+        <mat-chip
+          *ngIf="item.badge"
+          [color]="item.badgeColor || 'primary'"
+          selected>
+          {{ item.badge }}
+        </mat-chip>
+
+      </a>
+
+    </mat-nav-list>
+
+
+    <!-- SYSTEM STATUS -->
+    <div class="sidebar-status">
+
+      <span class="status-dot"></span>
+
+      <div class="status-text">
+
+        <strong>System Ready</strong>
+
+        <small>
+          TowerSync platform active
+        </small>
+
+      </div>
+
+    </div>
+
+  </mat-drawer>
+
+
+  <!-- ================================================= -->
+  <!-- MAIN CONTENT -->
+  <!-- ================================================= -->
+
+  <mat-drawer-content class="main-content">
+
+
+    <!-- ================================================= -->
+    <!-- TOP BAR -->
+    <!-- ================================================= -->
+
+    <mat-toolbar class="topbar">
+
+      <!-- MOBILE MENU -->
+      <!-- Hidden on desktop -->
+
+      <button
+        mat-icon-button
+        class="mobile-menu-button"
+        (click)="drawer.toggle()"
+        aria-label="Open navigation">
+
+        <span class="menu-symbol">☰</span>
+
+      </button>
+
+
+      <!-- PLATFORM TITLE -->
+
+      <div class="topbar-title">
+
+        <div class="title-icon">
+          📡
+        </div>
+
+        <div class="title-text">
+
+          <strong>
+            TowerSync Platform
+          </strong>
+
+          <span>
+            Telecom Operations Management
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- SPACE -->
+
+      <span class="topbar-fill"></span>
+
+      <!-- ================================================= -->
+      <!-- LOGGED-IN USER -->
+      <!-- ================================================= -->
+
+      <ng-container
+        *ngIf="currentUser$ | async as user; else loginButton">
+
+        <div class="topbar-user">
+
+          <!-- Avatar -->
+
+          <div class="user-avatar">
+            👤
+          </div>
+
+          <!-- User details -->
+
+          <div class="user-details">
+
+            <strong>
+              {{ user.username }}
+            </strong>
+
+            <span>
+              {{ user.role }}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- LOGOUT -->
+
+        <button
+          mat-button
+          class="logout-button"
+          type="button"
+          (click)="logout()">
+
+          <span class="logout-icon">
+            ↪
+          </span>
+
+          <span class="logout-text">
+            Logout
+          </span>
+
+        </button>
+
+      </ng-container>
+
+
+      <!-- ================================================= -->
+      <!-- LOGIN -->
+      <!-- ================================================= -->
+
+      <ng-template #loginButton>
+
+        <button
+          mat-flat-button
+          class="login-button"
+          type="button"
+          routerLink="/login">
+
+          <span class="login-icon">
+            🔐
+          </span>
+
+          <span>
+            Login
+          </span>
+
+        </button>
+
+      </ng-template>
+
+    </mat-toolbar>
+
+
+    <!-- ================================================= -->
+    <!-- PAGE CONTENT -->
+    <!-- ================================================= -->
+
+    <div class="content-shell">
+
+      <!-- Router pages -->
+
+      <router-outlet></router-outlet>
+
+    </div>
+
   </mat-drawer-content>
 
-  <div class="loading-overlay" *ngIf="loading$">
-    <mat-progress-spinner diameter="70" mode="indeterminate" color="accent"></mat-progress-spinner>
+
+  <!-- ================================================= -->
+  <!-- LOADING OVERLAY -->
+  <!-- ================================================= -->
+
+  <!--
+    loading$ is a Signal<boolean>.
+    Therefore we MUST use loading$()
+    and NOT loading$ | async.
+  -->
+
+  <div
+    class="loading-overlay"
+    *ngIf="loading$()">
+
+    <div class="loading-box">
+
+      <mat-progress-spinner
+        diameter="60"
+        mode="indeterminate"
+        color="accent">
+      </mat-progress-spinner>
+
+      <span>
+        Loading TowerSync...
+      </span>
+
+    </div>
+
   </div>
+
 </mat-drawer-container>
+
+
+<!-- ================================================= -->
+<!-- STYLES -->
+<!-- ================================================= -->
+
+<style>
+
+  /* =================================================
+     MAIN LAYOUT
+     ================================================= */
+
+  .layout-shell {
+
+    height: 100vh;
+
+    background:
+      radial-gradient(
+        circle at 80% 10%,
+        rgba(59, 130, 246, 0.10),
+        transparent 30%
+      ),
+      radial-gradient(
+        circle at 20% 90%,
+        rgba(124, 58, 237, 0.08),
+        transparent 30%
+      ),
+      #070d1a;
+
+    color: #f8fafc;
+
+  }
+
+
+  /* =================================================
+     SIDEBAR
+     ================================================= */
+
+  .sidebar {
+
+    width: 280px;
+
+    background:
+      linear-gradient(
+        180deg,
+        #111827 0%,
+        #0b1220 100%
+      );
+
+    color: #e5e7eb;
+
+    border-right:
+      1px solid rgba(148, 163, 184, 0.12);
+
+    box-shadow:
+      8px 0 30px rgba(0, 0, 0, 0.20);
+
+  }
+
+
+  /* =================================================
+     SIDEBAR BRAND
+     ================================================= */
+
+  .sidebar-brand {
+
+    padding: 30px 24px 26px;
+
+    border-bottom:
+      1px solid rgba(148, 163, 184, 0.10);
+
+  }
+
+
+  .sidebar-logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-size: 27px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.8px;
+
+    background:
+      linear-gradient(
+        90deg,
+        #60a5fa,
+        #a78bfa
+      );
+
+    -webkit-background-clip: text;
+
+    background-clip: text;
+
+    color: transparent;
+
+  }
+
+
+  .logo-icon {
+
+    font-size: 24px;
+
+  }
+
+
+  .sidebar-subtitle {
+
+    margin-top: 8px;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    color: #94a3b8;
+
+  }
+
+
+  /* =================================================
+     NAVIGATION
+     ================================================= */
+
+  .navigation-list {
+
+    padding: 18px 12px;
+
+  }
+
+
+  .navigation-list a {
+
+    height: 50px;
+
+    margin-bottom: 6px;
+
+    border-radius: 12px;
+
+    color: #aebbd0;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+
+  }
+
+
+  .navigation-list a:hover {
+
+    background:
+      rgba(59, 130, 246, 0.10);
+
+    color: #ffffff;
+
+    transform:
+      translateX(3px);
+
+  }
+
+
+  /* ACTIVE LINK */
+
+  .navigation-list a.active-link {
+
+    color: #ffffff;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(37, 99, 235, 0.28),
+        rgba(124, 58, 237, 0.16)
+      );
+
+    box-shadow:
+      inset 3px 0 0 #60a5fa;
+
+  }
+
+
+  .sidebar-icon {
+
+    width: 34px;
+
+    margin-right: 8px;
+
+    font-size: 19px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+  }
+
+
+  .nav-label {
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+  }
+
+
+  .sidebar-spacer {
+
+    flex: 1;
+
+  }
+
+
+  /* =================================================
+     SIDEBAR STATUS
+     ================================================= */
+
+  .sidebar-status {
+
+    position: absolute;
+
+    left: 18px;
+
+    right: 18px;
+
+    bottom: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px;
+
+    border-radius: 13px;
+
+    background:
+      rgba(16, 185, 129, 0.08);
+
+    border:
+      1px solid rgba(16, 185, 129, 0.15);
+
+  }
+
+
+  .status-text {
+
+    display: flex;
+
+    flex-direction: column;
+
+  }
+
+
+  .sidebar-status strong {
+
+    font-size: 12px;
+
+    color: #d1fae5;
+
+  }
+
+
+  .sidebar-status small {
+
+    margin-top: 3px;
+
+    font-size: 10px;
+
+    color: #6ee7b7;
+
+  }
+
+
+  .status-dot {
+
+    width: 9px;
+
+    height: 9px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+      0 0 12px rgba(34, 197, 94, 0.8);
+
+    animation:
+      statusPulse 2s infinite;
+
+  }
+
+
+  @keyframes statusPulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.45;
+    }
+
+  }
+
+
+  /* =================================================
+     MAIN CONTENT
+     ================================================= */
+
+  .main-content {
+
+    background:
+      radial-gradient(
+        circle at 70% 20%,
+        rgba(37, 99, 235, 0.07),
+        transparent 35%
+      ),
+      #070d1a;
+
+  }
+
+
+  /* =================================================
+     TOP BAR
+     ================================================= */
+
+  .topbar {
+
+    height: 80px;
+
+    padding: 0 28px;
+
+    display: flex;
+
+    align-items: center;
+
+    background:
+      rgba(15, 23, 42, 0.96);
+
+    color: #ffffff;
+
+    border-bottom:
+      1px solid rgba(148, 163, 184, 0.10);
+
+    backdrop-filter: blur(16px);
+
+  }
+
+
+  /* =================================================
+     MOBILE MENU
+     
+     Hidden on desktop.
+     This removes the unwanted "m".
+     ================================================= */
+
+  .mobile-menu-button {
+
+    display: none;
+
+    margin-right: 12px;
+
+    color: #cbd5e1;
+
+  }
+
+
+  .menu-symbol {
+
+    font-size: 22px;
+
+    line-height: 1;
+
+  }
+
+
+  /* =================================================
+     TOPBAR TITLE
+     ================================================= */
+
+  .topbar-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+  }
+
+
+  .title-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+      linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.20),
+        rgba(124, 58, 237, 0.20)
+      );
+
+    font-size: 20px;
+
+  }
+
+
+  .title-text {
+
+    display: flex;
+
+    flex-direction: column;
+
+  }
+
+
+  .topbar-title strong {
+
+    font-size: 18px;
+
+    line-height: 1.2;
+
+    font-weight: 700;
+
+    color: #f8fafc;
+
+  }
+
+
+  .topbar-title span {
+
+    margin-top: 3px;
+
+    font-size: 10px;
+
+    color: #94a3b8;
+
+    letter-spacing: 0.4px;
+
+  }
+
+
+  .topbar-fill {
+
+    flex: 1;
+
+  }
+
+
+  /* =================================================
+     USER AREA
+     ================================================= */
+
+  .topbar-user {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-right: 12px;
+
+    padding: 7px 13px;
+
+    border-radius: 12px;
+
+    background:
+      rgba(59, 130, 246, 0.08);
+
+    border:
+      1px solid rgba(96, 165, 250, 0.12);
+
+  }
+
+
+  /* USER AVATAR */
+
+  .user-avatar {
+
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+      linear-gradient(
+        135deg,
+        #2563eb,
+        #7c3aed
+      );
+
+    font-size: 17px;
+
+  }
+
+
+  /* USER DETAILS */
+
+  .user-details {
+
+    display: flex;
+
+    flex-direction: column;
+
+  }
+
+
+  .user-details strong {
+
+    font-size: 12px;
+
+    line-height: 1.2;
+
+    color: #ffffff;
+
+  }
+
+
+  .user-details span {
+
+    margin-top: 3px;
+
+    font-size: 9px;
+
+    color: #94a3b8;
+
+    text-transform: uppercase;
+
+  }
+
+
+  /* =================================================
+     LOGOUT BUTTON
+     ================================================= */
+
+  .logout-button {
+
+    display: flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    min-width: auto !important;
+
+    height: 42px;
+
+    padding: 0 14px !important;
+
+    border-radius: 10px !important;
+
+    color: #fca5a5 !important;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+  }
+
+
+  .logout-button:hover {
+
+    background:
+      rgba(239, 68, 68, 0.10);
+
+    color: #fecaca !important;
+
+  }
+
+
+  .logout-icon {
+
+    font-size: 20px;
+
+    line-height: 1;
+
+  }
+
+
+  .logout-text {
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+  }
+
+
+  /* =================================================
+     LOGIN BUTTON
+     ================================================= */
+
+  .login-button {
+
+    display: flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    height: 42px;
+
+    padding: 0 18px !important;
+
+    color: #ffffff !important;
+
+    border-radius: 10px !important;
+
+    background:
+      linear-gradient(
+        135deg,
+        #2563eb,
+        #7c3aed
+      ) !important;
+
+  }
+
+
+  .login-icon {
+
+    font-size: 15px;
+
+  }
+
+
+  /* =================================================
+     PAGE CONTENT
+     ================================================= */
+
+  .content-shell {
+
+    padding: 28px;
+
+    min-height:
+      calc(100vh - 80px);
+
+    overflow-y: auto;
+
+  }
+
+
+  /* =================================================
+     LOADING OVERLAY
+     ================================================= */
+
+  .loading-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+      rgba(3, 7, 18, 0.70);
+
+    backdrop-filter: blur(5px);
+
+  }
+
+
+  .loading-box {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 30px 40px;
+
+    border-radius: 18px;
+
+    background:
+      #111827;
+
+    border:
+      1px solid rgba(148, 163, 184, 0.15);
+
+    color: #cbd5e1;
+
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.35);
+
+  }
+
+
+  .loading-box span {
+
+    font-size: 13px;
+
+  }
+
+
+  /* =================================================
+     RESPONSIVE
+     ================================================= */
+
+  @media (max-width: 800px) {
+
+    .mobile-menu-button {
+
+      display: inline-flex;
+
+    }
+
+
+    .topbar {
+
+      padding: 0 15px;
+
+    }
+
+
+    .topbar-title span {
+
+      display: none;
+
+    }
+
+
+    .topbar-title strong {
+
+      font-size: 16px;
+
+    }
+
+
+    .user-details {
+
+      display: none;
+
+    }
+
+
+    .topbar-user {
+
+      padding: 5px;
+
+      margin-right: 5px;
+
+      background: transparent;
+
+      border: none;
+
+    }
+
+
+    .logout-button {
+
+      padding: 0 9px !important;
+
+    }
+
+
+    .content-shell {
+
+      padding: 18px;
+
+    }
+
+  }
+
+
+  /* =================================================
+     SMALL MOBILE
+     ================================================= */
+
+  @media (max-width: 500px) {
+
+    .title-icon {
+
+      display: none;
+
+    }
+
+
+    .topbar-title strong {
+
+      font-size: 14px;
+
+    }
+
+
+    .logout-text {
+
+      display: none;
+
+    }
+
+
+    .logout-button {
+
+      padding: 0 8px !important;
+
+    }
+
+  }
+
+</style>
