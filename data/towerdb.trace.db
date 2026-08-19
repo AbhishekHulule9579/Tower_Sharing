@@ -23,3 +23,8 @@ org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\00
 
     alter table if exists site_manager_requests 
        alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]
+2026-08-19 07:20:29.616531+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "\000d\000a    alter table if exists site_manager_requests \000d\000a       alter column requested_role set data type varchar(255) [*]default 'SITE_MANAGER'"; SQL statement:
+
+    alter table if exists site_manager_requests 
+       alter column requested_role set data type varchar(255) default 'SITE_MANAGER' [42000-240]

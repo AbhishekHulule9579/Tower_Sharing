@@ -38,7 +38,7 @@ public class SiteManagerRequest {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "requested_role", nullable = false, columnDefinition = "varchar(255) default 'SITE_MANAGER'")
+    @Column(name = "requested_role", nullable = false)
     private UserRole requestedRole = UserRole.SITE_MANAGER;
 
     @ManyToOne(fetch = FetchType.EAGER)

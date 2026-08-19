@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,7 +7,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterModule, RouterOutlet } from '@angular/router';
 
@@ -47,6 +47,8 @@ export interface AppNavItem {
   styleUrls: ['./app.css']
 })
 export class App {
+  @ViewChild(MatDrawer) private drawer?: MatDrawer;
+
   private readonly authService = inject(AuthService);
   protected readonly loadingService = inject(LoadingService);
   protected readonly backendStatus = inject(BackendStatusService);
@@ -69,6 +71,10 @@ export class App {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  toggleNavigation(): void {
+    this.drawer?.toggle();
   }
 
 }

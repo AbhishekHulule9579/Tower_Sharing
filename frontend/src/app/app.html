@@ -5,6 +5,7 @@
   <!-- ================================================= -->
 
   <mat-drawer
+    *ngIf="currentUser$ | async"
     #drawer
     class="sidebar"
     mode="side"
@@ -93,9 +94,10 @@
       <!-- Hidden on desktop -->
 
       <button
+        *ngIf="currentUser$ | async"
         mat-icon-button
         class="mobile-menu-button"
-        (click)="drawer.toggle()"
+        (click)="toggleNavigation()"
         aria-label="Open navigation">
 
         <span class="menu-symbol">☰</span>

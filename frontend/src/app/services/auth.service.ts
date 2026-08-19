@@ -1,6 +1,6 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -38,7 +38,7 @@ export class AuthService {
 
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(this.storageKey);
+      sessionStorage.removeItem(this.storageKey);
     }
     this.userSubject.next(null);
   }
@@ -81,7 +81,7 @@ export class AuthService {
 
   private saveUserToStorage(user: AuthUser): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(this.storageKey, JSON.stringify(user));
+      sessionStorage.setItem(this.storageKey, JSON.stringify(user));
     }
   }
 
@@ -90,7 +90,7 @@ export class AuthService {
       return null;
     }
     try {
-      const raw = localStorage.getItem(this.storageKey);
+      const raw = sessionStorage.getItem(this.storageKey);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
