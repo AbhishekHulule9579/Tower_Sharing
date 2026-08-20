@@ -25,7 +25,7 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg,#2563eb,#4f46e5);
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,7 +48,7 @@ h1 {
 
 .section-grid {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 
@@ -65,16 +65,16 @@ h1 {
 }
 
 .summary-card.total {
-  background: linear-gradient(135deg,#0c1c34,#0a1930) !important;
+  background: linear-gradient(135deg, #0c1c34, #0a1930) !important;
 }
 
 .summary-card.lease {
-  background: linear-gradient(135deg,#0b2930,#09242d) !important;
+  background: linear-gradient(135deg, #0b2930, #09242d) !important;
   border-color: #115344;
 }
 
 .summary-card.sale {
-  background: linear-gradient(135deg,#251b13,#171a21) !important;
+  background: linear-gradient(135deg, #251b13, #171a21) !important;
   border-color: #5b3b1a;
 }
 
@@ -160,7 +160,7 @@ h1 {
 }
 
 .title-icon.purple {
-  background: linear-gradient(135deg,#5b21b6,#7c3aed);
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
 }
 
 .title h2 {
@@ -421,7 +421,7 @@ h1 {
 .form-card .card-header {
   min-height: 76px;
   padding: 14px 18px;
-  background: linear-gradient(90deg,#0b1d34,#09182b);
+  background: linear-gradient(90deg, #0b1d34, #09182b);
 }
 
 .form-content {
@@ -430,7 +430,7 @@ h1 {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 15px 18px;
   align-items: start;
 }
@@ -538,7 +538,7 @@ h1 {
   min-width: 155px;
   padding: 0 20px !important;
   border-radius: 7px !important;
-  background: linear-gradient(135deg,#4f20d7,#682df2) !important;
+  background: linear-gradient(135deg, #4f20d7, #682df2) !important;
   color: #fff !important;
   font-size: 13px !important;
   font-weight: 600 !important;
@@ -546,7 +546,7 @@ h1 {
 }
 
 .save-button:hover {
-  background: linear-gradient(135deg,#5b25ec,#7c3aed) !important;
+  background: linear-gradient(135deg, #5b25ec, #7c3aed) !important;
   transform: translateY(-1px);
 }
 
@@ -695,7 +695,7 @@ h1 {
 
 @media (max-width: 1200px) {
   .form-grid {
-    grid-template-columns: repeat(3,minmax(0,1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -705,7 +705,7 @@ h1 {
   }
 
   .form-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -742,4 +742,101 @@ h1 {
   h1 {
     font-size: 23px;
   }
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.user-role-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #173d80;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #2563eb50;
+  display: inline-flex;
+  align-items: center;
+}
+
+.operator-lock-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #142d50;
+  color: #60a5fa;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #3b82f640;
+}
+
+.tower-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tower-label {
+  font-weight: 600;
+  color: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-badge {
+  color: #93c5fd;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #132237;
+  color: #7d93ae;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #203653;
+}
+
+.no-access-card {
+  padding: 30px 20px;
+  text-align: center;
+  border: 1px dashed #334e68 !important;
+}
+
+.no-access-content {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-access-icon {
+  font-size: 36px;
+  margin-bottom: 4px;
+}
+
+.no-access-content h3 {
+  margin: 0;
+  color: #f1f5f9;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-access-content p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 20px;
 }

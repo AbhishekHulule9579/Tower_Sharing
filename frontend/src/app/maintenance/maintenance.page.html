@@ -1,0 +1,373 @@
+<ng-container *ngIf="dataLoaded; else maintenanceLoading">
+  <div class="page-shell">
+    <div class="page-header">
+      <div class="header-info">
+        <div class="header-title-row">
+          <div class="header-icon">🔧</div>
+          <div>
+            <h2>Spare Parts & Maintenance</h2>
+            <p>
+              {{
+                isAdmin
+                  ? 'Track inventory levels, create repair requests, consume spare parts, and restore towers across the network.'
+                  : 'Manage tower repairs, inspections, and spare parts consumption for ' + (getOperatorDisplayName() || 'your company') + ' sites.'
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <span class="user-role-chip" *ngIf="currentUser">
+        {{ isAdmin ? '👑 Administrator' : ('🏢 ' + (getOperatorDisplayName() || 'Operator Manager')) }}
+      </span>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="section-grid">
+      <mat-card class="summary-card">
+        <div class="summary-icon blue">📦</div>
+        <div class="summary-info">
+          <span>SPARE PARTS</span>
+          <strong>{{ inventoryItems.length }}</strong>
+          <small>Tracked warehouse SKU items</small>
+        </div>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <div class="summary-icon orange">🛠️</div>
+        <div class="summary-info">
+          <span>{{ !isAdmin && isOperatorUser ? (getOperatorDisplayName() + ' REPAIRS') : 'ACTIVE WORK ORDERS' }}</span>
+          <strong>{{ getDisplayedRepairs().length }}</strong>
+          <small>Open site maintenance tickets</small>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Inventory Spare Parts Table -->
+    <mat-card class="content-card">
+      <div class="card-header">
+        <div class="title">
+          <div class="title-icon">📦</div>
+          <div>
+            <h3>Inventory Spare Parts</h3>
+            <p>Track warehouse spare parts inventory & stock status</p>
+          </div>
+        </div>
+        <span class="count-badge">{{ inventoryItems.length }} Parts</span>
+      </div>
+      <mat-divider></mat-divider>
+      <mat-card-content>
+        <div class="table-scroll">
+          <table mat-table [dataSource]="inventoryItems" class="inventory-table">
+            <ng-container matColumnDef="itemCode">
+              <th mat-header-cell *matHeaderCellDef> PART CODE </th>
+              <td mat-cell *matCellDef="let item">
+                <span class="part-code-tag">{{ item.itemCode }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="itemName">
+              <th mat-header-cell *matHeaderCellDef> PART NAME </th>
+              <td mat-cell *matCellDef="let item">
+                <strong>{{ item.itemName }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="quantity">
+              <th mat-header-cell *matHeaderCellDef> STOCK AVAILABLE </th>
+              <td mat-cell *matCellDef="let item">
+                <span class="stock-pill" [class.low-stock]="item.quantity <= item.minThreshold">
+                  <span class="status-dot"></span>
+                  {{ item.quantity }} units {{ item.quantity <= item.minThreshold ? '(Low)' : '' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="location">
+              <th mat-header-cell *matHeaderCellDef> DEPOT LOCATION </th>
+              <td mat-cell *matCellDef="let item">
+                <span class="location-text">📍 {{ item.location }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="threshold">
+              <th mat-header-cell *matHeaderCellDef> MIN THRESHOLD </th>
+              <td mat-cell *matCellDef="let item">
+                <span class="threshold-text">{{ item.minThreshold }} units</span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="inventoryColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: inventoryColumns;"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active Repair Work Orders Table -->
+    <mat-card class="content-card">
+      <div class="card-header">
+        <div class="title">
+          <div class="title-icon orange">🛠️</div>
+          <div>
+            <h3>Active Repair Work Orders</h3>
+            <p>Track maintenance tickets and restoration progress</p>
+          </div>
+        </div>
+        <span class="count-badge">{{ getDisplayedRepairs().length }} Work Orders</span>
+      </div>
+      <mat-divider></mat-divider>
+      <mat-card-content>
+        <div class="table-scroll">
+          <table mat-table [dataSource]="getDisplayedRepairs()" class="repair-table">
+            <ng-container matColumnDef="tower">
+              <th mat-header-cell *matHeaderCellDef> TOWER & OPERATOR </th>
+              <td mat-cell *matCellDef="let rep">
+                <div class="tower-cell">
+                  <span class="tower-tag">{{ rep.tower?.towerCode || rep.tower?.name }}</span>
+                  <small class="owner-hint">{{ rep.tower?.ownerOperator?.name }}</small>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="priority">
+              <th mat-header-cell *matHeaderCellDef> PRIORITY </th>
+              <td mat-cell *matCellDef="let rep">
+                <span class="priority-badge" [ngClass]="rep.priority?.toLowerCase()">
+                  {{ rep.priority }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef> STATUS </th>
+              <td mat-cell *matCellDef="let rep">
+                <span class="status-badge" [ngClass]="rep.status?.toLowerCase()">
+                  <span class="status-dot"></span>
+                  {{ rep.status }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="siteManager">
+              <th mat-header-cell *matHeaderCellDef> ASSIGNED MANAGER </th>
+              <td mat-cell *matCellDef="let rep">
+                <span class="manager-name">👤 {{ rep.assignedSiteManager?.username || rep.assignedSiteManager?.fullName || 'Unassigned' }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef> ACTIONS </th>
+              <td mat-cell *matCellDef="let rep">
+                <button
+                  type="button"
+                  class="btn-action manage"
+                  *ngIf="canManageRepair(rep)"
+                  (click)="selectForAction(rep)"
+                >
+                  ⚡ Select Ticket
+                </button>
+                <span *ngIf="!canManageRepair(rep)" class="read-only-text">🔒 Read-only</span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="repairColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: repairColumns;"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Dual Form Grid 1: Add Inventory + New Repair -->
+    <div class="dual-form-grid">
+      <mat-card class="content-card form-card">
+        <div class="card-header">
+          <div class="title">
+            <div class="title-icon">➕</div>
+            <div>
+              <h3>Add Spare Part Inventory</h3>
+            </div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-card-content class="form-content">
+          <div class="form-grid-inner">
+            <mat-form-field appearance="outline">
+              <mat-label>Part Code</mat-label>
+              <input matInput [(ngModel)]="inventoryForm.itemCode" name="itemCode" placeholder="e.g. PART-ANT-5G" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Part Name</mat-label>
+              <input matInput [(ngModel)]="inventoryForm.itemName" name="itemName" placeholder="e.g. 5G Panel Antenna" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Stock Quantity</mat-label>
+              <input matInput type="number" [(ngModel)]="inventoryForm.quantity" name="quantity" min="1" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Unit Price (₹)</mat-label>
+              <input matInput type="number" [(ngModel)]="inventoryForm.unitPrice" name="unitPrice" min="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Depot Location</mat-label>
+              <input matInput [(ngModel)]="inventoryForm.location" name="location" placeholder="e.g. Mumbai Depot" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Min Alert Threshold</mat-label>
+              <input matInput type="number" [(ngModel)]="inventoryForm.minThreshold" name="minThreshold" min="0" />
+            </mat-form-field>
+          </div>
+          <div class="form-actions">
+            <button mat-raised-button class="submit-button" (click)="createInventoryItem()">
+              <span>📦</span> Add Inventory Item
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="content-card form-card">
+        <div class="card-header">
+          <div class="title">
+            <div class="title-icon orange">📝</div>
+            <div>
+              <h3>New Repair Request</h3>
+              <p *ngIf="!isAdmin && isOperatorUser">Creating work order for {{ getOperatorDisplayName() }}</p>
+            </div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-card-content class="form-content">
+          <div class="form-grid-inner">
+            <mat-form-field appearance="outline">
+              <mat-label>Target Tower</mat-label>
+              <mat-select [(ngModel)]="repairForm.towerId" name="towerId">
+                <mat-option *ngFor="let tower of getSelectableTowers()" [value]="tower.id">
+                  {{ tower.towerCode }} — {{ tower.name }} ({{ tower.city }})
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="getSelectableTowers().length === 0">
+                No towers available for your operator.
+              </mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Assign Site Manager</mat-label>
+              <mat-select [(ngModel)]="repairForm.assignedSiteManagerId" name="assignedSiteManagerId">
+                <mat-option *ngFor="let manager of getSelectableSiteManagers()" [value]="manager.id">
+                  {{ manager.fullName || manager.username }} ({{ manager.email }})
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Repair Priority</mat-label>
+              <mat-select [(ngModel)]="repairForm.priority" name="priority">
+                <mat-option value="HIGH">HIGH</mat-option>
+                <mat-option value="MEDIUM">MEDIUM</mat-option>
+                <mat-option value="LOW">LOW</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Repair Description</mat-label>
+              <input matInput [(ngModel)]="repairForm.description" name="description" placeholder="Describe required repair and issues" />
+            </mat-form-field>
+          </div>
+          <div class="form-actions">
+            <button mat-raised-button class="submit-button" (click)="createRepairRequest()">
+              <span>🛠️</span> Create Repair Request
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Dual Form Grid 2: Consume Parts + Restore Tower -->
+    <div class="dual-form-grid">
+      <mat-card class="content-card form-card">
+        <div class="card-header">
+          <div class="title">
+            <div class="title-icon purple">⚙️</div>
+            <div>
+              <h3>Consume Parts for Repair</h3>
+            </div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-card-content class="form-content">
+          <div class="form-grid-inner">
+            <mat-form-field appearance="outline">
+              <mat-label>Repair Request Ticket</mat-label>
+              <mat-select [(ngModel)]="consumeForm.repairRequestId" name="repairRequestId">
+                <mat-option *ngFor="let repair of getManageableRepairs()" [value]="repair.id">
+                  {{ repair.requestTicketCode || ('REP-' + repair.id) }} — {{ repair.tower?.towerCode }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Inventory Item</mat-label>
+              <mat-select [(ngModel)]="consumeForm.inventoryItemId" name="inventoryItemId">
+                <mat-option *ngFor="let item of inventoryItems" [value]="item.id">
+                  {{ item.itemCode }} — {{ item.itemName }} (Stock: {{ item.quantity }})
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Quantity Used</mat-label>
+              <input matInput type="number" [(ngModel)]="consumeForm.quantityUsed" name="quantityUsed" min="1" />
+            </mat-form-field>
+          </div>
+          <div class="form-actions">
+            <button mat-raised-button class="submit-button" (click)="consumeParts()">
+              <span>⚡</span> Deduct Spares
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="content-card form-card">
+        <div class="card-header">
+          <div class="title">
+            <div class="title-icon green">✅</div>
+            <div>
+              <h3>Restore Tower Status</h3>
+            </div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-card-content class="form-content">
+          <div class="form-grid-inner">
+            <mat-form-field appearance="outline">
+              <mat-label>Repair Request Ticket</mat-label>
+              <mat-select [(ngModel)]="restoreForm.repairRequestId" name="repairRequestId">
+                <mat-option *ngFor="let repair of getManageableRepairs()" [value]="repair.id">
+                  {{ repair.requestTicketCode || ('REP-' + repair.id) }} — {{ repair.tower?.towerCode }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-full">
+              <mat-label>Maintenance Completion Notes</mat-label>
+              <input matInput [(ngModel)]="restoreForm.maintenanceNotes" name="maintenanceNotes" placeholder="Summary of repairs completed and tests performed" />
+            </mat-form-field>
+          </div>
+          <div class="form-actions">
+            <button mat-raised-button class="submit-button green-btn" (click)="restoreTower()">
+              <span>✓</span> Mark Restored & Set ACTIVE
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #maintenanceLoading>
+  <div class="page-shell">
+    <mat-card class="content-card">
+      <mat-card-title>Loading maintenance...</mat-card-title>
+      <mat-card-content>Please wait while maintenance inventory and repair data are loaded.</mat-card-content>
+    </mat-card>
+  </div>
+</ng-template>

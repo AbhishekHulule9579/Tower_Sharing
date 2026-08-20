@@ -1,0 +1,505 @@
+<ng-container *ngIf="dataLoaded; else loading">
+  <div
+    class="notification"
+    *ngIf="notification.show"
+    [ngClass]="notification.type"
+  >
+    <div class="notification-icon">
+      {{ notification.type === 'success' ? '✓' : notification.type === 'warning' ? '!' : '×' }}
+    </div>
+
+    <div class="notification-content">
+      <strong>
+        {{ notification.type === 'success' ? 'Success' : notification.type === 'warning' ? 'Warning' : 'Error' }}
+      </strong>
+      <span>{{ notification.message }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="notification-close"
+      (click)="hideNotification()"
+    >
+      ×
+    </button>
+  </div>
+
+  <div class="page-shell">
+    <div class="page-header">
+      <div class="header-icon">📡</div>
+
+      <div class="header-info">
+        <div class="header-title-row">
+          <h1>Tower Inventory</h1>
+          <span class="user-role-chip" *ngIf="currentUser">
+            {{ isAdmin ? '👑 System Administrator' : ('🏢 ' + (getOperatorDisplayName() || 'Operator Manager')) }}
+          </span>
+        </div>
+        <p>
+          {{
+            isAdmin
+              ? 'View, create, and manage tower assets across all network operators.'
+              : isOperatorUser
+              ? 'Manage ' + (getOperatorDisplayName() || 'your company') + ' tower infrastructure and inventory.'
+              : 'View tower assets across the network (Log in as Operator Manager or Admin to add/modify).'
+          }}
+        </p>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <mat-card class="summary-card total">
+        <div class="summary-icon">📡</div>
+
+        <div class="summary-info">
+          <span>{{ isOperatorUser && !isAdmin ? (getOperatorDisplayName() + ' Towers') : 'Total Towers' }}</span>
+          <strong>{{ getDisplayedTowers().length }}</strong>
+          <small>{{ isOperatorUser && !isAdmin ? 'Under your management' : 'Registered network towers' }}</small>
+        </div>
+      </mat-card>
+
+      <mat-card class="summary-card lease">
+        <div class="summary-icon">🔑</div>
+
+        <div class="summary-info">
+          <span>Available to Lease</span>
+          <strong>{{ availableForLease.length }}</strong>
+          <small>Ready for leasing</small>
+        </div>
+      </mat-card>
+
+      <mat-card class="summary-card sale">
+        <div class="summary-icon">🏷️</div>
+
+        <div class="summary-info">
+          <span>Available to Sell</span>
+          <strong>{{ availableForSale.length }}</strong>
+          <small>Ready for sale</small>
+        </div>
+      </mat-card>
+    </div>
+
+    <mat-card class="content-card">
+      <div class="card-header">
+        <div class="title">
+          <div class="title-icon">📡</div>
+          <div>
+            <h2>All Towers</h2>
+            <p>
+              {{
+                isOperatorUser && !isAdmin
+                  ? 'Showing network inventory (You can edit and manage ' + getOperatorDisplayName() + ' towers)'
+                  : 'Manage your existing tower inventory'
+              }}
+            </p>
+          </div>
+        </div>
+
+        <span class="count">
+          {{ towers.length }} Towers
+        </span>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="table-scroll">
+        <table
+          mat-table
+          [dataSource]="towers"
+          class="tower-table"
+        >
+          <ng-container matColumnDef="towerCode">
+            <th mat-header-cell *matHeaderCellDef>
+              TOWER CODE
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <span class="tower-code">
+                {{ tower.towerCode }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>
+              NAME & OPERATOR
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <div class="tower-name">
+                <span class="tower-avatar">
+                  📡
+                </span>
+                <div class="tower-title-col">
+                  <span class="tower-label">
+                    {{ tower.name }}
+                  </span>
+                  <small class="operator-badge">
+                    {{ tower.ownerOperator?.name || 'Unassigned Operator' }}
+                  </small>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef>
+              LOCATION
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <div class="tower-location">
+                <span class="location-icon">
+                  📍
+                </span>
+                <div>
+                  <span>
+                    {{ tower.location }}
+                  </span>
+                  <small>
+                    {{ tower.city }}, {{ tower.state }}
+                  </small>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>
+              STATUS
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <span
+                class="status-badge"
+                [ngClass]="{
+                  'active': tower.status === 'ACTIVE',
+                  'inactive': tower.status === 'INACTIVE',
+                  'maintenance': tower.status === 'MAINTENANCE' || tower.status === 'UNDER_MAINTENANCE',
+                  'disaster': tower.status === 'DISASTER_AFFECTED'
+                }"
+              >
+                <span class="status-dot"></span>
+                {{ tower.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sharingStatus">
+            <th mat-header-cell *matHeaderCellDef>
+              SHARING STATUS
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <span
+                class="sharing-badge"
+                [ngClass]="{
+                  'lease-badge': tower.sharingStatus === 'AVAILABLE_FOR_LEASE',
+                  'sale-badge': tower.sharingStatus === 'AVAILABLE_FOR_SALE',
+                  'unavailable-badge': tower.sharingStatus === 'NOT_AVAILABLE'
+                }"
+              >
+                <span>
+                  {{
+                    tower.sharingStatus === 'AVAILABLE_FOR_LEASE'
+                      ? '🔑'
+                      : tower.sharingStatus === 'AVAILABLE_FOR_SALE'
+                      ? '🏷️'
+                      : '⛔'
+                  }}
+                </span>
+                {{ tower.sharingStatus }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              ACTIONS
+            </th>
+            <td mat-cell *matCellDef="let tower">
+              <div class="actions" *ngIf="canEditTower(tower); else lockedAction">
+                <button
+                  type="button"
+                  class="action-button edit"
+                  title="Edit Tower (Authorized for your operator)"
+                  (click)="editTower(tower)"
+                >
+                  ✏
+                </button>
+                <button
+                  type="button"
+                  class="action-button delete"
+                  title="Delete Tower (Authorized for your operator)"
+                  (click)="deleteTower(tower.id)"
+                >
+                  🗑
+                </button>
+              </div>
+
+              <ng-template #lockedAction>
+                <span class="locked-badge" [title]="'Owned by ' + (tower.ownerOperator?.name || 'another operator')">
+                  🔒 Read-only
+                </span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <tr
+            mat-header-row
+            *matHeaderRowDef="displayedColumns"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+          ></tr>
+        </table>
+      </div>
+    </mat-card>
+
+    <mat-card class="content-card form-card" *ngIf="canManageTowers; else noAccessCard">
+      <div class="card-header">
+        <div class="title">
+          <div class="title-icon purple">
+            {{ selectedTower ? '✏' : '+' }}
+          </div>
+
+          <div>
+            <h2>
+              {{ selectedTower ? 'Edit Tower: ' + selectedTower.towerCode : 'Add New Tower' }}
+            </h2>
+            <p>
+              {{
+                selectedTower
+                  ? 'Update tower specifications and network sharing settings'
+                  : !isAdmin && isOperatorUser
+                  ? 'Add a new tower registered under ' + getOperatorDisplayName()
+                  : 'Add a new tower or update existing tower details'
+              }}
+            </p>
+          </div>
+        </div>
+
+        <span class="operator-lock-chip" *ngIf="!isAdmin && isOperatorUser">
+          🔒 Registered under {{ getOperatorDisplayName() }}
+        </span>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content class="form-content">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Tower Code</mat-label>
+            <input
+              matInput
+              name="towerCode"
+              placeholder="e.g. TOW-MUM-05"
+              [(ngModel)]="towerForm.towerCode"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input
+              matInput
+              name="name"
+              placeholder="e.g. Bandra West Micro Site"
+              [(ngModel)]="towerForm.name"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input
+              matInput
+              name="city"
+              placeholder="e.g. Mumbai"
+              [(ngModel)]="towerForm.city"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>State</mat-label>
+            <input
+              matInput
+              name="state"
+              placeholder="e.g. Maharashtra"
+              [(ngModel)]="towerForm.state"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Location / Address</mat-label>
+            <input
+              matInput
+              name="location"
+              placeholder="e.g. Hill Road, Bandra West"
+              [(ngModel)]="towerForm.location"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Owner Operator</mat-label>
+            <mat-select
+              name="ownerOperatorId"
+              [(ngModel)]="towerForm.ownerOperatorId"
+              [disabled]="!isAdmin"
+            >
+              <mat-option
+                *ngFor="let operator of operators"
+                [value]="operator.id"
+              >
+                {{ operator.name }} ({{ operator.code }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select
+              name="status"
+              [(ngModel)]="towerForm.status"
+            >
+              <mat-option value="ACTIVE">
+                ACTIVE
+              </mat-option>
+              <mat-option value="INACTIVE">
+                INACTIVE
+              </mat-option>
+              <mat-option value="MAINTENANCE">
+                MAINTENANCE
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Sharing Status</mat-label>
+            <mat-select
+              name="sharingStatus"
+              [(ngModel)]="towerForm.sharingStatus"
+            >
+              <mat-option value="AVAILABLE_FOR_LEASE">
+                AVAILABLE_FOR_LEASE
+              </mat-option>
+              <mat-option value="AVAILABLE_FOR_SALE">
+                AVAILABLE_FOR_SALE
+              </mat-option>
+              <mat-option value="NOT_AVAILABLE">
+                NOT_AVAILABLE
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Total Capacity (TRX / Slots)</mat-label>
+            <input
+              matInput
+              type="number"
+              name="totalCapacity"
+              [(ngModel)]="towerForm.totalCapacity"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Current Occupancy</mat-label>
+            <input
+              matInput
+              type="number"
+              name="currentOccupancy"
+              [(ngModel)]="towerForm.currentOccupancy"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Monthly Lease Rate (₹)</mat-label>
+            <input
+              matInput
+              type="number"
+              name="monthlyLeaseRate"
+              [(ngModel)]="towerForm.monthlyLeaseRate"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Sale Price (₹)</mat-label>
+            <input
+              matInput
+              type="number"
+              name="salePrice"
+              [(ngModel)]="towerForm.salePrice"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Latitude</mat-label>
+            <input
+              matInput
+              type="number"
+              step="0.0001"
+              name="latitude"
+              [(ngModel)]="towerForm.latitude"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Longitude</mat-label>
+            <input
+              matInput
+              type="number"
+              step="0.0001"
+              name="longitude"
+              [(ngModel)]="towerForm.longitude"
+            />
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            class="save-button"
+            (click)="saveTower()"
+          >
+            <span>
+              {{ selectedTower ? '💾' : '＋' }}
+            </span>
+            {{ selectedTower ? 'Save Tower Changes' : 'Create Tower' }}
+          </button>
+
+          <button
+            mat-stroked-button
+            class="reset-button"
+            (click)="resetForm()"
+          >
+            <span>↻</span>
+            Reset Form
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <ng-template #noAccessCard>
+      <mat-card class="content-card no-access-card">
+        <div class="no-access-content">
+          <span class="no-access-icon">🔒</span>
+          <h3>Tower Management Restricted</h3>
+          <p>
+            Only authorized Company Site Managers, Operator Managers, and Administrators can create new towers or modify existing inventory. Please log in with an authorized account to add towers.
+          </p>
+        </div>
+      </mat-card>
+    </ng-template>
+  </div>
+</ng-container>
+
+<ng-template #loading>
+  <div class="loading">
+    <mat-card>
+      <div class="loading-icon">
+        📡
+      </div>
+      <mat-card-title>
+        Loading towers...
+      </mat-card-title>
+      <mat-card-content>
+        Please wait while tower inventory and operators are loaded.
+      </mat-card-content>
+    </mat-card>
+  </div>
+</ng-template>

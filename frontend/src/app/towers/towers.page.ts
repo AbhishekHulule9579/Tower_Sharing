@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
+import { AuthService, AuthUser } from '../services/auth.service';
 import { OperatorService } from '../services/operator.service';
 import { TowerService } from '../services/tower.service';
 
@@ -26,607 +27,21 @@ import { TowerService } from '../services/tower.service';
     MatDividerModule
   ],
   selector: 'app-towers',
-  template: `
-    <ng-container *ngIf="dataLoaded; else loading">
-
-      <div
-        class="notification"
-        *ngIf="notification.show"
-        [ngClass]="notification.type"
-      >
-        <div class="notification-icon">
-          {{ notification.type === 'success' ? '✓' : notification.type === 'warning' ? '!' : '×' }}
-        </div>
-
-        <div class="notification-content">
-          <strong>
-            {{ notification.type === 'success' ? 'Success' : notification.type === 'warning' ? 'Warning' : 'Error' }}
-          </strong>
-          <span>{{ notification.message }}</span>
-        </div>
-
-        <button
-          type="button"
-          class="notification-close"
-          (click)="hideNotification()"
-        >
-          ×
-        </button>
-      </div>
-
-      <div class="page-shell">
-
-        <div class="page-header">
-          <div class="header-icon">📡</div>
-
-          <div>
-            <h1>Tower Inventory</h1>
-            <p>View, create, and manage tower assets across the network.</p>
-          </div>
-        </div>
-
-        <div class="section-grid">
-
-          <mat-card class="summary-card total">
-            <div class="summary-icon">📡</div>
-
-            <div class="summary-info">
-              <span>Total Towers</span>
-              <strong>{{ towers.length }}</strong>
-              <small>Registered towers</small>
-            </div>
-          </mat-card>
-
-          <mat-card class="summary-card lease">
-            <div class="summary-icon">🔑</div>
-
-            <div class="summary-info">
-              <span>Available to Lease</span>
-              <strong>{{ availableForLease.length }}</strong>
-              <small>Ready for leasing</small>
-            </div>
-          </mat-card>
-
-          <mat-card class="summary-card sale">
-            <div class="summary-icon">🏷️</div>
-
-            <div class="summary-info">
-              <span>Available to Sell</span>
-              <strong>{{ availableForSale.length }}</strong>
-              <small>Ready for sale</small>
-            </div>
-          </mat-card>
-
-        </div>
-
-        <mat-card class="content-card">
-
-          <div class="card-header">
-
-            <div class="title">
-
-              <div class="title-icon">📡</div>
-
-              <div>
-                <h2>All Towers</h2>
-                <p>Manage your existing tower inventory</p>
-              </div>
-
-            </div>
-
-            <span class="count">
-              {{ towers.length }} Towers
-            </span>
-
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <div class="table-scroll">
-
-            <table
-              mat-table
-              [dataSource]="towers"
-              class="tower-table"
-            >
-
-              <ng-container matColumnDef="towerCode">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  TOWER CODE
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <span class="tower-code">
-                    {{ tower.towerCode }}
-                  </span>
-
-                </td>
-
-              </ng-container>
-
-              <ng-container matColumnDef="name">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  NAME
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <div class="tower-name">
-
-                    <span class="tower-avatar">
-                      📡
-                    </span>
-
-                    <span>
-                      {{ tower.name }}
-                    </span>
-
-                  </div>
-
-                </td>
-
-              </ng-container>
-
-              <ng-container matColumnDef="location">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  LOCATION
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <div class="tower-location">
-
-                    <span class="location-icon">
-                      📍
-                    </span>
-
-                    <div>
-
-                      <span>
-                        {{ tower.location }}
-                      </span>
-
-                      <small>
-                        {{ tower.city }}
-                      </small>
-
-                    </div>
-
-                  </div>
-
-                </td>
-
-              </ng-container>
-
-              <ng-container matColumnDef="status">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  STATUS
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <span
-                    class="status-badge"
-                    [ngClass]="{
-                      'active': tower.status === 'ACTIVE',
-                      'inactive': tower.status === 'INACTIVE',
-                      'maintenance': tower.status === 'MAINTENANCE'
-                    }"
-                  >
-
-                    <span class="status-dot"></span>
-
-                    {{ tower.status }}
-
-                  </span>
-
-                </td>
-
-              </ng-container>
-
-              <ng-container matColumnDef="sharingStatus">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  SHARING STATUS
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <span
-                    class="sharing-badge"
-                    [ngClass]="{
-                      'lease-badge': tower.sharingStatus === 'AVAILABLE_FOR_LEASE',
-                      'sale-badge': tower.sharingStatus === 'AVAILABLE_FOR_SALE',
-                      'unavailable-badge': tower.sharingStatus === 'NOT_AVAILABLE'
-                    }"
-                  >
-
-                    <span>
-                      {{
-                        tower.sharingStatus === 'AVAILABLE_FOR_LEASE'
-                          ? '🔑'
-                          : tower.sharingStatus === 'AVAILABLE_FOR_SALE'
-                          ? '🏷️'
-                          : '⛔'
-                      }}
-                    </span>
-
-                    {{ tower.sharingStatus }}
-
-                  </span>
-
-                </td>
-
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-
-                <th mat-header-cell *matHeaderCellDef>
-                  ACTIONS
-                </th>
-
-                <td mat-cell *matCellDef="let tower">
-
-                  <div class="actions">
-
-                    <button
-                      type="button"
-                      class="action-button edit"
-                      title="Edit Tower"
-                      (click)="editTower(tower)"
-                    >
-                      ✏
-                    </button>
-
-                    <button
-                      type="button"
-                      class="action-button delete"
-                      title="Delete Tower"
-                      (click)="deleteTower(tower.id)"
-                    >
-                      🗑
-                    </button>
-
-                  </div>
-
-                </td>
-
-              </ng-container>
-
-              <tr
-                mat-header-row
-                *matHeaderRowDef="displayedColumns"
-              ></tr>
-
-              <tr
-                mat-row
-                *matRowDef="let row; columns: displayedColumns"
-              ></tr>
-
-            </table>
-
-          </div>
-
-        </mat-card>
-
-        <mat-card class="content-card form-card">
-
-          <div class="card-header">
-
-            <div class="title">
-
-              <div class="title-icon purple">
-                {{ selectedTower ? '✏' : '+' }}
-              </div>
-
-              <div>
-
-                <h2>
-                  {{ selectedTower ? 'Edit Tower' : 'Create New Tower' }}
-                </h2>
-
-                <p>
-                  {{
-                    selectedTower
-                      ? 'Update tower information and configuration'
-                      : 'Add a new tower or update existing tower details'
-                  }}
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <mat-card-content class="form-content">
-
-            <div class="form-grid">
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Tower Code</mat-label>
-
-                <input
-                  matInput
-                  name="towerCode"
-                  [(ngModel)]="towerForm.towerCode"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Name</mat-label>
-
-                <input
-                  matInput
-                  name="name"
-                  [(ngModel)]="towerForm.name"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>City</mat-label>
-
-                <input
-                  matInput
-                  name="city"
-                  [(ngModel)]="towerForm.city"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>State</mat-label>
-
-                <input
-                  matInput
-                  name="state"
-                  [(ngModel)]="towerForm.state"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Location</mat-label>
-
-                <input
-                  matInput
-                  name="location"
-                  [(ngModel)]="towerForm.location"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Owner Operator</mat-label>
-
-                <mat-select
-                  name="ownerOperatorId"
-                  [(ngModel)]="towerForm.ownerOperatorId"
-                >
-
-                  <mat-option
-                    *ngFor="let operator of operators"
-                    [value]="operator.id"
-                  >
-                    {{ operator.name }}
-                  </mat-option>
-
-                </mat-select>
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Status</mat-label>
-
-                <mat-select
-                  name="status"
-                  [(ngModel)]="towerForm.status"
-                >
-
-                  <mat-option value="ACTIVE">
-                    ACTIVE
-                  </mat-option>
-
-                  <mat-option value="INACTIVE">
-                    INACTIVE
-                  </mat-option>
-
-                  <mat-option value="MAINTENANCE">
-                    MAINTENANCE
-                  </mat-option>
-
-                </mat-select>
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Sharing Status</mat-label>
-
-                <mat-select
-                  name="sharingStatus"
-                  [(ngModel)]="towerForm.sharingStatus"
-                >
-
-                  <mat-option value="AVAILABLE_FOR_LEASE">
-                    AVAILABLE_FOR_LEASE
-                  </mat-option>
-
-                  <mat-option value="AVAILABLE_FOR_SALE">
-                    AVAILABLE_FOR_SALE
-                  </mat-option>
-
-                  <mat-option value="NOT_AVAILABLE">
-                    NOT_AVAILABLE
-                  </mat-option>
-
-                </mat-select>
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Total Capacity</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="totalCapacity"
-                  [(ngModel)]="towerForm.totalCapacity"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Current Occupancy</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="currentOccupancy"
-                  [(ngModel)]="towerForm.currentOccupancy"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Monthly Lease Rate (₹)</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="monthlyLeaseRate"
-                  [(ngModel)]="towerForm.monthlyLeaseRate"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Sale Price (₹)</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="salePrice"
-                  [(ngModel)]="towerForm.salePrice"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Latitude</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="latitude"
-                  [(ngModel)]="towerForm.latitude"
-                />
-
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-
-                <mat-label>Longitude</mat-label>
-
-                <input
-                  matInput
-                  type="number"
-                  name="longitude"
-                  [(ngModel)]="towerForm.longitude"
-                />
-
-              </mat-form-field>
-
-            </div>
-
-            <div class="form-actions">
-
-              <button
-                mat-raised-button
-                class="save-button"
-                (click)="saveTower()"
-              >
-                <span>
-                  {{ selectedTower ? '💾' : '＋' }}
-                </span>
-
-                {{ selectedTower ? 'Save Tower' : 'Create Tower' }}
-
-              </button>
-
-              <button
-                mat-stroked-button
-                class="reset-button"
-                (click)="resetForm()"
-              >
-                <span>↻</span>
-                Reset Form
-              </button>
-
-            </div>
-
-          </mat-card-content>
-
-        </mat-card>
-
-      </div>
-
-    </ng-container>
-
-    <ng-template #loading>
-
-      <div class="loading">
-
-        <mat-card>
-
-          <div class="loading-icon">
-            📡
-          </div>
-
-          <mat-card-title>
-            Loading towers...
-          </mat-card-title>
-
-          <mat-card-content>
-            Please wait while tower inventory and operators are loaded.
-          </mat-card-content>
-
-        </mat-card>
-
-      </div>
-
-    </ng-template>
-  `,
-  styleUrls: ['./tower.page.css']
+  templateUrl: './towers.page.html',
+  styleUrls: ['./towers.page.css']
 })
-export class TowersPage implements OnInit {
-
+export class TowersPage implements OnInit, OnDestroy {
   towers: any[] = [];
   availableForLease: any[] = [];
   availableForSale: any[] = [];
   operators: any[] = [];
   selectedTower: any | null = null;
+
+  currentUser: AuthUser | null = null;
+  isAdmin = false;
+  isOperatorUser = false;
+  canManageTowers = false;
+  private authSubscription?: Subscription;
 
   displayedColumns = [
     'towerCode',
@@ -666,64 +81,126 @@ export class TowersPage implements OnInit {
 
   constructor(
     private readonly towerService: TowerService,
-    private readonly operatorService: OperatorService
+    private readonly operatorService: OperatorService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.currentUser = this.authService.getCurrentUser();
+    this.updateUserPermissions();
+
+    this.authSubscription = this.authService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+      this.updateUserPermissions();
+      this.syncPredefinedOperator();
+    });
+
     this.loadData();
   }
 
-  private loadData(): void {
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+    if (this.notificationTimer) {
+      clearTimeout(this.notificationTimer);
+    }
+  }
 
+  private updateUserPermissions(): void {
+    const role = this.currentUser?.role;
+    this.isAdmin = role === 'ADMIN';
+    this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
+    this.canManageTowers = this.isAdmin || this.isOperatorUser;
+  }
+
+  private syncPredefinedOperator(): void {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId && !this.selectedTower) {
+      this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+    }
+  }
+
+  public getOperatorDisplayName(): string {
+    if (this.currentUser?.operatorName) {
+      return this.currentUser.operatorName;
+    }
+    if (this.currentUser?.operatorCode) {
+      return this.currentUser.operatorCode;
+    }
+    if (this.currentUser?.operatorId) {
+      const match = this.operators.find((op) => op.id === this.currentUser?.operatorId);
+      if (match) return match.name;
+    }
+    return '';
+  }
+
+  public getDisplayedTowers(): any[] {
+    if (this.isOperatorUser && !this.isAdmin && this.currentUser?.operatorId) {
+      return this.towers.filter((t) => t.ownerOperator?.id === this.currentUser?.operatorId);
+    }
+    return this.towers;
+  }
+
+  public canEditTower(tower: any): boolean {
+    if (this.isAdmin) {
+      return true;
+    }
+    if (this.isOperatorUser && this.currentUser?.operatorId) {
+      return tower.ownerOperator?.id === this.currentUser.operatorId;
+    }
+    return false;
+  }
+
+  private loadData(): void {
     forkJoin({
       towers: this.towerService.getAll(),
       operators: this.operatorService.getAllOperators()
     }).subscribe({
-      next: result => {
-
+      next: (result) => {
         this.towers = result.towers || [];
+        this.operators = result.operators || [];
 
         this.availableForLease = this.towers.filter(
-          tower => tower.sharingStatus === 'AVAILABLE_FOR_LEASE'
+          (tower) => tower.sharingStatus === 'AVAILABLE_FOR_LEASE'
         );
 
         this.availableForSale = this.towers.filter(
-          tower => tower.sharingStatus === 'AVAILABLE_FOR_SALE'
+          (tower) => tower.sharingStatus === 'AVAILABLE_FOR_SALE'
         );
 
-        this.operators = result.operators || [];
+        this.syncPredefinedOperator();
 
         Promise.resolve().then(() => {
           this.dataLoaded = true;
         });
-
       },
 
-      error: error => {
-
+      error: (error) => {
         this.dataLoaded = true;
-
         this.showNotification(
           'error',
           this.getErrorMessage(error, 'Unable to load tower data.')
         );
-
       }
     });
-
   }
 
   public saveTower(): void {
+    if (!this.canManageTowers) {
+      this.showNotification(
+        'error',
+        'Only Company Site Managers, Operator Managers, or Administrators can add or edit towers.'
+      );
+      return;
+    }
+
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+    }
 
     const validationError = this.validateTower();
-
     if (validationError) {
-
-      this.showNotification(
-        'warning',
-        validationError
-      );
-
+      this.showNotification('warning', validationError);
       return;
     }
 
@@ -735,73 +212,40 @@ export class TowersPage implements OnInit {
     };
 
     if (this.selectedTower?.id) {
+      if (!this.canEditTower(this.selectedTower)) {
+        this.showNotification(
+          'error',
+          'You are only authorized to modify towers belonging to your operator company.'
+        );
+        return;
+      }
 
-      this.towerService.updateTower(
-        this.selectedTower.id,
-        payload
-      ).subscribe({
-
+      this.towerService.updateTower(this.selectedTower.id, payload).subscribe({
         next: () => {
-
-          this.showNotification(
-            'success',
-            'Tower updated successfully.'
-          );
-
+          this.showNotification('success', 'Tower updated successfully.');
           this.resetForm(false);
           this.loadData();
-
         },
-
-        error: error => {
-
-          this.showNotification(
-            'error',
-            this.getErrorMessage(
-              error,
-              'Unable to update the tower.'
-            )
-          );
-
+        error: (error) => {
+          this.showNotification('error', this.getErrorMessage(error, 'Unable to update the tower.'));
         }
-
       });
-
       return;
     }
 
     this.towerService.createTower(payload).subscribe({
-
       next: () => {
-
-        this.showNotification(
-          'success',
-          'Tower created successfully.'
-        );
-
+        this.showNotification('success', 'Tower created successfully.');
         this.resetForm(false);
         this.loadData();
-
       },
-
-      error: error => {
-
-        this.showNotification(
-          'error',
-          this.getErrorMessage(
-            error,
-            'Unable to create the tower.'
-          )
-        );
-
+      error: (error) => {
+        this.showNotification('error', this.getErrorMessage(error, 'Unable to create the tower.'));
       }
-
     });
-
   }
 
   private validateTower(): string | null {
-
     if (!this.towerForm.towerCode?.trim()) {
       return 'Tower Code is required.';
     }
@@ -850,10 +294,7 @@ export class TowersPage implements OnInit {
       return 'Current Occupancy cannot be empty or negative.';
     }
 
-    if (
-      this.towerForm.currentOccupancy >
-      this.towerForm.totalCapacity
-    ) {
+    if (this.towerForm.currentOccupancy > this.towerForm.totalCapacity) {
       return 'Current Occupancy cannot be greater than Total Capacity.';
     }
 
@@ -895,6 +336,13 @@ export class TowersPage implements OnInit {
   }
 
   public editTower(tower: any): void {
+    if (!this.canEditTower(tower)) {
+      this.showNotification(
+        'warning',
+        'You are only authorized to edit towers belonging to your operator company.'
+      );
+      return;
+    }
 
     this.selectedTower = tower;
 
@@ -910,68 +358,52 @@ export class TowersPage implements OnInit {
       currentOccupancy: tower.currentOccupancy ?? 0,
       ownerOperatorId: tower.ownerOperator?.id ?? null,
       status: tower.status || 'ACTIVE',
-      sharingStatus:
-        tower.sharingStatus || 'AVAILABLE_FOR_LEASE',
+      sharingStatus: tower.sharingStatus || 'AVAILABLE_FOR_LEASE',
       monthlyLeaseRate: tower.monthlyLeaseRate ?? 0,
       salePrice: tower.salePrice ?? 0
     };
 
-    this.showNotification(
-      'success',
-      `Editing tower ${tower.towerCode}.`
-    );
+    this.showNotification('success', `Editing tower ${tower.towerCode}.`);
 
     window.scrollTo({
       top: document.body.scrollHeight,
       behavior: 'smooth'
     });
-
   }
 
   public deleteTower(id: number): void {
-
     if (!id) {
+      this.showNotification('error', 'Invalid tower ID. Unable to delete the tower.');
+      return;
+    }
 
+    const tower = this.towers.find((t) => t.id === id);
+    if (tower && !this.canEditTower(tower)) {
       this.showNotification(
         'error',
-        'Invalid tower ID. Unable to delete the tower.'
+        'You are only authorized to delete towers belonging to your operator company.'
       );
-
       return;
     }
 
     this.towerService.deleteTower(id).subscribe({
-
       next: () => {
-
-        this.showNotification(
-          'success',
-          'Tower deleted successfully.'
-        );
-
+        this.showNotification('success', 'Tower deleted successfully.');
         this.loadData();
-
       },
-
-      error: error => {
-
-        this.showNotification(
-          'error',
-          this.getErrorMessage(
-            error,
-            'Unable to delete the tower.'
-          )
-        );
-
+      error: (error) => {
+        this.showNotification('error', this.getErrorMessage(error, 'Unable to delete the tower.'));
       }
-
     });
-
   }
 
   public resetForm(showMessage = true): void {
-
     this.selectedTower = null;
+
+    const defaultOwnerId =
+      !this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId
+        ? this.currentUser.operatorId
+        : null;
 
     this.towerForm = {
       towerCode: '',
@@ -983,7 +415,7 @@ export class TowersPage implements OnInit {
       longitude: 0,
       totalCapacity: 0,
       currentOccupancy: 0,
-      ownerOperatorId: null,
+      ownerOperatorId: defaultOwnerId,
       status: 'ACTIVE',
       sharingStatus: 'AVAILABLE_FOR_LEASE',
       monthlyLeaseRate: 0,
@@ -991,21 +423,11 @@ export class TowersPage implements OnInit {
     };
 
     if (showMessage) {
-
-      this.showNotification(
-        'success',
-        'Form has been reset.'
-      );
-
+      this.showNotification('success', 'Form has been reset.');
     }
-
   }
 
-  private showNotification(
-    type: 'success' | 'error' | 'warning',
-    message: string
-  ): void {
-
+  private showNotification(type: 'success' | 'error' | 'warning', message: string): void {
     if (this.notificationTimer) {
       clearTimeout(this.notificationTimer);
     }
@@ -1019,11 +441,9 @@ export class TowersPage implements OnInit {
     this.notificationTimer = setTimeout(() => {
       this.hideNotification();
     }, 5000);
-
   }
 
   public hideNotification(): void {
-
     if (this.notificationTimer) {
       clearTimeout(this.notificationTimer);
     }
@@ -1033,14 +453,9 @@ export class TowersPage implements OnInit {
       type: 'error',
       message: ''
     };
-
   }
 
-  private getErrorMessage(
-    error: any,
-    defaultMessage: string
-  ): string {
-
+  private getErrorMessage(error: any, defaultMessage: string): string {
     if (!error) {
       return defaultMessage;
     }
@@ -1065,6 +480,10 @@ export class TowersPage implements OnInit {
       return 'Invalid tower information. Please check all fields.';
     }
 
+    if (error.status === 403) {
+      return 'Access denied: You are only allowed to manage towers belonging to your operator company.';
+    }
+
     if (error.status === 404) {
       return 'Tower or related resource was not found.';
     }
@@ -1079,5 +498,4 @@ export class TowersPage implements OnInit {
 
     return defaultMessage;
   }
-
 }

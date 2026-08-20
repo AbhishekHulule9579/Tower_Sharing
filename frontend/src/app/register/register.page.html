@@ -1,0 +1,226 @@
+<div class="register-shell">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="register-container">
+    <section class="brand-section">
+      <div class="brand-icon">📡</div>
+      <div class="brand-name">Tower<span>Sync</span></div>
+      <div class="line"></div>
+
+      <h1>
+        Join the TowerSync
+        <span>Operations Platform</span>
+      </h1>
+
+      <p>
+        Create your account and request access to manage telecom
+        operations, tower sites and network activities.
+      </p>
+
+      <div class="features">
+        <div>✓ Secure account registration</div>
+        <div>✓ Operator and site management</div>
+        <div>✓ Role-based platform access</div>
+      </div>
+
+      <div class="status">
+        <span></span>
+        Registration system ready
+      </div>
+    </section>
+
+    <mat-card class="register-card">
+      <div class="register-header">
+        <div class="header-icon">📝</div>
+        <div>
+          <h2>Create Account</h2>
+          <p>Submit your registration request</p>
+        </div>
+      </div>
+
+      <div class="error" *ngIf="errorMessage">
+        <span>⚠️</span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" (click)="errorMessage=''">×</button>
+      </div>
+
+      <div class="success" *ngIf="successMessage">
+        <span>✓</span>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <form (ngSubmit)="submit()">
+        <label>Register as</label>
+        <div class="select-box">
+          <span>
+            {{ requestedRole === 'SITE_MANAGER' ? '👨‍💼' : '📡' }}
+          </span>
+
+          <select
+            name="requestedRole"
+            [(ngModel)]="requestedRole">
+            <option value="SITE_MANAGER">
+              Site Manager
+            </option>
+            <option value="OPERATOR_MANAGER">
+              Operations Manager
+            </option>
+          </select>
+
+          <span class="arrow">⌄</span>
+        </div>
+
+        <div class="role-info">
+          <span>
+            {{ requestedRole === 'SITE_MANAGER' ? '👨‍💼' : '📡' }}
+          </span>
+
+          <div>
+            <small>REQUESTING ACCESS AS</small>
+            <strong>
+              {{
+                requestedRole === 'SITE_MANAGER'
+                  ? 'Site Manager'
+                  : 'Operations Manager'
+              }}
+            </strong>
+          </div>
+        </div>
+
+        <label>Username</label>
+        <div class="input-box">
+          <span>👤</span>
+          <input
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Choose a username"
+            required
+            [(ngModel)]="username">
+        </div>
+
+        <label>Full Name</label>
+        <div class="input-box">
+          <span>🧑</span>
+          <input
+            name="fullName"
+            type="text"
+            autocomplete="name"
+            placeholder="Enter your full name"
+            required
+            [(ngModel)]="fullName">
+        </div>
+
+        <label>Email</label>
+        <div class="input-box">
+          <span>✉️</span>
+          <input
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Enter your email address"
+            required
+            [(ngModel)]="email">
+        </div>
+
+        <label>Phone Number</label>
+        <div class="input-box">
+          <span>📱</span>
+          <input
+            name="phoneNumber"
+            type="tel"
+            autocomplete="tel"
+            placeholder="Enter your phone number"
+            required
+            [(ngModel)]="phoneNumber">
+        </div>
+
+        <label>Password</label>
+        <div class="input-box">
+          <span>🔒</span>
+          <input
+            name="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            autocomplete="new-password"
+            placeholder="Create a password"
+            required
+            [(ngModel)]="password">
+
+          <button
+            type="button"
+            class="eye"
+            (click)="hidePassword=!hidePassword">
+            {{ hidePassword ? '👁' : '🙈' }}
+          </button>
+        </div>
+
+        <label>Operator</label>
+        <div class="select-box">
+          <span>🏢</span>
+          <select
+            name="operatorId"
+            [(ngModel)]="operatorId"
+            [disabled]="isOperatorsLoading || operators.length === 0">
+            <option [ngValue]="null" disabled>
+              {{ isOperatorsLoading ? 'Loading telecom operators...' : 'Select your operator' }}
+            </option>
+            <option
+              *ngFor="let op of operators"
+              [ngValue]="op.id">
+              {{ op.name }} ({{ op.code }})
+            </option>
+          </select>
+          <span class="arrow">⌄</span>
+        </div>
+
+        <div class="operator-load-message" *ngIf="isOperatorsLoading">
+          Loading available telecom operators…
+        </div>
+
+        <div class="operator-load-message error" *ngIf="operatorsLoadError">
+          <span>{{ operatorsLoadError }}</span>
+          <button type="button" (click)="loadOperators()">Try again</button>
+        </div>
+
+        <div
+          class="operator-info"
+          *ngIf="operatorId !== null">
+          <span>🏢</span>
+          <div>
+            <small>SELECTED OPERATOR</small>
+            <strong>
+              {{ selectedOperatorName }}
+            </strong>
+          </div>
+        </div>
+
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-button"
+          [disabled]="isLoading">
+          <span *ngIf="!isLoading">
+            📝 &nbsp; Submit Registration Request
+          </span>
+          <span *ngIf="isLoading">
+            <i></i>
+            Submitting...
+          </span>
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          class="back-button"
+          routerLink="/login">
+          ← Back to Login
+        </button>
+      </form>
+
+      <div class="security">
+        🔒 Your registration information is securely submitted
+      </div>
+    </mat-card>
+  </div>
+</div>

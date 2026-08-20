@@ -1,0 +1,256 @@
+<div class="home-shell">
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+  <div class="background-shape shape-three"></div>
+
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="welcome-badge">
+        <span class="pulse-dot"></span>
+        <span>Telecom Operations Platform</span>
+        <span class="user-pill" *ngIf="isAuthenticated && currentUser">
+          👤 Logged in as {{ currentUser.username }} ({{ currentUser.role }})
+        </span>
+      </div>
+
+      <h1>
+        Welcome to
+        <span class="gradient-text">TowerSync</span>
+      </h1>
+
+      <p class="hero-description">
+        Manage telecom towers, operators, site managers,
+        maintenance activities, cross-operator leasing, and disaster recovery
+        from one unified platform.
+      </p>
+
+      <div class="hero-actions">
+        <ng-container *ngIf="isAuthenticated; else guestActions">
+          <button
+            mat-flat-button
+            class="primary-button"
+            (click)="navigateTo('dashboard')">
+            🚀 Go to Dashboard
+          </button>
+
+          <button
+            mat-stroked-button
+            class="secondary-button"
+            (click)="navigateTo('towers')">
+            📡 Manage Towers
+          </button>
+
+          <button
+            mat-stroked-button
+            class="logout-button"
+            (click)="logout()">
+            🔓 Log Out
+          </button>
+        </ng-container>
+
+        <ng-template #guestActions>
+          <button
+            mat-flat-button
+            class="primary-button"
+            (click)="navigateTo('login')">
+            🔐 Login to System
+          </button>
+
+          <button
+            mat-stroked-button
+            class="secondary-button"
+            (click)="navigateTo('register')">
+            📝 Request Access
+          </button>
+        </ng-template>
+      </div>
+
+      <div class="hero-info">
+        <div>
+          <strong>24/7</strong>
+          <span>Live Monitoring</span>
+        </div>
+
+        <div>
+          <strong>99.9%</strong>
+          <span>SLA Availability</span>
+        </div>
+
+        <div>
+          <strong>Real-Time</strong>
+          <span>Disaster Roaming</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        📡
+      </div>
+      <div>
+        <span class="stat-number">500+</span>
+        <span class="stat-label">Tower Sites</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        👨‍💼
+      </div>
+      <div>
+        <span class="stat-number">120+</span>
+        <span class="stat-label">Site Managers</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">
+        🟢
+      </div>
+      <div>
+        <span class="stat-number">98%</span>
+        <span class="stat-label">Active Towers</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        ⚡
+      </div>
+      <div>
+        <span class="stat-number">24/7</span>
+        <span class="stat-label">System Monitoring</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-section">
+    <div class="section-heading">
+      <span class="section-label">
+        PLATFORM CAPABILITIES
+      </span>
+
+      <h2>
+        Everything you need to
+        <span class="gradient-text">orchestrate tower operations</span>
+      </h2>
+
+      <p>
+        Manage infrastructure, contracts, leasing, and emergency recovery from a single dashboard.
+      </p>
+    </div>
+
+    <div class="home-cards">
+      <mat-card
+        class="feature-card dashboard-card"
+        (click)="navigateTo('dashboard')">
+        <div class="card-top">
+          <div class="feature-icon dashboard-icon">
+            📊
+          </div>
+          <span class="arrow">
+            →
+          </span>
+        </div>
+
+        <h2>Operations Dashboard</h2>
+        <p>
+          Live metrics on tower utilization, revenue generation, active disaster alerts, and maintenance tickets.
+        </p>
+
+        <div class="card-footer">
+          <span>View Analytics</span>
+          <span>→</span>
+        </div>
+      </mat-card>
+
+      <mat-card
+        class="feature-card operators-card"
+        (click)="navigateTo('leases')">
+        <div class="card-top">
+          <div class="feature-icon operator-icon">
+            🤝
+          </div>
+          <span class="arrow">
+            →
+          </span>
+        </div>
+
+        <h2>Capacity Leasing</h2>
+        <p>
+          Monetize idle tower capacity or lease extra TRX slots from other operators seamlessly.
+        </p>
+
+        <div class="card-footer">
+          <span>Explore Leases</span>
+          <span>→</span>
+        </div>
+      </mat-card>
+
+      <mat-card
+        class="feature-card manager-card"
+        (click)="navigateTo('disasters')">
+        <div class="card-top">
+          <div class="feature-icon manager-icon">
+            🚨
+          </div>
+          <span class="arrow">
+            →
+          </span>
+        </div>
+
+        <h2>Disaster Roaming</h2>
+        <p>
+          Instant intra-operator capacity sharing and traffic rerouting during network crises and natural outages.
+        </p>
+
+        <div class="card-footer">
+          <span>Emergency Support</span>
+          <span>→</span>
+        </div>
+      </mat-card>
+    </div>
+  </section>
+
+  <section class="quick-section">
+    <div class="quick-content">
+      <div>
+        <span class="section-label">
+          QUICK ACCESS
+        </span>
+
+        <h2>
+          {{ isAuthenticated ? ('Welcome Back, ' + (currentUser?.username || 'User')) : 'Ready to manage your telecom infrastructure?' }}
+        </h2>
+
+        <p>
+          {{ isAuthenticated ? 'Access your command dashboard to manage network towers, contracts, and work orders.' : 'Sign in to access your operator dashboard and begin managing assets.' }}
+        </p>
+      </div>
+
+      <button
+        mat-flat-button
+        class="quick-button"
+        (click)="navigateTo(isAuthenticated ? 'dashboard' : 'login')">
+        {{ isAuthenticated ? 'Open Command Dashboard →' : 'Sign In Now →' }}
+      </button>
+    </div>
+  </section>
+
+  <footer class="home-footer">
+    <div>
+      <strong>Tower<span>Sync</span></strong>
+      <p>
+        Smart Telecom Tower Infrastructure & Disaster Sharing Platform
+      </p>
+    </div>
+
+    <div class="footer-status">
+      <span class="status-dot"></span>
+      All systems operational
+    </div>
+  </footer>
+</div>

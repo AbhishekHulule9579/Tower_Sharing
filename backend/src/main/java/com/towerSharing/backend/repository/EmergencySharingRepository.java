@@ -13,4 +13,6 @@ public interface EmergencySharingRepository extends JpaRepository<EmergencyShari
     List<EmergencySharing> findByAffectedOperatorId(Long operatorId);
     List<EmergencySharing> findByHostOperatorId(Long operatorId);
     List<EmergencySharing> findByStatus(EmergencyStatus status);
+    List<EmergencySharing> findByDamagedTowerIdOrHostTowerId(Long damagedTowerId, Long hostTowerId);
 }
+

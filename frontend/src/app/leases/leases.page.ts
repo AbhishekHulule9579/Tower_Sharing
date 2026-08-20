@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,7 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
+import { AuthService, AuthUser } from '../services/auth.service';
 import { LeaseService } from '../services/lease.service';
 import { OperatorService } from '../services/operator.service';
 import { TowerService } from '../services/tower.service';
@@ -31,141 +32,25 @@ import { TowerService } from '../services/tower.service';
     MatDividerModule
   ],
   selector: 'app-leases',
-  template: `
-    <ng-container *ngIf="leaseLoaded; else leasesLoading">
-      <div class="page-shell">
-        <div class="page-header">
-          <div>
-            <h2>Lease Requests</h2>
-            <p>Review new requests, approve leases, and manage active contracts.</p>
-          </div>
-        </div>
-
-        <mat-card>
-          <mat-card-title>Active Lease Contracts</mat-card-title>
-          <mat-card-content>
-            <table mat-table [dataSource]="leases" class="mat-elevation-z2 lease-table">
-              <ng-container matColumnDef="tower">
-                <th mat-header-cell *matHeaderCellDef> Tower </th>
-                <td mat-cell *matCellDef="let lease"> {{ lease.tower?.towerCode || lease.tower?.name }} </td>
-              </ng-container>
-              <ng-container matColumnDef="operator">
-                <th mat-header-cell *matHeaderCellDef> Lessee </th>
-                <td mat-cell *matCellDef="let lease"> {{ lease.lesseeOperator?.name }} </td>
-              </ng-container>
-              <ng-container matColumnDef="sharedCapacity">
-                <th mat-header-cell *matHeaderCellDef> Shared Capacity </th>
-                <td mat-cell *matCellDef="let lease"> {{ lease.sharedCapacity }} </td>
-              </ng-container>
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef> Status </th>
-                <td mat-cell *matCellDef="let lease"> {{ lease.status }} </td>
-              </ng-container>
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef> Actions </th>
-                <td mat-cell *matCellDef="let lease">
-                  <button mat-icon-button color="primary" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, true)">
-                    <mat-icon>check_circle</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, false)">
-                    <mat-icon>cancel</mat-icon>
-                  </button>
-                  <button mat-icon-button color="accent" *ngIf="lease.status === 'ACTIVE'" (click)="terminateLease(lease.id)">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card>
-          <mat-card-title>Request a Lease</mat-card-title>
-          <mat-card-content>
-            <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Tower</mat-label>
-                <mat-select name="towerId" [(ngModel)]="leaseForm.towerId">
-                  <mat-option *ngFor="let tower of leaseTowers" [value]="tower.id">{{ tower.towerCode }} — {{ tower.location }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Operator</mat-label>
-                <mat-select name="lesseeOperatorId" [(ngModel)]="leaseForm.lesseeOperatorId">
-                  <mat-option *ngFor="let operator of operators" [value]="operator.id">{{ operator.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Shared Capacity</mat-label>
-                <input matInput type="number" name="sharedCapacity" [(ngModel)]="leaseForm.sharedCapacity" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Months</mat-label>
-                <input matInput type="number" name="months" [(ngModel)]="leaseForm.months" />
-              </mat-form-field>
-            </div>
-            <div class="form-actions">
-              <button mat-raised-button color="primary" (click)="requestLease()">Submit Request</button>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </ng-container>
-
-    <ng-template #leasesLoading>
-      <div class="page-shell">
-        <mat-card>
-          <mat-card-title>Loading leases...</mat-card-title>
-          <mat-card-content>Please wait while lease and operator data are loaded.</mat-card-content>
-        </mat-card>
-      </div>
-    </ng-template>
-  `,
-  styles: [
-    `
-      .page-shell {
-        display: grid;
-        gap: 22px;
-        padding: 22px;
-      }
-      .page-header h2 {
-        margin: 0;
-        font-size: 2rem;
-      }
-      .page-header p {
-        margin: 4px 0 0;
-        color: rgba(255, 255, 255, 0.76);
-      }
-      .lease-table {
-        width: 100%;
-        margin-top: 16px;
-      }
-      .form-grid {
-        display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        margin-top: 16px;
-      }
-      .form-actions {
-        margin-top: 18px;
-      }
-    `
-  ]
+  templateUrl: './leases.page.html',
+  styleUrls: ['./leases.page.css']
 })
-export class LeasesPage implements OnInit {
+export class LeasesPage implements OnInit, OnDestroy {
   leases: any[] = [];
-  leaseTowers: any[] = [];
+  allAvailableLeaseTowers: any[] = [];
   operators: any[] = [];
   displayedColumns = ['tower', 'operator', 'sharedCapacity', 'status', 'actions'];
   leaseLoaded = false;
 
+  currentUser: AuthUser | null = null;
+  isAdmin = false;
+  isOperatorUser = false;
+  private authSubscription?: Subscription;
+
   leaseForm: any = {
     towerId: null,
     lesseeOperatorId: null,
-    sharedCapacity: 0,
+    sharedCapacity: 10,
     months: 12
   };
 
@@ -173,61 +58,171 @@ export class LeasesPage implements OnInit {
     private readonly leaseService: LeaseService,
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
+    private readonly authService: AuthService,
     private readonly snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
+    this.currentUser = this.authService.getCurrentUser();
+    this.updateUserPermissions();
+
+    this.authSubscription = this.authService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+      this.updateUserPermissions();
+      this.syncPredefinedOperator();
+    });
+
     this.loadData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
+
+  private updateUserPermissions(): void {
+    const role = this.currentUser?.role;
+    this.isAdmin = role === 'ADMIN';
+    this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
+  }
+
+  private syncPredefinedOperator(): void {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      this.leaseForm.lesseeOperatorId = this.currentUser.operatorId;
+    }
+  }
+
+  public getOperatorDisplayName(): string {
+    return this.currentUser?.operatorName || this.currentUser?.operatorCode || '';
+  }
+
+  public getSelectableTowers(): any[] {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      return this.allAvailableLeaseTowers.filter(
+        (t) => t.ownerOperator?.id !== this.currentUser?.operatorId
+      );
+    }
+    return this.allAvailableLeaseTowers;
+  }
+
+  public canApproveLease(lease: any): boolean {
+    if (this.isAdmin) return true;
+    if (this.isOperatorUser && this.currentUser?.operatorId) {
+      const ownerId = lease.tower?.ownerOperator?.id || lease.lessorOperator?.id;
+      return ownerId === this.currentUser.operatorId;
+    }
+    return false;
+  }
+
+  public canTerminateLease(lease: any): boolean {
+    if (this.isAdmin) return true;
+    if (this.isOperatorUser && this.currentUser?.operatorId) {
+      const ownerId = lease.tower?.ownerOperator?.id || lease.lessorOperator?.id;
+      const lesseeId = lease.lesseeOperator?.id;
+      return ownerId === this.currentUser.operatorId || lesseeId === this.currentUser.operatorId;
+    }
+    return false;
   }
 
   private loadData(): void {
     forkJoin({
       leases: this.leaseService.getAll(),
-      operators: this.operatorService.getAllOperators(),
-      leaseTowers: this.towerService.getAvailableForLease()
+      availableTowers: this.towerService.getAvailableForLease(),
+      operators: this.operatorService.getAllOperators()
     }).subscribe({
-      next: ({ leases, operators, leaseTowers }) => {
+      next: ({ leases, availableTowers, operators }) => {
         this.leases = leases || [];
+        this.allAvailableLeaseTowers = availableTowers || [];
         this.operators = operators || [];
-        this.leaseTowers = leaseTowers || [];
+        this.syncPredefinedOperator();
         this.leaseLoaded = true;
       },
       error: () => {
         this.leaseLoaded = true;
-        this.snackBar.open('Unable to load lease data.', 'Close', { duration: 3000 });
+        this.snackBar.open('Unable to load lease information.', 'Close', { duration: 3000 });
       }
     });
   }
 
   public requestLease(): void {
+    if (!this.leaseForm.towerId) {
+      this.snackBar.open('⚠️ Please select a tower to request lease.', 'Close', { duration: 3500 });
+      return;
+    }
+
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      this.leaseForm.lesseeOperatorId = this.currentUser.operatorId;
+    }
+
+    if (!this.leaseForm.lesseeOperatorId) {
+      this.snackBar.open('⚠️ Please specify the lessee operator.', 'Close', { duration: 3500 });
+      return;
+    }
+
+    const selectedTower = this.allAvailableLeaseTowers.find((t: any) => t.id === this.leaseForm.towerId);
+    if (selectedTower && selectedTower.ownerOperator?.id === this.leaseForm.lesseeOperatorId) {
+      this.snackBar.open('⚠️ Cannot lease a tower from your own company. Please select a tower owned by another operator.', 'Close', { duration: 4000 });
+      return;
+    }
+
+    if (!this.leaseForm.sharedCapacity || this.leaseForm.sharedCapacity <= 0) {
+      this.snackBar.open('⚠️ Shared capacity must be greater than 0 TRX slots.', 'Close', { duration: 3500 });
+      return;
+    }
+
+    if (!this.leaseForm.months || this.leaseForm.months < 1) {
+      this.snackBar.open('⚠️ Lease duration must be at least 1 month.', 'Close', { duration: 3500 });
+      return;
+    }
+
     this.leaseService.requestLease(this.leaseForm).subscribe({
       next: () => {
-        this.snackBar.open('Lease request submitted.', 'Close', { duration: 3000 });
-        this.leaseForm = { towerId: null, lesseeOperatorId: null, sharedCapacity: 0, months: 12 };
+        this.snackBar.open('Lease request submitted successfully and is pending owner approval.', 'Close', {
+          duration: 4000
+        });
+        this.leaseForm = {
+          towerId: null,
+          lesseeOperatorId: (!this.isAdmin && this.currentUser?.operatorId) ? this.currentUser.operatorId : null,
+          sharedCapacity: 10,
+          months: 12
+        };
         this.loadData();
       },
-      error: () => this.snackBar.open('Unable to submit lease request.', 'Close', { duration: 3000 })
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error || 'Unable to submit lease request.';
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      }
     });
   }
 
   public approveLease(id: number, approved: boolean): void {
-    this.leaseService.approveLease(id, approved, approved ? 'Approved from frontend' : 'Rejected from frontend').subscribe({
+    this.leaseService.approveLease(id, approved, approved ? 'Approved by owner' : 'Rejected by owner').subscribe({
       next: () => {
-        const message = approved ? 'Lease approved.' : 'Lease rejected.';
-        this.snackBar.open(message, 'Close', { duration: 3000 });
+        this.snackBar.open(
+          `Lease ${approved ? 'approved and activated' : 'rejected'} successfully.`,
+          'Close',
+          { duration: 3000 }
+        );
         this.loadData();
       },
-      error: () => this.snackBar.open('Unable to update lease status.', 'Close', { duration: 3000 })
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error || 'Unable to update lease status.';
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      }
     });
   }
 
   public terminateLease(id: number): void {
     this.leaseService.terminateLease(id).subscribe({
       next: () => {
-        this.snackBar.open('Lease terminated.', 'Close', { duration: 3000 });
+        this.snackBar.open('Lease terminated successfully.', 'Close', { duration: 3000 });
         this.loadData();
       },
-      error: () => this.snackBar.open('Unable to terminate lease.', 'Close', { duration: 3000 })
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error || 'Unable to terminate lease.';
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      }
     });
   }
 }

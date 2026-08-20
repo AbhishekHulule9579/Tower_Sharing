@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { Subscription } from 'rxjs';
+import { AuthService, AuthUser } from '../services/auth.service';
 import { OperatorService } from '../services/operator.service';
 import { TowerService } from '../services/tower.service';
 import { TransactionService } from '../services/transaction.service';
@@ -30,116 +32,19 @@ import { TransactionService } from '../services/transaction.service';
     MatDividerModule
   ],
   selector: 'app-transactions',
-  template: `
-    <div class="page-shell">
-      <div class="page-header">
-        <div>
-          <h2>Tower Sale & Purchase Ledger</h2>
-          <p>View buy/sell asset operations and buy available towers from other operators.</p>
-        </div>
-      </div>
-
-      <mat-card>
-        <mat-card-title>Completed Transactions</mat-card-title>
-        <mat-card-content>
-          <table mat-table [dataSource]="transactions" class="mat-elevation-z2 tx-table">
-            <ng-container matColumnDef="tower">
-              <th mat-header-cell *matHeaderCellDef> Tower </th>
-              <td mat-cell *matCellDef="let tx"> {{ tx.tower?.towerCode || tx.tower?.name }} </td>
-            </ng-container>
-            <ng-container matColumnDef="seller">
-              <th mat-header-cell *matHeaderCellDef> Seller </th>
-              <td mat-cell *matCellDef="let tx"> {{ tx.sellerOperator?.name }} </td>
-            </ng-container>
-            <ng-container matColumnDef="buyer">
-              <th mat-header-cell *matHeaderCellDef> Buyer </th>
-              <td mat-cell *matCellDef="let tx"> {{ tx.buyerOperator?.name }} </td>
-            </ng-container>
-            <ng-container matColumnDef="agreedPrice">
-              <th mat-header-cell *matHeaderCellDef> Agreed Price </th>
-              <td mat-cell *matCellDef="let tx"> {{ tx.agreedPrice | currency:'INR':'symbol' }} </td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef> Status </th>
-              <td mat-cell *matCellDef="let tx"> {{ tx.status }} </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card>
-        <mat-card-title>Buy a Tower Asset</mat-card-title>
-        <mat-card-content>
-          <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Tower Available for Sale</mat-label>
-              <mat-select name="towerId" [(ngModel)]="transactionForm.towerId">
-                <mat-option *ngFor="let tower of saleTowers" [value]="tower.id">
-                  {{ tower.towerCode }} (Seller: {{ tower.ownerOperator?.name }})
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Buyer Operator</mat-label>
-              <mat-select name="buyerOperatorId" [(ngModel)]="transactionForm.buyerOperatorId">
-                <mat-option *ngFor="let buyer of buyers" [value]="buyer.id">{{ buyer.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Agreed Price (INR)</mat-label>
-              <input matInput type="number" name="agreedPrice" [(ngModel)]="transactionForm.agreedPrice" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Notes</mat-label>
-              <input matInput name="notes" [(ngModel)]="transactionForm.notes" />
-            </mat-form-field>
-          </div>
-          <div class="form-actions">
-            <button mat-raised-button color="primary" (click)="buyTower()">Complete Purchase</button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
-  styles: [
-    `
-      .page-shell {
-        display: grid;
-        gap: 22px;
-        padding: 22px;
-      }
-      .page-header h2 {
-        margin: 0;
-        font-size: 2rem;
-      }
-      .page-header p {
-        margin: 4px 0 0;
-        color: rgba(255, 255, 255, 0.76);
-      }
-      .tx-table {
-        width: 100%;
-        margin-top: 16px;
-      }
-      .form-grid {
-        display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        margin-top: 16px;
-      }
-      .form-actions {
-        margin-top: 18px;
-      }
-    `
-  ]
+  templateUrl: './transactions.page.html',
+  styleUrls: ['./transactions.page.css']
 })
-export class TransactionsPage implements OnInit {
+export class TransactionsPage implements OnInit, OnDestroy {
   transactions: any[] = [];
   saleTowers: any[] = [];
   buyers: any[] = [];
   displayedColumns = ['tower', 'seller', 'buyer', 'agreedPrice', 'status'];
+
+  currentUser: AuthUser | null = null;
+  isAdmin = false;
+  isOperatorUser = false;
+  private authSubscription?: Subscription;
 
   transactionForm: any = {
     towerId: null,
@@ -152,12 +57,61 @@ export class TransactionsPage implements OnInit {
     private readonly transactionService: TransactionService,
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
+    private readonly authService: AuthService,
     private readonly snackBar: MatSnackBar,
     private readonly changeDetector: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.currentUser = this.authService.getCurrentUser();
+    this.updateUserPermissions();
+
+    this.authSubscription = this.authService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+      this.updateUserPermissions();
+      this.syncPredefinedBuyer();
+    });
+
     this.loadData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
+
+  private updateUserPermissions(): void {
+    const role = this.currentUser?.role;
+    this.isAdmin = role === 'ADMIN';
+    this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
+  }
+
+  private syncPredefinedBuyer(): void {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      this.transactionForm.buyerOperatorId = this.currentUser.operatorId;
+    }
+  }
+
+  public getOperatorDisplayName(): string {
+    if (this.currentUser?.operatorName) {
+      return this.currentUser.operatorName;
+    }
+    if (this.currentUser?.operatorCode) {
+      return this.currentUser.operatorCode;
+    }
+    if (this.currentUser?.operatorId) {
+      const match = this.buyers.find((b) => b.id === this.currentUser?.operatorId);
+      if (match) return match.name;
+    }
+    return '';
+  }
+
+  public getSelectableSaleTowers(): any[] {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      return this.saleTowers.filter((t) => t.ownerOperator?.id !== this.currentUser?.operatorId);
+    }
+    return this.saleTowers;
   }
 
   private loadData(): void {
@@ -171,15 +125,46 @@ export class TransactionsPage implements OnInit {
     });
     this.operatorService.getAllOperators().subscribe((data) => {
       this.buyers = data || [];
+      this.syncPredefinedBuyer();
       this.changeDetector.detectChanges();
     });
   }
 
   public buyTower(): void {
+    if (!this.transactionForm.towerId) {
+      this.snackBar.open('⚠️ Please select an available tower to buy.', 'Close', { duration: 3500 });
+      return;
+    }
+
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      this.transactionForm.buyerOperatorId = this.currentUser.operatorId;
+    }
+
+    if (!this.transactionForm.buyerOperatorId) {
+      this.snackBar.open('⚠️ Please select the buyer operator.', 'Close', { duration: 3500 });
+      return;
+    }
+
+    const selectedTower = this.saleTowers.find((t) => t.id === this.transactionForm.towerId);
+    if (selectedTower && selectedTower.ownerOperator?.id === this.transactionForm.buyerOperatorId) {
+      this.snackBar.open('⚠️ Cannot buy a tower that is already owned by your operator.', 'Close', { duration: 4000 });
+      return;
+    }
+
+    if (!this.transactionForm.agreedPrice || this.transactionForm.agreedPrice <= 0) {
+      this.snackBar.open('⚠️ Please enter a valid agreed purchase price greater than ₹0.', 'Close', { duration: 3500 });
+      return;
+    }
+
     this.transactionService.buyTower(this.transactionForm).subscribe({
       next: () => {
-        this.snackBar.open('Tower purchase recorded.', 'Close', { duration: 3000 });
-        this.transactionForm = { towerId: null, buyerOperatorId: null, agreedPrice: 0, notes: '' };
+        this.snackBar.open('Tower purchase recorded successfully.', 'Close', { duration: 3000 });
+        this.transactionForm = {
+          towerId: null,
+          buyerOperatorId: (!this.isAdmin && this.currentUser?.operatorId) ? this.currentUser.operatorId : null,
+          agreedPrice: 0,
+          notes: ''
+        };
         this.loadData();
       },
       error: () => this.snackBar.open('Unable to submit purchase.', 'Close', { duration: 3000 })

@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -54,27 +53,42 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         System.out.println(">>> Checking persistent data status...");
 
-        // Ensure predefined ADMIN user exists with BCrypt password encryption if missing
-        User adminUser = userRepository.findByUsername("admin").orElse(null);
-        if (adminUser == null) {
-            userRepository.save(new User("admin", passwordEncoder.encode("admin123"), "admin@platform.com", UserRole.ADMIN, null));
-            System.out.println(">>> Predefined ADMIN account created (Username: admin, Password: BCrypt[admin123]).");
-        } else {
-            System.out.println(">>> Predefined ADMIN account exists. Preserving all registered user data.");
+        // Ensure predefined ADMIN user exists
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            userRepository.save(new User("admin", passwordEncoder.encode("admin123"), "admin@platform.com", "System Administrator", "+91-9999900001", UserRole.ADMIN, null));
+            System.out.println(">>> Predefined ADMIN account created (Username: admin, Password: admin123).");
         }
 
-        if (operatorRepository.count() > 0) {
-            System.out.println(">>> Base telecom operators & domain data already initialized.");
+        // Initialize base operators if not present
+        Operator jio = operatorRepository.findByCode("JIO").orElseGet(() -> 
+            operatorRepository.save(new Operator("Reliance Jio Infocomm", "JIO", "admin@jio.com", "+91-9820011223"))
+        );
+        Operator airtel = operatorRepository.findByCode("AIRTEL").orElseGet(() -> 
+            operatorRepository.save(new Operator("Bharti Airtel Limited", "AIRTEL", "admin@airtel.com", "+91-9810044556"))
+        );
+        Operator vi = operatorRepository.findByCode("VI").orElseGet(() -> 
+            operatorRepository.save(new Operator("Vodafone Idea Limited", "VI", "admin@vodafoneidea.com", "+91-9830077889"))
+        );
+        Operator bsnl = operatorRepository.findByCode("BSNL").orElseGet(() -> 
+            operatorRepository.save(new Operator("Bharat Sanchar Nigam Ltd", "BSNL", "admin@bsnl.co.in", "+91-9410001122"))
+        );
+
+        // Seed default operator managers & site managers if missing
+        seedUserIfMissing("jio_mgr", "jio123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
+        seedUserIfMissing("airtel_mgr", "airtel123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
+        seedUserIfMissing("vi_mgr", "vi123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
+        seedUserIfMissing("bsnl_mgr", "bsnl123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
+
+        seedUserIfMissing("jio_site", "site123", "sitemgr@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
+        seedUserIfMissing("airtel_site", "site123", "sitemgr@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
+        seedUserIfMissing("vi_site", "site123", "sitemgr@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
+
+        if (towerRepository.count() > 0) {
+            System.out.println(">>> Base telecom towers & domain data already initialized.");
             return;
         }
 
         System.out.println(">>> Initializing Telecom Tower Sharing & Disaster Recovery Platform Core Data...");
-
-        // Create Telecom Operators
-        Operator jio = operatorRepository.save(new Operator("Reliance Jio Infocomm", "JIO", "admin@jio.com", "+91-9820011223"));
-        Operator airtel = operatorRepository.save(new Operator("Bharti Airtel Limited", "AIRTEL", "admin@airtel.com", "+91-9810044556"));
-        Operator vi = operatorRepository.save(new Operator("Vodafone Idea Limited", "VI", "admin@vodafoneidea.com", "+91-9830077889"));
-        Operator bsnl = operatorRepository.save(new Operator("Bharat Sanchar Nigam Ltd", "BSNL", "admin@bsnl.co.in", "+91-9410001122"));
 
         // Create Telecom Towers
         Tower t1 = towerRepository.save(new Tower("TOW-MUM-01", "Marine Drive Metro Cell", "Marine Drive, Nariman Point", "Mumbai", "Maharashtra", 18.9438, 72.8229, 100, 60, jio, TowerStatus.ACTIVE, SharingStatus.AVAILABLE_FOR_LEASE, 75000.0, 15000000.0));
@@ -92,10 +106,10 @@ public class DataInitializer implements CommandLineRunner {
 
         // Create Tower Leases
         TowerLease lease1 = leaseRepository.save(new TowerLease(
-                t1, jio, vi, 20, 75000.0, LocalDate.now().minusMonths(3), LocalDate.now().plusMonths(9), LeaseStatus.ACTIVE, "Approved by Admin - Lease ACTIVE"
+                t1, jio, vi, 20, 75000.0, LocalDate.now().minusMonths(3), LocalDate.now().plusMonths(9), LeaseStatus.ACTIVE, "Approved by Jio Operator Manager - Lease ACTIVE"
         ));
         TowerLease lease2 = leaseRepository.save(new TowerLease(
-                t6, airtel, bsnl, 15, 80000.0, LocalDate.now(), LocalDate.now().plusMonths(12), LeaseStatus.PENDING_APPROVAL, "Awaiting Admin approval"
+                t6, airtel, bsnl, 15, 80000.0, LocalDate.now(), LocalDate.now().plusMonths(12), LeaseStatus.PENDING_APPROVAL, "Awaiting Airtel approval"
         ));
 
         // Create Buy/Sell Asset Purchase History
@@ -119,7 +133,7 @@ public class DataInitializer implements CommandLineRunner {
                 incident1, t3, t4, vi, jio, 30, 2500.0, LocalDate.now().minusDays(2), LocalDate.now().plusDays(28), 75000.0, EmergencyStatus.ACTIVE
         ));
 
-        // Create Repair Requests (Unassigned initially so user can assign after registering Site Managers)
+        // Create Repair Requests
         RepairRequest rep1 = repairRequestRepository.save(new RepairRequest(
                 "REP-DEL-2026-001",
                 t3,
@@ -130,7 +144,7 @@ public class DataInitializer implements CommandLineRunner {
                 null,
                 LocalDate.now().minusDays(2),
                 null,
-                "Awaiting site manager assignment after manual user registration."
+                "Awaiting site engineer maintenance review."
         ));
 
         RepairRequest rep2 = repairRequestRepository.save(new RepairRequest(
@@ -150,5 +164,12 @@ public class DataInitializer implements CommandLineRunner {
         usageRepository.save(new RepairInventoryUsage(rep1, inv4, 2));
 
         System.out.println(">>> Demo Core Setup Completed Successfully!");
+    }
+
+    private void seedUserIfMissing(String username, String rawPassword, String email, String fullName, String phone, UserRole role, Operator operator) {
+        if (userRepository.findByUsername(username).isEmpty()) {
+            userRepository.save(new User(username, passwordEncoder.encode(rawPassword), email, fullName, phone, role, operator));
+            System.out.println(">>> Predefined account created: " + username + " (" + role + ") for " + (operator != null ? operator.getName() : "All"));
+        }
     }
 }

@@ -1,0 +1,123 @@
+<div class="login-shell">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="login-container">
+    <section class="brand-section">
+      <div class="brand-icon">📡</div>
+      <div class="brand-name">Tower<span>Sync</span></div>
+      <div class="line"></div>
+      <h1>Telecom Operations <span>Management Platform</span></h1>
+      <p>Securely manage tower operations, operators, site managers and disaster recovery from one powerful platform.</p>
+
+      <div class="features">
+        <div>✓ Real-time tower monitoring</div>
+        <div>✓ Operator & site management</div>
+        <div>✓ Disaster recovery operations</div>
+      </div>
+
+      <div class="status">
+        <span></span>
+        TowerSync services ready
+      </div>
+    </section>
+
+    <mat-card class="login-card">
+      <div class="login-header">
+        <div class="header-icon">📡</div>
+        <div>
+          <h2>Welcome Back</h2>
+          <p>Sign in to your TowerSync account</p>
+        </div>
+      </div>
+
+      <div class="error" *ngIf="errorMessage">
+        <span>⚠️</span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" (click)="errorMessage=''">×</button>
+      </div>
+
+      <form (ngSubmit)="login()">
+        <label>Username</label>
+        <div class="input-box">
+          <span>👤</span>
+          <input
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Enter your username"
+            required
+            [(ngModel)]="username">
+        </div>
+
+        <label>Password</label>
+        <div class="input-box">
+          <span>🔒</span>
+          <input
+            name="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            required
+            [(ngModel)]="password">
+
+          <button
+            type="button"
+            class="eye"
+            (click)="hidePassword=!hidePassword">
+            {{ hidePassword ? '👁' : '🙈' }}
+          </button>
+        </div>
+
+        <label>Login as</label>
+        <div class="select-box">
+          <span>
+            {{ role === 'ADMIN' ? '🛡️' : role === 'OPERATOR_MANAGER' ? '📡' : '👨‍💼' }}
+          </span>
+
+          <select name="role" [(ngModel)]="role">
+            <option value="ADMIN">Administrator</option>
+            <option value="OPERATOR_MANAGER">Operator Manager</option>
+            <option value="SITE_MANAGER">Site Manager</option>
+          </select>
+
+          <span class="arrow">⌄</span>
+        </div>
+
+        <div class="selected-role">
+          <div class="role-icon">
+            {{ role === 'ADMIN' ? '🛡️' : role === 'OPERATOR_MANAGER' ? '📡' : '👨‍💼' }}
+          </div>
+          <div>
+            <small>SIGNING IN AS</small>
+            <strong>
+              {{ role === 'ADMIN' ? 'Administrator' : role === 'OPERATOR_MANAGER' ? 'Operator Manager' : 'Site Manager' }}
+            </strong>
+          </div>
+        </div>
+
+        <button
+          mat-flat-button
+          type="submit"
+          class="login-button"
+          [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔐 &nbsp; Sign In</span>
+          <span *ngIf="isLoading">
+            <i></i> Signing in...
+          </span>
+        </button>
+      </form>
+
+      <div class="register">
+        <span>Don't have an account?</span>
+        <button mat-button type="button" routerLink="/register">
+          Register as Site Manager or Operations Manager →
+        </button>
+      </div>
+
+      <div class="security">
+        🔒 Secure TowerSync authentication
+      </div>
+    </mat-card>
+  </div>
+</div>

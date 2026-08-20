@@ -1,11 +1,13 @@
 package com.towerSharing.backend.service;
 
+import com.towerSharing.backend.model.RepairInventoryUsage;
+import com.towerSharing.backend.model.RepairRequest;
 import com.towerSharing.backend.model.SharingStatus;
 import com.towerSharing.backend.model.Tower;
-import com.towerSharing.backend.model.TowerStatus;
-import com.towerSharing.backend.repository.TowerRepository;
+import com.towerSharing.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,10 +15,25 @@ import java.util.List;
 public class TowerService {
 
     private final TowerRepository towerRepository;
+    private final EmergencySharingRepository emergencySharingRepository;
+    private final RepairRequestRepository repairRequestRepository;
+    private final RepairInventoryUsageRepository usageRepository;
+    private final TowerLeaseRepository leaseRepository;
+    private final TowerTransactionRepository transactionRepository;
 
     @Autowired
-    public TowerService(TowerRepository towerRepository) {
+    public TowerService(TowerRepository towerRepository,
+                        EmergencySharingRepository emergencySharingRepository,
+                        RepairRequestRepository repairRequestRepository,
+                        RepairInventoryUsageRepository usageRepository,
+                        TowerLeaseRepository leaseRepository,
+                        TowerTransactionRepository transactionRepository) {
         this.towerRepository = towerRepository;
+        this.emergencySharingRepository = emergencySharingRepository;
+        this.repairRequestRepository = repairRequestRepository;
+        this.usageRepository = usageRepository;
+        this.leaseRepository = leaseRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<Tower> getAllTowers() {
@@ -52,7 +69,37 @@ public class TowerService {
         return towerRepository.save(existingTower);
     }
 
+    @Transactional
     public void deleteTower(Long id) {
+        // 1. Clean up emergency sharings where tower is damaged or host
+        var sharings = emergencySharingRepository.findByDamagedTowerIdOrHostTowerId(id, id);
+        if (!sharings.isEmpty()) {
+            emergencySharingRepository.deleteAll(sharings);
+        }
+
+        // 2. Clean up repair requests and associated inventory usages
+        List<RepairRequest> repairs = repairRequestRepository.findByTowerId(id);
+        for (RepairRequest rep : repairs) {
+            List<RepairInventoryUsage> usages = usageRepository.findByRepairRequestId(rep.getId());
+            if (!usages.isEmpty()) {
+                usageRepository.deleteAll(usages);
+            }
+            repairRequestRepository.delete(rep);
+        }
+
+        // 3. Clean up leases
+        var leases = leaseRepository.findByTowerId(id);
+        if (!leases.isEmpty()) {
+            leaseRepository.deleteAll(leases);
+        }
+
+        // 4. Clean up transactions
+        var transactions = transactionRepository.findByTowerId(id);
+        if (!transactions.isEmpty()) {
+            transactionRepository.deleteAll(transactions);
+        }
+
+        // 5. Delete the tower
         towerRepository.deleteById(id);
     }
 
@@ -68,3 +115,4 @@ public class TowerService {
         return towerRepository.findBySharingStatus(SharingStatus.AVAILABLE_FOR_SALE);
     }
 }
+

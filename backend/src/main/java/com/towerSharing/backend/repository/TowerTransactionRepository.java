@@ -13,4 +13,6 @@ public interface TowerTransactionRepository extends JpaRepository<TowerTransacti
     List<TowerTransaction> findByBuyerOperatorId(Long buyerId);
     List<TowerTransaction> findByStatus(TransactionStatus status);
     long countByStatus(TransactionStatus status);
+    List<TowerTransaction> findByTowerId(Long towerId);
 }
+

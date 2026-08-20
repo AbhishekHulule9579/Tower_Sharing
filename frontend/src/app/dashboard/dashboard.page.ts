@@ -2,138 +2,45 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatGridListModule, MatIconModule, MatButtonModule, MatSnackBarModule],
-  template: `
-    <ng-container *ngIf="dashboardLoaded; else dashboardLoading">
-      <div class="dashboard-shell">
-        <div class="dashboard-top-cards">
-          <mat-card class="stat-card" *ngFor="let card of statCards">
-            <div class="stat-card-header">
-              <div>
-                <div class="stat-card-title">{{ card.label }}</div>
-                <div class="stat-card-value">{{ card.value | number }}</div>
-              </div>
-              <mat-icon>{{ card.icon }}</mat-icon>
-            </div>
-            <div class="stat-card-footer">{{ card.description }}</div>
-          </mat-card>
-        </div>
-
-        <div class="dashboard-panels">
-          <mat-card class="panel-card summary-card">
-            <mat-card-title>Disaster Monitoring</mat-card-title>
-            <mat-card-content>
-              <p>{{ disasterSummary }}</p>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="panel-card summary-card">
-            <mat-card-title>Lease & Revenue</mat-card-title>
-            <mat-card-content>
-              <p>{{ leaseSummary }}</p>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="panel-card summary-card">
-            <mat-card-title>Maintenance Report</mat-card-title>
-            <mat-card-content>
-              <p>{{ maintenanceSummary }}</p>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="panel-card summary-card">
-            <mat-card-title>Market Snapshot</mat-card-title>
-            <mat-card-content>
-              <p>{{ marketSummary }}</p>
-            </mat-card-content>
-          </mat-card>
-        </div>
-      </div>
-    </ng-container>
-
-    <ng-template #dashboardLoading>
-      <div class="dashboard-shell loading-shell">
-        <mat-card>
-          <mat-card-title>Loading dashboard...</mat-card-title>
-          <mat-card-content>Please wait while dashboard data is loaded from the backend.</mat-card-content>
-        </mat-card>
-      </div>
-    </ng-template>
-  `,
-  styles: [
-    `
-      .dashboard-shell {
-        display: grid;
-        gap: 24px;
-      }
-      .dashboard-top-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-      }
-      .stat-card {
-        background: linear-gradient(135deg, #5e35b1, #1e88e5);
-        color: white;
-        min-height: 140px;
-      }
-      .stat-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .stat-card-title {
-        font-size: 0.9rem;
-        opacity: 0.85;
-      }
-      .stat-card-value {
-        font-size: 2.2rem;
-        font-weight: 800;
-      }
-      .stat-card-footer {
-        margin-top: 14px;
-        opacity: 0.92;
-      }
-      .dashboard-panels {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-      }
-      .panel-card {
-        background: #0f172a;
-        color: #eef2ff;
-        min-height: 180px;
-      }
-      .summary-card mat-card-title {
-        font-weight: 700;
-      }
-      .panel-card p {
-        margin: 0;
-      }
-    `
-  ]
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    MatDividerModule,
+    RouterLink
+  ],
+  templateUrl: './dashboard.page.html',
+  styleUrls: ['./dashboard.page.css']
 })
 export class DashboardPage implements OnInit {
-  statCards = [
-    { label: 'Total Towers', value: 0, icon: 'apartment', description: 'All registered tower assets' },
-    { label: 'Active Incidents', value: 0, icon: 'warning', description: 'Ongoing disaster incidents' },
-    { label: 'Pending Lease Requests', value: 0, icon: 'hourglass_top', description: 'Leases awaiting approval' },
-    { label: 'Site Manager Requests', value: 0, icon: 'account_box', description: 'Pending registration approvals' },
-    { label: 'Low Inventory Alerts', value: 0, icon: 'inventory_2', description: 'Stock running below threshold' }
-  ];
+  summary: any = {
+    totalTowers: 0,
+    activeIncidents: 0,
+    pendingLeaseRequests: 0,
+    pendingRegistrationRequests: 0,
+    lowInventoryAlerts: 0,
+    availableForLease: 0,
+    availableForSale: 0,
+    openRepairs: 0,
+    completedTransactions: 0
+  };
 
-  disasterSummary = 'Loading disaster monitoring details...';
-  leaseSummary = 'Loading lease and revenue details...';
-  maintenanceSummary = 'Loading maintenance report...';
-  marketSummary = 'Loading market availability...';
+  disasterDetails: any = null;
+  revenueDetails: any = null;
+  maintenanceDetails: any = null;
+  utilizationDetails: any = null;
+
   dashboardLoaded = false;
 
   constructor(
@@ -142,28 +49,42 @@ export class DashboardPage implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadStats();
+    this.loadAllDashboardData();
   }
 
-  private loadStats(): void {
-    this.dashboardService.getSummary().subscribe({
-      next: (summary) => {
-        this.statCards[0].value = summary.totalTowers ?? 0;
-        this.statCards[1].value = summary.activeIncidents ?? 0;
-        this.statCards[2].value = summary.pendingLeaseRequests ?? 0;
-        this.statCards[3].value = summary.pendingRegistrationRequests ?? 0;
-        this.statCards[4].value = summary.lowInventoryAlerts ?? 0;
-        this.disasterSummary = `Open incidents: ${summary.activeIncidents ?? 0}.`;
-        this.leaseSummary = `Pending lease requests: ${summary.pendingLeaseRequests ?? 0}; completed transactions: ${summary.completedTransactions ?? 0}.`;
-        this.maintenanceSummary = `Open repairs: ${summary.openRepairs ?? 0}; low stock items: ${summary.lowInventoryAlerts ?? 0}.`;
-        this.marketSummary = `Available for lease: ${summary.availableForLease ?? 0}, available for sale: ${summary.availableForSale ?? 0}.`;
+  private loadAllDashboardData(): void {
+    forkJoin({
+      summary: this.dashboardService.getSummary().pipe(catchError(() => of(null))),
+      disaster: this.dashboardService.getDisasterMonitoring().pipe(catchError(() => of(null))),
+      revenue: this.dashboardService.getRevenueLease().pipe(catchError(() => of(null))),
+      maintenance: this.dashboardService.getMaintenanceReport().pipe(catchError(() => of(null))),
+      utilization: this.dashboardService.getTowerUtilization().pipe(catchError(() => of(null)))
+    }).subscribe({
+      next: (results) => {
+        if (results.summary) {
+          this.summary = {
+            totalTowers: results.summary.totalTowers ?? 0,
+            activeIncidents: results.summary.activeIncidents ?? 0,
+            pendingLeaseRequests: results.summary.pendingLeaseRequests ?? 0,
+            pendingRegistrationRequests: results.summary.pendingRegistrationRequests ?? 0,
+            lowInventoryAlerts: results.summary.lowInventoryAlerts ?? 0,
+            availableForLease: results.summary.availableForLease ?? 0,
+            availableForSale: results.summary.availableForSale ?? 0,
+            openRepairs: results.summary.openRepairs ?? 0,
+            completedTransactions: results.summary.completedTransactions ?? 0
+          };
+        }
+
+        this.disasterDetails = results.disaster;
+        this.revenueDetails = results.revenue;
+        this.maintenanceDetails = results.maintenance;
+        this.utilizationDetails = results.utilization;
+
         this.dashboardLoaded = true;
       },
       error: () => {
         this.dashboardLoaded = true;
-        this.snackBar.open('Unable to load dashboard data. Please refresh after the backend is available.', 'Close', {
-          duration: 5000
-        });
+        this.snackBar.open('Unable to load dashboard telemetry.', 'Close', { duration: 4000 });
       }
     });
   }
