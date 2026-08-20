@@ -60,8 +60,7 @@ public class JwtUtil {
                     .getPayload();
             return claims.getSubject();
         } catch (JwtException | IllegalArgumentException ex) {
-            // Fallback if token is simple username string or legacy format
-            return token;
+            return null;
         }
     }
 
