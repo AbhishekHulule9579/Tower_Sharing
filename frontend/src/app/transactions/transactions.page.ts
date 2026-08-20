@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { afterNextRender, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -34,41 +34,34 @@ import { TransactionService } from '../services/transaction.service';
     <div class="page-shell">
       <div class="page-header">
         <div>
-          <h2>Transactions</h2>
-          <p>Track all tower purchases and manage new buy requests.</p>
+          <h2>Tower Sale & Purchase Ledger</h2>
+          <p>View buy/sell asset operations and buy available towers from other operators.</p>
         </div>
       </div>
 
-      <div class="section-grid">
-        <mat-card class="summary-card">
-          <mat-card-title>Total Transactions</mat-card-title>
-          <mat-card-content>{{ transactions.length }}</mat-card-content>
-        </mat-card>
-        <mat-card class="summary-card">
-          <mat-card-title>Available Towers for Purchase</mat-card-title>
-          <mat-card-content>{{ saleTowers.length }}</mat-card-content>
-        </mat-card>
-      </div>
-
       <mat-card>
-        <mat-card-title>Recent Purchases</mat-card-title>
+        <mat-card-title>Completed Transactions</mat-card-title>
         <mat-card-content>
-          <table mat-table [dataSource]="transactions" class="mat-elevation-z2 transaction-table">
+          <table mat-table [dataSource]="transactions" class="mat-elevation-z2 tx-table">
             <ng-container matColumnDef="tower">
               <th mat-header-cell *matHeaderCellDef> Tower </th>
-              <td mat-cell *matCellDef="let item"> {{ item.tower?.towerCode || item.tower?.name }} </td>
+              <td mat-cell *matCellDef="let tx"> {{ tx.tower?.towerCode || tx.tower?.name }} </td>
+            </ng-container>
+            <ng-container matColumnDef="seller">
+              <th mat-header-cell *matHeaderCellDef> Seller </th>
+              <td mat-cell *matCellDef="let tx"> {{ tx.sellerOperator?.name }} </td>
             </ng-container>
             <ng-container matColumnDef="buyer">
               <th mat-header-cell *matHeaderCellDef> Buyer </th>
-              <td mat-cell *matCellDef="let item"> {{ item.buyerOperator?.name }} </td>
+              <td mat-cell *matCellDef="let tx"> {{ tx.buyerOperator?.name }} </td>
             </ng-container>
-            <ng-container matColumnDef="price">
-              <th mat-header-cell *matHeaderCellDef> Price </th>
-              <td mat-cell *matCellDef="let item"> {{ item.agreedPrice | currency:'INR' }} </td>
+            <ng-container matColumnDef="agreedPrice">
+              <th mat-header-cell *matHeaderCellDef> Agreed Price </th>
+              <td mat-cell *matCellDef="let tx"> {{ tx.agreedPrice | currency:'INR':'symbol' }} </td>
             </ng-container>
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef> Date </th>
-              <td mat-cell *matCellDef="let item"> {{ item.createdAt | date:'mediumDate' }} </td>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef> Status </th>
+              <td mat-cell *matCellDef="let tx"> {{ tx.status }} </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -78,34 +71,34 @@ import { TransactionService } from '../services/transaction.service';
       </mat-card>
 
       <mat-card>
-        <mat-card-title>Buy Tower</mat-card-title>
+        <mat-card-title>Buy a Tower Asset</mat-card-title>
         <mat-card-content>
           <div class="form-grid">
             <mat-form-field appearance="outline">
-              <mat-label>Tower</mat-label>
-              <mat-select [(ngModel)]="transactionForm.towerId" name="towerId">
+              <mat-label>Tower Available for Sale</mat-label>
+              <mat-select name="towerId" [(ngModel)]="transactionForm.towerId">
                 <mat-option *ngFor="let tower of saleTowers" [value]="tower.id">
-                  {{ tower.towerCode }} — {{ tower.location }}
+                  {{ tower.towerCode }} (Seller: {{ tower.ownerOperator?.name }})
                 </mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Buyer Operator</mat-label>
-              <mat-select [(ngModel)]="transactionForm.buyerOperatorId" name="buyerOperatorId">
-                <mat-option *ngFor="let operator of buyers" [value]="operator.id">{{ operator.name }}</mat-option>
+              <mat-select name="buyerOperatorId" [(ngModel)]="transactionForm.buyerOperatorId">
+                <mat-option *ngFor="let buyer of buyers" [value]="buyer.id">{{ buyer.name }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Agreed Price</mat-label>
-              <input matInput type="number" [(ngModel)]="transactionForm.agreedPrice" name="agreedPrice" />
+              <mat-label>Agreed Price (INR)</mat-label>
+              <input matInput type="number" name="agreedPrice" [(ngModel)]="transactionForm.agreedPrice" />
             </mat-form-field>
-            <mat-form-field appearance="outline" class="span-full">
+            <mat-form-field appearance="outline">
               <mat-label>Notes</mat-label>
-              <input matInput [(ngModel)]="transactionForm.notes" name="notes" />
+              <input matInput name="notes" [(ngModel)]="transactionForm.notes" />
             </mat-form-field>
           </div>
           <div class="form-actions">
-            <button mat-raised-button color="primary" (click)="buyTower()">Purchase Tower</button>
+            <button mat-raised-button color="primary" (click)="buyTower()">Complete Purchase</button>
           </div>
         </mat-card-content>
       </mat-card>
@@ -126,31 +119,15 @@ import { TransactionService } from '../services/transaction.service';
         margin: 4px 0 0;
         color: rgba(255, 255, 255, 0.76);
       }
-      .section-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 18px;
-      }
-      .summary-card {
-        background: #111827;
-        color: #ede9fe;
-        min-height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .transaction-table {
+      .tx-table {
         width: 100%;
         margin-top: 16px;
       }
       .form-grid {
         display: grid;
         gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         margin-top: 16px;
-      }
-      .span-full {
-        grid-column: span 2;
       }
       .form-actions {
         margin-top: 18px;
@@ -162,7 +139,7 @@ export class TransactionsPage implements OnInit {
   transactions: any[] = [];
   saleTowers: any[] = [];
   buyers: any[] = [];
-  displayedColumns = ['tower', 'buyer', 'price', 'date'];
+  displayedColumns = ['tower', 'seller', 'buyer', 'agreedPrice', 'status'];
 
   transactionForm: any = {
     towerId: null,
@@ -177,12 +154,11 @@ export class TransactionsPage implements OnInit {
     private readonly operatorService: OperatorService,
     private readonly snackBar: MatSnackBar,
     private readonly changeDetector: ChangeDetectorRef
-  ) {
-    // Defer one task beyond hydration's dev-mode verification pass.
-    afterNextRender(() => setTimeout(() => this.loadData()));
-  }
+  ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadData();
+  }
 
   private loadData(): void {
     this.transactionService.getAll().subscribe((data) => {

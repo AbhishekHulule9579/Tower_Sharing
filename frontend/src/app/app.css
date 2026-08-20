@@ -23,6 +23,13 @@
   flex-direction: column;
   gap: 4px;
   padding: 24px 20px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+.sidebar-brand:hover {
+  opacity: 0.88;
 }
 
 .sidebar-logo {
@@ -83,6 +90,13 @@
 .topbar-title {
   font-weight: 700;
   letter-spacing: 0.01em;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+.topbar-title:hover {
+  opacity: 0.88;
 }
 
 .topbar-fill {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.towerSharing.backend.config.JwtUtil;
 import com.towerSharing.backend.dto.LoginRequestDto;
 import com.towerSharing.backend.dto.LoginResponseDto;
 import com.towerSharing.backend.dto.SiteManagerRequestCreateDto;
@@ -23,6 +24,7 @@ import com.towerSharing.backend.model.UserRole;
 import com.towerSharing.backend.repository.OperatorRepository;
 import com.towerSharing.backend.repository.SiteManagerRequestRepository;
 import com.towerSharing.backend.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,22 +34,40 @@ public class AuthController {
     private final UserRepository userRepository;
     private final OperatorRepository operatorRepository;
     private final SiteManagerRequestRepository siteManagerRequestRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Autowired
     public AuthController(UserRepository userRepository,
                           OperatorRepository operatorRepository,
-                          SiteManagerRequestRepository siteManagerRequestRepository) {
+                          SiteManagerRequestRepository siteManagerRequestRepository,
+                          PasswordEncoder passwordEncoder,
+                          JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.operatorRepository = operatorRepository;
         this.siteManagerRequestRepository = siteManagerRequestRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElse(null);
-        if (user == null || !user.getPassword().equals(request.getPassword())) {
+        if (user == null) {
             return ResponseEntity.badRequest().body("Invalid username or password.");
+        }
+
+        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword())
+                || request.getPassword().equals(user.getPassword());
+
+        if (!passwordMatches) {
+            return ResponseEntity.badRequest().body("Invalid username or password.");
+        }
+
+        if (request.getPassword().equals(user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(user);
         }
 
         if (request.getRole() != null && !request.getRole().isBlank()) {
@@ -56,7 +76,7 @@ public class AuthController {
             }
         }
 
-        String token = "demo-token-" + user.getUsername();
+        String token = jwtUtil.generateToken(user);
         return ResponseEntity.ok(new LoginResponseDto(user, token));
     }
 
@@ -144,9 +164,10 @@ public class AuthController {
             return ResponseEntity.badRequest().body("User with this username already exists.");
         }
 
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User siteManager = new User(
                 request.getUsername(),
-                request.getPassword(),
+                encodedPassword,
                 request.getEmail(),
                 request.getFullName(),
                 request.getPhoneNumber(),
@@ -162,14 +183,13 @@ public class AuthController {
     }
 
     private User getUserFromToken(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
             return null;
         }
-        String token = authorizationHeader.substring("Bearer ".length());
-        if (!token.startsWith("demo-token-")) {
+        String username = jwtUtil.extractUsername(authorizationHeader);
+        if (username == null || username.isBlank()) {
             return null;
         }
-        String username = token.substring("demo-token-".length());
         return userRepository.findByUsername(username).orElse(null);
     }
 }

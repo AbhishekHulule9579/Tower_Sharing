@@ -1,4 +1,4 @@
-﻿<mat-drawer-container class="layout-shell">
+<mat-drawer-container class="layout-shell">
 
   <!-- ================================================= -->
   <!-- SIDEBAR -->
@@ -12,7 +12,7 @@
     opened>
 
     <!-- BRAND -->
-    <div class="sidebar-brand">
+    <a class="sidebar-brand" routerLink="/" style="cursor: pointer; text-decoration: none; color: inherit;">
 
       <div class="sidebar-logo">
         <span class="logo-icon">📡</span>
@@ -23,7 +23,7 @@
         Disaster Recovery Command
       </div>
 
-    </div>
+    </a>
 
 
     <!-- NAVIGATION -->
@@ -106,8 +106,7 @@
 
 
       <!-- PLATFORM TITLE -->
-
-      <div class="topbar-title">
+      <a class="topbar-title" routerLink="/" style="cursor: pointer; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
 
         <div class="title-icon">
           📡
@@ -125,7 +124,7 @@
 
         </div>
 
-      </div>
+      </a>
 
 
       <!-- SPACE -->

@@ -11,7 +11,7 @@ cd d:\Tower_Sharing\backend
 
 H2 Console:
 - URL: http://localhost:8080/h2-console/
-- JDBC URL: `jdbc:h2:mem:towerdb`
+- JDBC URL: `jdbc:h2:file:./data/towerdb`
 - User: `sa` (password blank)
 
 POSTMAN Basics:

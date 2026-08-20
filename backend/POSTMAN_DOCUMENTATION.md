@@ -5,7 +5,7 @@
 - **Health Check**: `GET http://localhost:8080/api/health`
 - **App Info**: `GET http://localhost:8080/`
 - **H2 Web Console URL**: `http://localhost:8080/h2-console`
-  - **JDBC URL**: `jdbc:h2:mem:towerdb`
+  - **JDBC URL**: `jdbc:h2:file:./data/towerdb`
   - **User Name**: `sa`
   - **Password**: *(leave blank)*
 
@@ -211,3 +211,25 @@
 ### Maintenance & Cost Reports Dashboard
 - **Method**: `GET`
 - **URL**: `http://localhost:8080/api/dashboards/maintenance-report`
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM USERS;
+ID  	EMAIL  	PASSWORD  	ROLE  	USERNAME  	OPERATOR_ID  	FULL_NAME  	PHONE_NUMBER  
+1	admin@platform.com	admin123	ADMIN	admin	null	null	null
+2	manager@jio.com	pass123	OPERATOR_MANAGER	jio_mgr	1	null	null
+3	manager@airtel.com	pass123	OPERATOR_MANAGER	airtel_mgr	2	null	null
+4	manager@vi.com	pass123	OPERATOR_MANAGER	vi_mgr	3	null	null
+5	manager@bsnl.com	pass123	OPERATOR_MANAGER	bsnl_mgr	4	null	null
+6	mumbai.site@jio.com	site123	SITE_MANAGER	site_mgr_mumbai	1	null	null
+7	delhi.site@airtel.com	site123	SITE_MANAGER	site_mgr_delhi	2	null	null
+8	chennai.site@vi.com	site123	SITE_MANAGER	site_mgr_chennai	3	null	null

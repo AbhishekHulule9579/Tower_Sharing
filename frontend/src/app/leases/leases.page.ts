@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { afterNextRender, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -35,94 +35,94 @@ import { TowerService } from '../services/tower.service';
     <ng-container *ngIf="leaseLoaded; else leasesLoading">
       <div class="page-shell">
         <div class="page-header">
-        <div>
-          <h2>Lease Requests</h2>
-          <p>Review new requests, approve leases, and manage active contracts.</p>
+          <div>
+            <h2>Lease Requests</h2>
+            <p>Review new requests, approve leases, and manage active contracts.</p>
+          </div>
         </div>
+
+        <mat-card>
+          <mat-card-title>Active Lease Contracts</mat-card-title>
+          <mat-card-content>
+            <table mat-table [dataSource]="leases" class="mat-elevation-z2 lease-table">
+              <ng-container matColumnDef="tower">
+                <th mat-header-cell *matHeaderCellDef> Tower </th>
+                <td mat-cell *matCellDef="let lease"> {{ lease.tower?.towerCode || lease.tower?.name }} </td>
+              </ng-container>
+              <ng-container matColumnDef="operator">
+                <th mat-header-cell *matHeaderCellDef> Lessee </th>
+                <td mat-cell *matCellDef="let lease"> {{ lease.lesseeOperator?.name }} </td>
+              </ng-container>
+              <ng-container matColumnDef="sharedCapacity">
+                <th mat-header-cell *matHeaderCellDef> Shared Capacity </th>
+                <td mat-cell *matCellDef="let lease"> {{ lease.sharedCapacity }} </td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Status </th>
+                <td mat-cell *matCellDef="let lease"> {{ lease.status }} </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                <td mat-cell *matCellDef="let lease">
+                  <button mat-icon-button color="primary" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, true)">
+                    <mat-icon>check_circle</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, false)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" *ngIf="lease.status === 'ACTIVE'" (click)="terminateLease(lease.id)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+          <mat-card-title>Request a Lease</mat-card-title>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Tower</mat-label>
+                <mat-select name="towerId" [(ngModel)]="leaseForm.towerId">
+                  <mat-option *ngFor="let tower of leaseTowers" [value]="tower.id">{{ tower.towerCode }} — {{ tower.location }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Operator</mat-label>
+                <mat-select name="lesseeOperatorId" [(ngModel)]="leaseForm.lesseeOperatorId">
+                  <mat-option *ngFor="let operator of operators" [value]="operator.id">{{ operator.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Shared Capacity</mat-label>
+                <input matInput type="number" name="sharedCapacity" [(ngModel)]="leaseForm.sharedCapacity" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Months</mat-label>
+                <input matInput type="number" name="months" [(ngModel)]="leaseForm.months" />
+              </mat-form-field>
+            </div>
+            <div class="form-actions">
+              <button mat-raised-button color="primary" (click)="requestLease()">Submit Request</button>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
+    </ng-container>
 
-      <mat-card>
-        <mat-card-title>Active Lease Contracts</mat-card-title>
-        <mat-card-content>
-          <table mat-table [dataSource]="leases" class="mat-elevation-z2 lease-table">
-            <ng-container matColumnDef="tower">
-              <th mat-header-cell *matHeaderCellDef> Tower </th>
-              <td mat-cell *matCellDef="let lease"> {{ lease.tower?.towerCode || lease.tower?.name }} </td>
-            </ng-container>
-            <ng-container matColumnDef="operator">
-              <th mat-header-cell *matHeaderCellDef> Lessee </th>
-              <td mat-cell *matCellDef="let lease"> {{ lease.lesseeOperator?.name }} </td>
-            </ng-container>
-            <ng-container matColumnDef="sharedCapacity">
-              <th mat-header-cell *matHeaderCellDef> Shared Capacity </th>
-              <td mat-cell *matCellDef="let lease"> {{ lease.sharedCapacity }} </td>
-            </ng-container>
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef> Status </th>
-              <td mat-cell *matCellDef="let lease"> {{ lease.status }} </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef> Actions </th>
-              <td mat-cell *matCellDef="let lease">
-                <button mat-icon-button color="primary" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, true)">
-                  <mat-icon>check_circle</mat-icon>
-                </button>
-                <button mat-icon-button color="warn" *ngIf="lease.status === 'PENDING_APPROVAL'" (click)="approveLease(lease.id, false)">
-                  <mat-icon>cancel</mat-icon>
-                </button>
-                <button mat-icon-button color="accent" *ngIf="lease.status === 'ACTIVE'" (click)="terminateLease(lease.id)">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card>
-        <mat-card-title>Request a Lease</mat-card-title>
-        <mat-card-content>
-          <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Tower</mat-label>
-              <mat-select name="towerId" [(ngModel)]="leaseForm.towerId">
-                <mat-option *ngFor="let tower of leaseTowers" [value]="tower.id">{{ tower.towerCode }} — {{ tower.location }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Operator</mat-label>
-              <mat-select name="lesseeOperatorId" [(ngModel)]="leaseForm.lesseeOperatorId">
-                <mat-option *ngFor="let operator of operators" [value]="operator.id">{{ operator.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Shared Capacity</mat-label>
-              <input matInput type="number" name="sharedCapacity" [(ngModel)]="leaseForm.sharedCapacity" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Months</mat-label>
-              <input matInput type="number" name="months" [(ngModel)]="leaseForm.months" />
-            </mat-form-field>
-          </div>
-          <div class="form-actions">
-            <button mat-raised-button color="primary" (click)="requestLease()">Submit Request</button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  </ng-container>
-
-  <ng-template #leasesLoading>
-    <div class="page-shell">
-      <mat-card>
-        <mat-card-title>Loading leases...</mat-card-title>
-        <mat-card-content>Please wait while lease and operator data are loaded.</mat-card-content>
-      </mat-card>
-    </div>
-  </ng-template>
+    <ng-template #leasesLoading>
+      <div class="page-shell">
+        <mat-card>
+          <mat-card-title>Loading leases...</mat-card-title>
+          <mat-card-content>Please wait while lease and operator data are loaded.</mat-card-content>
+        </mat-card>
+      </div>
+    </ng-template>
   `,
   styles: [
     `
@@ -174,11 +174,11 @@ export class LeasesPage implements OnInit {
     private readonly towerService: TowerService,
     private readonly operatorService: OperatorService,
     private readonly snackBar: MatSnackBar
-  ) {
-    afterNextRender(() => setTimeout(() => this.loadData()));
-  }
+  ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadData();
+  }
 
   private loadData(): void {
     forkJoin({
@@ -193,6 +193,7 @@ export class LeasesPage implements OnInit {
         this.leaseLoaded = true;
       },
       error: () => {
+        this.leaseLoaded = true;
         this.snackBar.open('Unable to load lease data.', 'Close', { duration: 3000 });
       }
     });

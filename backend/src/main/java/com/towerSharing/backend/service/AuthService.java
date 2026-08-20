@@ -10,20 +10,25 @@ import com.towerSharing.backend.repository.OperatorRepository;
 import com.towerSharing.backend.repository.SiteManagerRequestRepository;
 import com.towerSharing.backend.repository.UserRepository;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final OperatorRepository operatorRepository;
     private final SiteManagerRequestRepository siteManagerRequestRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public AuthService(UserRepository userRepository,
                        OperatorRepository operatorRepository,
-                       SiteManagerRequestRepository siteManagerRequestRepository) {
+                       SiteManagerRequestRepository siteManagerRequestRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.operatorRepository = operatorRepository;
         this.siteManagerRequestRepository = siteManagerRequestRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public SiteManagerRequest createRequest(SiteManagerRequestCreateDto request) {
@@ -50,7 +55,8 @@ public class AuthService {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User with this username already exists.");
         }
-        userRepository.save(new com.towerSharing.backend.model.User(request.getUsername(), request.getPassword(), request.getEmail(), com.towerSharing.backend.model.UserRole.SITE_MANAGER, request.getOperator()));
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        userRepository.save(new com.towerSharing.backend.model.User(request.getUsername(), encodedPassword, request.getEmail(), com.towerSharing.backend.model.UserRole.SITE_MANAGER, request.getOperator()));
         request.setStatus(SiteManagerRequestStatus.APPROVED);
         return siteManagerRequestRepository.save(request);
     }

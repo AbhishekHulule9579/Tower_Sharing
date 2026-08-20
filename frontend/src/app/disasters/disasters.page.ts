@@ -44,7 +44,7 @@ import { TowerService } from '../services/tower.service';
       <div class="section-grid">
         <mat-card class="summary-card">
           <mat-card-title>Active Incidents</mat-card-title>
-          <mat-card-content>{{ incidents.filter(i => i.status === 'ACTIVE').length }}</mat-card-content>
+          <mat-card-content>{{ activeIncidentCount }}</mat-card-content>
         </mat-card>
         <mat-card class="summary-card">
           <mat-card-title>Emergency Shares</mat-card-title>
@@ -306,6 +306,10 @@ export class DisastersPage implements OnInit {
   incidentColumns = ['title', 'type', 'region', 'status', 'actions'];
   sharingColumns = ['incident', 'hostTower', 'sharedCapacity', 'days'];
 
+  get activeIncidentCount(): number {
+    return this.incidents.filter((i: any) => i.status === 'ACTIVE').length;
+  }
+
   incidentForm: any = {
     title: '',
     disasterType: 'FLOOD',
@@ -348,11 +352,10 @@ export class DisastersPage implements OnInit {
         this.emergencySharings = emergencySharings || [];
         this.towers = towers || [];
         this.operators = operators || [];
-        setTimeout(() => {
-          this.disastersLoaded = true;
-        }, 0);
+        this.disastersLoaded = true;
       },
       error: () => {
+        this.disastersLoaded = true;
         this.snackBar.open('Unable to load disaster data.', 'Close', { duration: 3000 });
       }
     });
