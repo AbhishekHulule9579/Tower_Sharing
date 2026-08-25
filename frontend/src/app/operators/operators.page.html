@@ -122,7 +122,7 @@
           </div>
 
           <div class="row-content">
-            <strong>{{ user.username || user.email }}</strong>
+            <strong>{{ user.fullName || user.name || user.username || user.email }}</strong>
             <span>{{ user.email }}</span>
           </div>
 
@@ -170,7 +170,7 @@
 
           <div class="row-content">
             <strong>
-              {{ manager.username || manager.email }}
+              {{ manager.fullName || manager.name || manager.username || manager.email }}
             </strong>
             <span>
               {{ manager.email }}

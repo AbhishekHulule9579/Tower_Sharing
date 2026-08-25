@@ -60,7 +60,7 @@ export class OperatorsPage implements OnInit {
     if (!search) return this.users;
 
     return this.users.filter(user =>
-      `${user.username || ''} ${user.email || ''} ${user.role || ''}`
+      `${user.fullName || ''} ${user.name || ''} ${user.username || ''} ${user.email || ''} ${user.role || ''}`
         .toLowerCase()
         .includes(search)
     );
@@ -72,7 +72,7 @@ export class OperatorsPage implements OnInit {
     if (!search) return this.siteManagers;
 
     return this.siteManagers.filter(manager =>
-      `${manager.username || ''} ${manager.email || ''} ${manager.role || ''}`
+      `${manager.fullName || ''} ${manager.name || ''} ${manager.username || ''} ${manager.email || ''} ${manager.role || ''}`
         .toLowerCase()
         .includes(search)
     );

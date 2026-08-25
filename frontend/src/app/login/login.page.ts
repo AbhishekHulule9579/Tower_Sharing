@@ -14,7 +14,7 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['./login.page.css']
 })
 export class LoginPage {
-  username = '';
+  email: string = '';
   password = '';
   role = 'ADMIN';
   errorMessage = '';
@@ -29,8 +29,8 @@ export class LoginPage {
   login(): void {
     this.errorMessage = '';
 
-    if (!this.username.trim() || !this.password) {
-      this.errorMessage = 'Please enter both username and password.';
+    if (!this.email.trim() || !this.password) {
+      this.errorMessage = 'Please enter both Email and password.';
       return;
     }
 
@@ -39,7 +39,7 @@ export class LoginPage {
     this.isLoading = true;
 
     this.authService.login(
-      this.username.trim(),
+      this.email.trim(),
       this.password,
       this.role
     ).subscribe({

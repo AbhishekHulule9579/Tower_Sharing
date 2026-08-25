@@ -7,7 +7,9 @@ import { environment } from '../../environments/environment';
 
 export interface AuthUser {
   id: number;
-  username: string;
+  fullName: string;
+  name?: string;
+  username?: string;
   email: string;
   role: string;
   operatorId?: number;
@@ -27,9 +29,11 @@ export class AuthService {
 
   constructor(private readonly http: HttpClient) {}
 
-  login(username: string, password: string, role: string): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${this.api}/login`, { username, password, role }).pipe(
+  login(email: string, password: string, role: string): Observable<AuthUser> {
+    return this.http.post<AuthUser>(`${this.api}/login`, { email, password, role }).pipe(
       tap((user) => {
+        if (!user.fullName && user.username) user.fullName = user.username;
+        if (!user.name) user.name = user.fullName;
         this.saveUserToStorage(user);
         this.userSubject.next(user);
       })

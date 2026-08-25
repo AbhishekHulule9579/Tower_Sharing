@@ -9,7 +9,7 @@
         <span class="pulse-dot"></span>
         <span>Telecom Operations Platform</span>
         <span class="user-pill" *ngIf="isAuthenticated && currentUser">
-          👤 Logged in as {{ currentUser.username }} ({{ currentUser.role }})
+          👤 Logged in as {{ currentUser.fullName || currentUser.name || currentUser.username }} ({{ currentUser.role }})
         </span>
       </div>
 
@@ -223,7 +223,7 @@
         </span>
 
         <h2>
-          {{ isAuthenticated ? ('Welcome Back, ' + (currentUser?.username || 'User')) : 'Ready to manage your telecom infrastructure?' }}
+          {{ isAuthenticated ? ('Welcome Back, ' + (currentUser?.fullName || currentUser?.name || currentUser?.username || 'User')) : 'Ready to manage your telecom infrastructure?' }}
         </h2>
 
         <p>

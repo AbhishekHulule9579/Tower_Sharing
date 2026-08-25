@@ -225,7 +225,10 @@
 
 SELECT * FROM USERS;
 ID  	EMAIL  	PASSWORD  	ROLE  	USERNAME  	OPERATOR_ID  	FULL_NAME  	PHONE_NUMBER  
-1	admin@platform.com	admin123	ADMIN	admin	null	null	null
+1	admin@jio.com	admin123	ADMIN	jio_admin	1	Jio System Administrator	+91-9820000001
+2	admin@airtel.com	admin123	ADMIN	airtel_admin	2	Airtel System Administrator	+91-9810000002
+3	admin@vodafoneidea.com	admin123	ADMIN	vi_admin	3	Vi System Administrator	+91-9830000003
+4	admin@bsnl.co.in	admin123	ADMIN	bsnl_admin	4	BSNL System Administrator	+91-9410000004
 2	manager@jio.com	pass123	OPERATOR_MANAGER	jio_mgr	1	null	null
 3	manager@airtel.com	pass123	OPERATOR_MANAGER	airtel_mgr	2	null	null
 4	manager@vi.com	pass123	OPERATOR_MANAGER	vi_mgr	3	null	null

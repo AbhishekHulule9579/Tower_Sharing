@@ -4,6 +4,8 @@ import com.towerSharing.backend.model.User;
 
 public class LoginResponseDto {
     private Long id;
+    private String name;
+    private String fullName;
     private String username;
     private String email;
     private String role;
@@ -16,13 +18,31 @@ public class LoginResponseDto {
 
     public LoginResponseDto(User user, String token) {
         this.id = user.getId();
-        this.username = user.getUsername();
+        this.fullName = user.getFullName() != null ? user.getFullName() : user.getUsername();
+        this.name = this.fullName;
+        this.username = this.fullName;
         this.email = user.getEmail();
         this.role = user.getRole() != null ? user.getRole().name() : null;
         this.operatorId = user.getOperator() != null ? user.getOperator().getId() : null;
         this.operatorCode = user.getOperator() != null ? user.getOperator().getCode() : null;
         this.operatorName = user.getOperator() != null ? user.getOperator().getName() : null;
         this.token = token;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public Long getId() {

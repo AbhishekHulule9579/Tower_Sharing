@@ -21,7 +21,6 @@ import { OperatorService } from '../services/operator.service';
   styleUrls: ['./register.page.css']
 })
 export class RegisterPage implements OnInit {
-  username = '';
   fullName = '';
   email = '';
   phoneNumber = '';
@@ -79,7 +78,6 @@ export class RegisterPage implements OnInit {
     this.successMessage = '';
 
     if (
-      !this.username.trim() ||
       !this.fullName.trim() ||
       !this.email.trim() ||
       !this.phoneNumber.trim() ||
@@ -90,8 +88,8 @@ export class RegisterPage implements OnInit {
       return;
     }
 
-    if (this.username.trim().length < 3) {
-      this.errorMessage = 'Username must be at least 3 characters long.';
+    if (this.fullName.trim().length < 3) {
+      this.errorMessage = 'Full Name must be at least 3 characters long.';
       return;
     }
 
@@ -117,7 +115,7 @@ export class RegisterPage implements OnInit {
     this.isLoading = true;
 
     this.authService.registerSiteManagerRequest({
-      username: this.username.trim(),
+      username: this.fullName.trim(),
       password: this.password,
       email: this.email.trim(),
       fullName: this.fullName.trim(),

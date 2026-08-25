@@ -53,35 +53,53 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         System.out.println(">>> Checking persistent data status...");
 
-        // Ensure predefined ADMIN user exists
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            userRepository.save(new User("admin", passwordEncoder.encode("admin123"), "admin@platform.com", "System Administrator", "+91-9999900001", UserRole.ADMIN, null));
-            System.out.println(">>> Predefined ADMIN account created (Username: admin, Password: admin123).");
-        }
+        // Remove legacy generic "admin" user if present
+        userRepository.findByUsername("admin").ifPresent(user -> {
+            userRepository.delete(user);
+            System.out.println(">>> Removed legacy generic 'admin' account.");
+        });
 
         // Initialize base operators if not present
-        Operator jio = operatorRepository.findByCode("JIO").orElseGet(() -> 
-            operatorRepository.save(new Operator("Reliance Jio Infocomm", "JIO", "admin@jio.com", "+91-9820011223"))
+        Operator jio = operatorRepository.findByCode("JIO").map(op -> {
+            op.setName("Jio");
+            return operatorRepository.save(op);
+        }).orElseGet(() -> 
+            operatorRepository.save(new Operator("Jio", "JIO", "admin@jio.com", "+91-9820011223"))
         );
-        Operator airtel = operatorRepository.findByCode("AIRTEL").orElseGet(() -> 
-            operatorRepository.save(new Operator("Bharti Airtel Limited", "AIRTEL", "admin@airtel.com", "+91-9810044556"))
+        Operator airtel = operatorRepository.findByCode("AIRTEL").map(op -> {
+            op.setName("Airtel");
+            return operatorRepository.save(op);
+        }).orElseGet(() -> 
+            operatorRepository.save(new Operator("Airtel", "AIRTEL", "admin@airtel.com", "+91-9810044556"))
         );
-        Operator vi = operatorRepository.findByCode("VI").orElseGet(() -> 
-            operatorRepository.save(new Operator("Vodafone Idea Limited", "VI", "admin@vodafoneidea.com", "+91-9830077889"))
+        Operator vi = operatorRepository.findByCode("VI").map(op -> {
+            op.setName("VI");
+            return operatorRepository.save(op);
+        }).orElseGet(() -> 
+            operatorRepository.save(new Operator("VI", "VI", "admin@vodafoneidea.com", "+91-9830077889"))
         );
-        Operator bsnl = operatorRepository.findByCode("BSNL").orElseGet(() -> 
-            operatorRepository.save(new Operator("Bharat Sanchar Nigam Ltd", "BSNL", "admin@bsnl.co.in", "+91-9410001122"))
+        Operator bsnl = operatorRepository.findByCode("BSNL").map(op -> {
+            op.setName("BSNL");
+            return operatorRepository.save(op);
+        }).orElseGet(() -> 
+            operatorRepository.save(new Operator("BSNL", "BSNL", "admin@bsnl.co.in", "+91-9410001122"))
         );
+
+        // Seed 4 operator-specific ADMIN accounts
+        seedUserIfMissing("Jio Admin", "admin123", "admin@jio.com", "Jio Admin", "+91-9820000001", UserRole.ADMIN, jio);
+        seedUserIfMissing("Airtel Admin", "admin123", "admin@airtel.com", "Airtel Admin", "+91-9810000002", UserRole.ADMIN, airtel);
+        seedUserIfMissing("Vi Admin", "admin123", "admin@vodafoneidea.com", "Vi Admin", "+91-9830000003", UserRole.ADMIN, vi);
+        seedUserIfMissing("BSNL Admin", "admin123", "admin@bsnl.co.in", "BSNL Admin", "+91-9410000004", UserRole.ADMIN, bsnl);
 
         // Seed default operator managers & site managers if missing
-        seedUserIfMissing("jio_mgr", "jio123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
-        seedUserIfMissing("airtel_mgr", "airtel123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
-        seedUserIfMissing("vi_mgr", "vi123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
-        seedUserIfMissing("bsnl_mgr", "bsnl123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
+        seedUserIfMissing("Jio Operations Manager", "jio123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
+        seedUserIfMissing("Airtel Operations Manager", "airtel123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
+        seedUserIfMissing("Vi Operations Manager", "vi123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
+        seedUserIfMissing("BSNL Operations Manager", "bsnl123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
 
-        seedUserIfMissing("jio_site", "site123", "sitemgr@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
-        seedUserIfMissing("airtel_site", "site123", "sitemgr@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
-        seedUserIfMissing("vi_site", "site123", "sitemgr@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
+        seedUserIfMissing("Jio Site Engineer Mumbai", "site123", "sitemgr@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
+        seedUserIfMissing("Airtel Site Engineer Delhi", "site123", "sitemgr@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
+        seedUserIfMissing("Vi Site Engineer Chennai", "site123", "sitemgr@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
 
         if (towerRepository.count() > 0) {
             System.out.println(">>> Base telecom towers & domain data already initialized.");
@@ -163,13 +181,28 @@ public class DataInitializer implements CommandLineRunner {
         // Record Inventory Usage for Repair Work Order
         usageRepository.save(new RepairInventoryUsage(rep1, inv4, 2));
 
+        // De-duplicate: if same email appears more than once, keep only the first row
+        userRepository.findAll().stream()
+            .collect(java.util.stream.Collectors.groupingBy(u -> u.getEmail() == null ? "" : u.getEmail().toLowerCase()))
+            .values().stream()
+            .filter(list -> list.size() > 1)
+            .forEach(list -> {
+                list.stream().skip(1).forEach(dup -> {
+                    userRepository.delete(dup);
+                    System.out.println(">>> Removed duplicate user entry for email: " + dup.getEmail());
+                });
+            });
+
         System.out.println(">>> Demo Core Setup Completed Successfully!");
     }
 
     private void seedUserIfMissing(String username, String rawPassword, String email, String fullName, String phone, UserRole role, Operator operator) {
-        if (userRepository.findByUsername(username).isEmpty()) {
+        boolean exists = userRepository.existsByFullName(fullName)
+                || userRepository.findByUsername(username).isPresent()
+                || !userRepository.findByEmailIgnoreCase(email).isEmpty();
+        if (!exists) {
             userRepository.save(new User(username, passwordEncoder.encode(rawPassword), email, fullName, phone, role, operator));
-            System.out.println(">>> Predefined account created: " + username + " (" + role + ") for " + (operator != null ? operator.getName() : "All"));
+            System.out.println(">>> Predefined account created: " + fullName + " (" + role + ") for " + (operator != null ? operator.getName() : "All"));
         }
     }
 }

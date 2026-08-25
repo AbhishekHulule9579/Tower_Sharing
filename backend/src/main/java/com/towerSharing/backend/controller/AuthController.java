@@ -52,17 +52,22 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElse(null);
+        String loginEmail = request.getLoginEmail();
+        if (loginEmail == null || loginEmail.isBlank()) {
+            return ResponseEntity.badRequest().body("Please enter your Email and password.");
+        }
+
+        User user = userRepository.findFirstByEmailIgnoreCase(loginEmail.trim()).orElse(null);
+
         if (user == null) {
-            return ResponseEntity.badRequest().body("Invalid username or password.");
+            return ResponseEntity.badRequest().body("Invalid Email or password.");
         }
 
         boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword())
                 || request.getPassword().equals(user.getPassword());
 
         if (!passwordMatches) {
-            return ResponseEntity.badRequest().body("Invalid username or password.");
+            return ResponseEntity.badRequest().body("Invalid Email or password.");
         }
 
         if (request.getPassword().equals(user.getPassword())) {
@@ -82,8 +87,20 @@ public class AuthController {
 
     @PostMapping("/site-manager-requests")
     public ResponseEntity<?> createSiteManagerRequest(@RequestBody SiteManagerRequestCreateDto request) {
-        if (siteManagerRequestRepository.existsByUsername(request.getUsername()) || userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists.");
+        String fullName = request.getFullName();
+        if (fullName == null || fullName.isBlank()) {
+            fullName = request.getUsername();
+        }
+        if (fullName == null || fullName.isBlank()) {
+            return ResponseEntity.badRequest().body("Full name is required.");
+        }
+        request.setFullName(fullName);
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            request.setUsername(fullName);
+        }
+
+        if (userRepository.existsByFullName(fullName) || userRepository.findByUsername(fullName).isPresent()) {
+            return ResponseEntity.badRequest().body("Account with this Name already exists.");
         }
         if (request.getFullName() == null || request.getFullName().isBlank()) {
             return ResponseEntity.badRequest().body("Full name is required.");

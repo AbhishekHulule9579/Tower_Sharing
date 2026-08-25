@@ -38,16 +38,16 @@
       </div>
 
       <form (ngSubmit)="login()">
-        <label>Username</label>
+        <label>Email</label>
         <div class="input-box">
-          <span>👤</span>
+          <span>✉️</span>
           <input
-            name="username"
-            type="text"
-            autocomplete="username"
-            placeholder="Enter your username"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Enter your Email"
             required
-            [(ngModel)]="username">
+            [(ngModel)]="email">
         </div>
 
         <label>Password</label>

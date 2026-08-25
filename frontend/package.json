@@ -2,11 +2,13 @@
   "name": "frontend",
   "version": "0.0.0",
   "scripts": {
-    "ng": "ng",
+    "prestart": "node patch-node-check.js",
+    "postinstall": "node patch-node-check.js",
+    "ng": "node patch-node-check.js && ng",
     "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "build": "node patch-node-check.js && ng build",
+    "watch": "node patch-node-check.js && ng build --watch --configuration development",
+    "test": "node patch-node-check.js && ng test",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
   "prettier": {
