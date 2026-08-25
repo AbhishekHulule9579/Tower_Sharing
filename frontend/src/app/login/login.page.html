@@ -7,27 +7,43 @@
       <div class="brand-icon">📡</div>
       <div class="brand-name">Tower<span>Sync</span></div>
       <div class="line"></div>
-      <h1>Telecom Operations <span>Management Platform</span></h1>
-      <p>Securely manage tower operations, operators, site managers and disaster recovery from one powerful platform.</p>
+      <h1>Telecom Infrastructure <span>Sharing Platform</span></h1>
+      <p>Securely govern multi-tenant network assets, operator teams, and site manager approvals from a unified command center.</p>
 
       <div class="features">
-        <div>✓ Real-time tower monitoring</div>
-        <div>✓ Operator & site management</div>
-        <div>✓ Disaster recovery operations</div>
+        <div>✓ Multi-tenant operator data isolation</div>
+        <div>✓ Tower governance & asset registry</div>
+        <div>✓ Site manager access authorization</div>
+        <div>✓ Real-time network health telemetry</div>
+      </div>
+
+      <!-- Quick-Access / Demo Credentials Helper -->
+      <div class="preset-helper-box">
+        <span class="preset-helper-title">⚡ Quick-Access Operator Credentials:</span>
+        <div class="preset-chips">
+          <button
+            type="button"
+            *ngFor="let p of presets"
+            class="preset-chip"
+            (click)="selectPreset(p)">
+            <span class="chip-dot" [style.background-color]="p.color"></span>
+            {{ p.label }}
+          </button>
+        </div>
       </div>
 
       <div class="status">
         <span></span>
-        TowerSync services ready
+        TowerSync Enterprise Node Ready
       </div>
     </section>
 
     <mat-card class="login-card">
       <div class="login-header">
-        <div class="header-icon">📡</div>
+        <div class="header-icon">🛡️</div>
         <div>
-          <h2>Welcome Back</h2>
-          <p>Sign in to your TowerSync account</p>
+          <h2>Admin & Operator Portal</h2>
+          <p>Sign in with your enterprise credentials</p>
         </div>
       </div>
 
@@ -38,14 +54,14 @@
       </div>
 
       <form (ngSubmit)="login()">
-        <label>Email</label>
+        <label>Username / Email</label>
         <div class="input-box">
           <span>✉️</span>
           <input
             name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="Enter your Email"
+            type="text"
+            autocomplete="username"
+            placeholder="admin@jio.com or jio_admin"
             required
             [(ngModel)]="email">
         </div>
@@ -64,19 +80,20 @@
           <button
             type="button"
             class="eye"
-            (click)="hidePassword=!hidePassword">
+            (click)="hidePassword=!hidePassword"
+            title="Toggle password visibility">
             {{ hidePassword ? '👁' : '🙈' }}
           </button>
         </div>
 
-        <label>Login as</label>
+        <label>Role</label>
         <div class="select-box">
           <span>
             {{ role === 'ADMIN' ? '🛡️' : role === 'OPERATOR_MANAGER' ? '📡' : '👨‍💼' }}
           </span>
 
           <select name="role" [(ngModel)]="role">
-            <option value="ADMIN">Administrator</option>
+            <option value="ADMIN">Administrator (Governance & Approvals)</option>
             <option value="OPERATOR_MANAGER">Operator Manager</option>
             <option value="SITE_MANAGER">Site Manager</option>
           </select>
@@ -91,7 +108,7 @@
           <div>
             <small>SIGNING IN AS</small>
             <strong>
-              {{ role === 'ADMIN' ? 'Administrator' : role === 'OPERATOR_MANAGER' ? 'Operator Manager' : 'Site Manager' }}
+              {{ role === 'ADMIN' ? 'Telecom Operator Administrator' : role === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager' }}
             </strong>
           </div>
         </div>
@@ -102,8 +119,8 @@
           class="login-button"
           [disabled]="isLoading">
           <span *ngIf="!isLoading">🔐 &nbsp; Sign In</span>
-          <span *ngIf="isLoading">
-            <i></i> Signing in...
+          <span *ngIf="isLoading" class="spinner-label">
+            <span class="spinner-ring"></span> Signing in...
           </span>
         </button>
       </form>
@@ -116,7 +133,7 @@
       </div>
 
       <div class="security">
-        🔒 Secure TowerSync authentication
+        🔒 Enterprise Encrypted • Multi-Tenant JWT Authentication
       </div>
     </mat-card>
   </div>

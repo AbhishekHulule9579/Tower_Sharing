@@ -1,197 +1,376 @@
 <div class="page-shell">
-  <div class="page-header">
-    <div>
-      <div class="eyebrow">TOWERSYNC MANAGEMENT</div>
-      <h1>Operators & Users</h1>
-      <p>Monitor operators, platform users and site manager assignments.</p>
-    </div>
 
-    <button class="refresh-button" type="button" (click)="loadData()">
-      ↻ Refresh
-    </button>
-  </div>
-
-  <div class="summary-grid">
-    <div class="summary-card blue">
-      <div class="summary-icon">📡</div>
+  <!-- ========================================================= -->
+  <!-- 1. OPERATOR ADMIN VIEW                                    -->
+  <!-- ========================================================= -->
+  <ng-container *ngIf="isAdmin; else generalDirectoryView">
+    <div class="page-header">
       <div>
-        <span>Operators</span>
-        <strong>{{ operators.length }}</strong>
-        <small>Registered operators</small>
+        <div class="eyebrow">ENTERPRISE GOVERNANCE</div>
+        <h1>{{ operatorName }} Managers & Team</h1>
+        <p>Manage and audit operations staff and engineers registered under {{ operatorName }}.</p>
       </div>
+
+      <button class="refresh-button" type="button" (click)="loadData()">
+        ↻ Refresh Team
+      </button>
     </div>
 
-    <div class="summary-card purple">
-      <div class="summary-icon">👥</div>
-      <div>
-        <span>Platform Users</span>
-        <strong>{{ users.length }}</strong>
-        <small>Active system users</small>
-      </div>
-    </div>
-
-    <div class="summary-card green">
-      <div class="summary-icon">👨‍💼</div>
-      <div>
-        <span>Site Managers</span>
-        <strong>{{ siteManagers.length }}</strong>
-        <small>Registered managers</small>
-      </div>
-    </div>
-
-    <div class="summary-card orange">
-      <div class="summary-icon">✓</div>
-      <div>
-        <span>System Status</span>
-        <strong>Active</strong>
-        <small>TowerSync services</small>
-      </div>
-    </div>
-  </div>
-
-  <div class="content-grid">
-    <mat-card class="data-card operators-card">
-      <div class="card-header">
+    <!-- Admin Team Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card blue">
+        <div class="summary-icon">🏢</div>
         <div>
-          <h2>📡 Operators</h2>
-          <p>Telecom operators connected to TowerSync</p>
-        </div>
-        <span class="count blue-count">{{ operators.length }}</span>
-      </div>
-
-      <div class="search-box">
-        <span>🔍</span>
-        <input
-          type="text"
-          [(ngModel)]="operatorSearch"
-          placeholder="Search operators...">
-      </div>
-
-      <div class="data-list">
-        <div
-          class="data-row"
-          *ngFor="let operator of filteredOperators">
-          <div class="row-icon operator-icon">
-            📡
-          </div>
-
-          <div class="row-content">
-            <strong>{{ operator.name }}</strong>
-            <span>{{ operator.code }}</span>
-          </div>
-
-          <div class="row-right">
-            <span class="email">{{ operator.contactEmail }}</span>
-            <span class="active-badge">Active</span>
-          </div>
-        </div>
-
-        <div
-          class="empty-state"
-          *ngIf="filteredOperators.length === 0">
-          <span>📡</span>
-          <strong>No operators found</strong>
-          <small>There are no operators matching your search.</small>
+          <span>Company</span>
+          <strong>{{ operatorName }}</strong>
+          <small>{{ currentUser?.operatorCode || 'Enterprise Node' }}</small>
         </div>
       </div>
-    </mat-card>
 
-    <mat-card class="data-card users-card">
-      <div class="card-header">
+      <div class="summary-card purple">
+        <div class="summary-icon">📡</div>
         <div>
-          <h2>👥 Platform Users</h2>
-          <p>Users registered in the system</p>
-        </div>
-        <span class="count purple-count">{{ users.length }}</span>
-      </div>
-
-      <div class="search-box">
-        <span>🔍</span>
-        <input
-          type="text"
-          [(ngModel)]="userSearch"
-          placeholder="Search users...">
-      </div>
-
-      <div class="data-list">
-        <div
-          class="data-row"
-          *ngFor="let user of filteredUsers">
-          <div class="row-icon user-icon">
-            👤
-          </div>
-
-          <div class="row-content">
-            <strong>{{ user.fullName || user.name || user.username || user.email }}</strong>
-            <span>{{ user.email }}</span>
-          </div>
-
-          <div class="row-right">
-            <span class="role-badge">
-              {{ user.role }}
-            </span>
-          </div>
-        </div>
-
-        <div
-          class="empty-state"
-          *ngIf="filteredUsers.length === 0">
-          <span>👥</span>
-          <strong>No users found</strong>
-          <small>There are no users matching your search.</small>
+          <span>Operator Managers</span>
+          <strong>{{ adminOperatorManagers.length }}</strong>
+          <small>Active company managers</small>
         </div>
       </div>
-    </mat-card>
 
-    <mat-card class="data-card managers-card">
-      <div class="card-header">
+      <div class="summary-card green">
+        <div class="summary-icon">👥</div>
         <div>
-          <h2>👨‍💼 Site Managers</h2>
-          <p>Managers responsible for site operations</p>
-        </div>
-        <span class="count green-count">{{ siteManagers.length }}</span>
-      </div>
-
-      <div class="search-box">
-        <span>🔍</span>
-        <input
-          type="text"
-          [(ngModel)]="managerSearch"
-          placeholder="Search site managers...">
-      </div>
-
-      <div class="data-list">
-        <div
-          class="data-row"
-          *ngFor="let manager of filteredManagers">
-          <div class="row-icon manager-icon">
-            👨‍💼
-          </div>
-
-          <div class="row-content">
-            <strong>
-              {{ manager.fullName || manager.name || manager.username || manager.email }}
-            </strong>
-            <span>
-              {{ manager.email }}
-            </span>
-          </div>
-
-          <div class="row-right">
-            <span class="manager-badge">
-              {{ manager.role }}
-            </span>
-          </div>
-        </div>
-
-        <div
-          class="empty-state"
-          *ngIf="filteredManagers.length === 0">
-          <span>👨‍💼</span>
-          <strong>No site managers found</strong>
-          <small>There are no managers matching your search.</small>
+          <span>Total Staff</span>
+          <strong>{{ adminCompanyStaff.length }}</strong>
+          <small>Registered company personnel</small>
         </div>
       </div>
-    </mat-card>
-  </div>
+
+      <div class="summary-card orange">
+        <div class="summary-icon">✓</div>
+        <div>
+          <span>Account Security</span>
+          <strong>Active</strong>
+          <small>Encrypted JWT governance</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Managers & Team Content -->
+    <div class="admin-team-grid">
+
+      <!-- Section: Operator Managers -->
+      <mat-card class="data-card admin-managers-card">
+        <div class="card-header">
+          <div>
+            <h2>🏢 {{ operatorName }} Operator Managers</h2>
+            <p>Authorized managers governing {{ operatorName }} operations and site workflows</p>
+          </div>
+          <span class="count blue-count">{{ adminOperatorManagers.length }}</span>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="managerSearch"
+            placeholder="Search by manager name, username, email, phone...">
+        </div>
+
+        <div class="data-list">
+          <div
+            class="data-row team-row"
+            *ngFor="let manager of adminOperatorManagers">
+            <div class="row-icon manager-icon">
+              👨‍💼
+            </div>
+
+            <div class="row-content">
+              <div class="user-primary-row">
+                <strong>{{ manager.fullName || manager.name || manager.username }}</strong>
+                <span class="username-tag">&#64;{{ manager.username }}</span>
+              </div>
+              <div class="user-meta-row">
+                <span>✉️ {{ manager.email }}</span>
+                <span>📱 {{ manager.phoneNumber || '+91-9800000000' }}</span>
+              </div>
+            </div>
+
+            <div class="row-right">
+              <span class="role-badge role-mgr">OPERATOR_MANAGER</span>
+              <span class="active-badge">Active</span>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            *ngIf="adminOperatorManagers.length === 0">
+            <span>👨‍💼</span>
+            <strong>No Operator Managers found</strong>
+            <small>No operator managers are registered under {{ operatorName }}.</small>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- Section: All Company Staff -->
+      <mat-card class="data-card admin-staff-card">
+        <div class="card-header">
+          <div>
+            <h2>👥 {{ operatorName }} Personnel Directory</h2>
+            <p>All active site engineers and staff members registered under {{ operatorName }}</p>
+          </div>
+          <span class="count purple-count">{{ adminCompanyStaff.length }}</span>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="userSearch"
+            placeholder="Search company staff directory...">
+        </div>
+
+        <div class="data-list">
+          <div
+            class="data-row team-row"
+            *ngFor="let staff of adminCompanyStaff">
+            <div class="row-icon user-icon">
+              👤
+            </div>
+
+            <div class="row-content">
+              <div class="user-primary-row">
+                <strong>{{ staff.fullName || staff.name || staff.username }}</strong>
+                <span class="username-tag">&#64;{{ staff.username }}</span>
+              </div>
+              <div class="user-meta-row">
+                <span>✉️ {{ staff.email }}</span>
+                <span>📱 {{ staff.phoneNumber || '+91-9800000000' }}</span>
+              </div>
+            </div>
+
+            <div class="row-right">
+              <span class="role-badge" [ngClass]="{
+                'role-admin': staff.role === 'ADMIN',
+                'role-mgr': staff.role === 'OPERATOR_MANAGER',
+                'role-site': staff.role === 'SITE_MANAGER'
+              }">
+                {{ staff.role }}
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            *ngIf="adminCompanyStaff.length === 0">
+            <span>👥</span>
+            <strong>No staff members found</strong>
+            <small>There are no staff matching your search filter.</small>
+          </div>
+        </div>
+      </mat-card>
+
+    </div>
+  </ng-container>
+
+  <!-- ========================================================= -->
+  <!-- 2. GENERAL DIRECTORY VIEW (FOR SITE & OPERATIONS MANAGERS)-->
+  <!-- ========================================================= -->
+  <ng-template #generalDirectoryView>
+    <div class="page-header">
+      <div>
+        <div class="eyebrow">TOWERSYNC MANAGEMENT</div>
+        <h1>Operators & Users</h1>
+        <p>Monitor operators, platform users and site manager assignments.</p>
+      </div>
+
+      <button class="refresh-button" type="button" (click)="loadData()">
+        ↻ Refresh
+      </button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card blue">
+        <div class="summary-icon">📡</div>
+        <div>
+          <span>Operators</span>
+          <strong>{{ operators.length }}</strong>
+          <small>Registered operators</small>
+        </div>
+      </div>
+
+      <div class="summary-card purple">
+        <div class="summary-icon">👥</div>
+        <div>
+          <span>Platform Users</span>
+          <strong>{{ users.length }}</strong>
+          <small>Active system users</small>
+        </div>
+      </div>
+
+      <div class="summary-card green">
+        <div class="summary-icon">👨‍💼</div>
+        <div>
+          <span>Site Managers</span>
+          <strong>{{ siteManagers.length }}</strong>
+          <small>Registered managers</small>
+        </div>
+      </div>
+
+      <div class="summary-card orange">
+        <div class="summary-icon">✓</div>
+        <div>
+          <span>System Status</span>
+          <strong>Active</strong>
+          <small>TowerSync services</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <mat-card class="data-card operators-card">
+        <div class="card-header">
+          <div>
+            <h2>📡 Operators</h2>
+            <p>Telecom operators connected to TowerSync</p>
+          </div>
+          <span class="count blue-count">{{ operators.length }}</span>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="operatorSearch"
+            placeholder="Search operators...">
+        </div>
+
+        <div class="data-list">
+          <div
+            class="data-row"
+            *ngFor="let operator of filteredOperators">
+            <div class="row-icon operator-icon">
+              📡
+            </div>
+
+            <div class="row-content">
+              <strong>{{ operator.name }}</strong>
+              <span>{{ operator.code }}</span>
+            </div>
+
+            <div class="row-right">
+              <span class="email">{{ operator.contactEmail }}</span>
+              <span class="active-badge">Active</span>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            *ngIf="filteredOperators.length === 0">
+            <span>📡</span>
+            <strong>No operators found</strong>
+            <small>There are no operators matching your search.</small>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="data-card users-card">
+        <div class="card-header">
+          <div>
+            <h2>👥 Platform Users</h2>
+            <p>Users registered in the system</p>
+          </div>
+          <span class="count purple-count">{{ users.length }}</span>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="userSearch"
+            placeholder="Search users...">
+        </div>
+
+        <div class="data-list">
+          <div
+            class="data-row"
+            *ngFor="let user of filteredUsers">
+            <div class="row-icon user-icon">
+              👤
+            </div>
+
+            <div class="row-content">
+              <strong>{{ user.fullName || user.name || user.username || user.email }}</strong>
+              <span>{{ user.email }}</span>
+            </div>
+
+            <div class="row-right">
+              <span class="role-badge">
+                {{ user.role }}
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            *ngIf="filteredUsers.length === 0">
+            <span>👥</span>
+            <strong>No users found</strong>
+            <small>There are no users matching your search.</small>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="data-card managers-card">
+        <div class="card-header">
+          <div>
+            <h2>👨‍💼 Site Managers</h2>
+            <p>Managers responsible for site operations</p>
+          </div>
+          <span class="count green-count">{{ siteManagers.length }}</span>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="managerSearch"
+            placeholder="Search site managers...">
+        </div>
+
+        <div class="data-list">
+          <div
+            class="data-row"
+            *ngFor="let manager of filteredManagers">
+            <div class="row-icon manager-icon">
+              👨‍💼
+            </div>
+
+            <div class="row-content">
+              <strong>
+                {{ manager.fullName || manager.name || manager.username || manager.email }}
+              </strong>
+              <span>
+                {{ manager.email }}
+              </span>
+            </div>
+
+            <div class="row-right">
+              <span class="manager-badge">
+                {{ manager.role }}
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            *ngIf="filteredManagers.length === 0">
+            <span>👨‍💼</span>
+            <strong>No site managers found</strong>
+            <small>There are no managers matching your search.</small>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </ng-template>
+
 </div>

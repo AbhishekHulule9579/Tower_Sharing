@@ -4,14 +4,26 @@
       <div class="header-title-row">
         <div class="header-icon">👨‍💼</div>
         <div>
-          <h2>Registration Access Requests</h2>
-          <p>{{ isAdmin ? 'Approve pending Operations Manager and Site Manager registrations across operators.' : 'Approve pending Site Manager registrations for ' + (userRole === 'OPERATOR_MANAGER' ? 'your company' : 'the system') + '.' }}</p>
+          <h2>{{ isAdmin ? (operatorName + ' Registration Access Requests') : 'Registration Access Requests' }}</h2>
+          <p>{{ isAdmin ? ('Validate and approve incoming Site Manager and Operations Manager registrations for ' + operatorName + '.') : ('Approve pending Site Manager registrations for ' + (userRole === 'OPERATOR_MANAGER' ? operatorName : 'the platform') + '.') }}</p>
         </div>
       </div>
     </div>
     <span class="user-role-chip" *ngIf="userRole">
-      {{ isAdmin ? '👑 Administrator' : '🏢 Operations Manager' }}
+      {{ isAdmin ? ('🛡️ ' + operatorName + ' Administrator') : '🏢 Operations Manager' }}
     </span>
+  </div>
+
+  <div class="alert-box success" *ngIf="successMessage">
+    <span>✓</span>
+    <span>{{ successMessage }}</span>
+    <button type="button" (click)="successMessage=''">×</button>
+  </div>
+
+  <div class="alert-box error" *ngIf="errorMessage">
+    <span>⚠️</span>
+    <span>{{ errorMessage }}</span>
+    <button type="button" (click)="errorMessage=''">×</button>
   </div>
 
   <ng-container *ngIf="requests.length > 0; else noRequests">
@@ -21,7 +33,7 @@
           <div class="title-icon">📋</div>
           <div>
             <h3>Pending Registrations</h3>
-            <p>Access requests awaiting your validation</p>
+            <p>Access requests awaiting your validation for {{ operatorName }}</p>
           </div>
         </div>
         <span class="count-badge">{{ requests.length }} Requests</span>
@@ -32,39 +44,47 @@
           <div class="user-avatar">👤</div>
           <div class="request-details">
             <div class="request-user-row">
-              <strong>{{ request.fullName || request.name }}</strong>
+              <strong>{{ request.fullName || request.name || request.username }}</strong>
+              <span class="username-tag">&#64;{{ request.username }}</span>
             </div>
             <div class="secondary-info">
               <span>✉️ {{ request.email }}</span>
-              <span>📱 {{ request.phoneNumber || 'N/A' }}</span>
+              <span>📱 {{ request.phoneNumber || '+91-9800000000' }}</span>
               <span class="role-pill">{{ request.requestedRole === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager' }}</span>
               <span class="operator-pill">🏢 {{ request.operator?.name || request.operator?.code }}</span>
             </div>
           </div>
-          <div class="request-actions">
+          <div class="request-actions" *ngIf="canApprove(request); else statusOnly">
             <button
               type="button"
               class="btn-action approve"
-              *ngIf="canApprove(request)"
               (click)="approve(request.id)"
-              [disabled]="request.status !== 'PENDING' || approvingRequestId === request.id">
+              [disabled]="request.status !== 'PENDING' || processingRequestId === request.id">
               <span>✓</span>
-              {{ approvingRequestId === request.id ? 'Approving...' : 'Approve Access' }}
+              {{ processingRequestId === request.id ? 'Processing...' : 'Approve' }}
             </button>
-            <span class="status-chip" [class.pending]="request.status === 'PENDING'">{{ request.status }}</span>
+            <button
+              type="button"
+              class="btn-action reject"
+              (click)="reject(request.id)"
+              [disabled]="request.status !== 'PENDING' || processingRequestId === request.id">
+              <span>✕</span>
+              Reject
+            </button>
           </div>
+          <ng-template #statusOnly>
+            <span class="status-chip" [class.pending]="request.status === 'PENDING'">{{ request.status }}</span>
+          </ng-template>
         </div>
       </div>
     </mat-card>
   </ng-container>
 
-  <div class="error-message" *ngIf="errorMessage">⚠️ {{ errorMessage }}</div>
-
   <ng-template #noRequests>
     <mat-card class="content-card empty-card">
       <div class="empty-icon">✓</div>
       <h3>No Pending Registration Requests</h3>
-      <p>There are no registration access requests currently awaiting your approval.</p>
+      <p>There are no registration access requests currently awaiting your approval for {{ operatorName }}.</p>
     </mat-card>
   </ng-template>
 </div>

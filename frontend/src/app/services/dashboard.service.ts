@@ -10,6 +10,10 @@ export class DashboardService {
 
   constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
+  getAdminSummary(): Observable<any> {
+    return this.http.get<any>(`${this.api}/admin-summary`, this.authHeaders());
+  }
+
   getSummary(): Observable<any> {
     return this.http.get<any>(`${this.api}/summary`, this.authHeaders());
   }

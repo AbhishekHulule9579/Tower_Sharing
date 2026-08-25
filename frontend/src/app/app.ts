@@ -58,16 +58,31 @@ export class App {
   protected readonly apiBaseUrl = environment.apiBaseUrl;
   protected readonly currentUser$ = this.authService.currentUser$;
 
-  protected navItems: AppNavItem[] = [
+  private readonly allNavItems: AppNavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
     { label: 'Towers', path: '/towers', icon: '📡' },
     { label: 'Leases', path: '/leases', icon: '🤝', badge: 0, badgeColor: 'accent' },
     { label: 'Transactions', path: '/transactions', icon: '💰' },
     { label: 'Disasters', path: '/disasters', icon: '🚨', badge: 0, badgeColor: 'warn' },
     { label: 'Maintenance', path: '/maintenance', icon: '🔧', badge: 0, badgeColor: 'warn' },
-    { label: 'Operators', path: '/operators', icon: '🏢' }
-    , { label: 'Requests', path: '/site-manager-requests', icon: '✓' }
+    { label: 'Operators & Managers', path: '/operators', icon: '🏢' },
+    { label: 'Site Manager Requests', path: '/site-manager-requests', icon: '✓' }
   ];
+
+  private readonly adminNavItems: AppNavItem[] = [
+    { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
+    { label: 'Towers', path: '/towers', icon: '📡' },
+    { label: 'Operators & Managers', path: '/operators', icon: '🏢' },
+    { label: 'Site Manager Requests', path: '/site-manager-requests', icon: '✓' }
+  ];
+
+  get navItems(): AppNavItem[] {
+    const user = this.authService.getCurrentUser();
+    if (user?.role === 'ADMIN') {
+      return this.adminNavItems;
+    }
+    return this.allNavItems;
+  }
 
   logout(): void {
     this.authService.logout();

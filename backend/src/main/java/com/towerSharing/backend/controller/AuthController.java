@@ -54,20 +54,23 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
         String loginEmail = request.getLoginEmail();
         if (loginEmail == null || loginEmail.isBlank()) {
-            return ResponseEntity.badRequest().body("Please enter your Email and password.");
+            return ResponseEntity.badRequest().body("Please enter your Email or Username and password.");
         }
 
-        User user = userRepository.findFirstByEmailIgnoreCase(loginEmail.trim()).orElse(null);
+        String query = loginEmail.trim();
+        User user = userRepository.findFirstByEmailIgnoreCase(query)
+                .or(() -> userRepository.findByUsername(query))
+                .orElse(null);
 
         if (user == null) {
-            return ResponseEntity.badRequest().body("Invalid Email or password.");
+            return ResponseEntity.badRequest().body("Invalid Email/Username or password.");
         }
 
         boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword())
                 || request.getPassword().equals(user.getPassword());
 
         if (!passwordMatches) {
-            return ResponseEntity.badRequest().body("Invalid Email or password.");
+            return ResponseEntity.badRequest().body("Invalid Email/Username or password.");
         }
 
         if (request.getPassword().equals(user.getPassword())) {
@@ -151,9 +154,9 @@ public class AuthController {
             return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         if (actor.getRole() == UserRole.ADMIN) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.OPERATOR_MANAGER, SiteManagerRequestStatus.PENDING));
+            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndStatus(actor.getOperator(), SiteManagerRequestStatus.PENDING));
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins or operator managers can view pending site manager requests.");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins or operator managers can view pending registration requests.");
     }
 
     @PostMapping("/site-manager-requests/{id}/approve")
@@ -170,7 +173,7 @@ public class AuthController {
         if (request.getStatus() != SiteManagerRequestStatus.PENDING) {
             return ResponseEntity.badRequest().body("Request has already been processed.");
         }
-        boolean canApprove = (actor.getRole() == UserRole.ADMIN && request.getRequestedRole() == UserRole.OPERATOR_MANAGER
+        boolean canApprove = (actor.getRole() == UserRole.ADMIN
                     && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()))
                 || (actor.getRole() == UserRole.OPERATOR_MANAGER && request.getRequestedRole() == UserRole.SITE_MANAGER
                     && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()));
@@ -198,6 +201,34 @@ public class AuthController {
         siteManagerRequestRepository.save(request);
 
         return ResponseEntity.ok(siteManager);
+    }
+
+    @PostMapping("/site-manager-requests/{id}/reject")
+    public ResponseEntity<?> rejectSiteManagerRequest(@PathVariable Long id,
+                                                      @RequestHeader(name = "Authorization", required = false) String authorization) {
+        User actor = getUserFromToken(authorization);
+        if (actor == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid authorization token.");
+        }
+
+        SiteManagerRequest request = siteManagerRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found."));
+
+        if (request.getStatus() != SiteManagerRequestStatus.PENDING) {
+            return ResponseEntity.badRequest().body("Request has already been processed.");
+        }
+        boolean canReject = (actor.getRole() == UserRole.ADMIN
+                    && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()))
+                || (actor.getRole() == UserRole.OPERATOR_MANAGER && request.getRequestedRole() == UserRole.SITE_MANAGER
+                    && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()));
+        if (!canReject) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to reject this registration request.");
+        }
+
+        request.setStatus(SiteManagerRequestStatus.REJECTED);
+        siteManagerRequestRepository.save(request);
+
+        return ResponseEntity.ok(request);
     }
 
     private User getUserFromToken(String authorizationHeader) {

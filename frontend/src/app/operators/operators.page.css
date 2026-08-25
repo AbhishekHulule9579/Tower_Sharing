@@ -402,12 +402,70 @@
   font-size: 9px;
 }
 
+.admin-team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.team-row {
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  margin-bottom: 8px;
+}
+
+.user-primary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-primary-row strong {
+  font-size: 13px !important;
+  color: #f8fafc !important;
+}
+
+.username-tag {
+  font-size: 11px;
+  color: #60a5fa;
+  font-weight: 500;
+}
+
+.user-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.role-admin {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.role-mgr {
+  color: #93c5fd !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-site {
+  color: #86efac !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
 @media(max-width: 1000px) {
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .content-grid {
+  .content-grid,
+  .admin-team-grid {
     grid-template-columns: 1fr;
   }
 

@@ -71,6 +71,10 @@ export class AuthService {
     return this.http.post<any>(`${this.api}/site-manager-requests/${requestId}/approve`, {}, this.getAuthOptions());
   }
 
+  rejectSiteManagerRequest(requestId: number): Observable<any> {
+    return this.http.post<any>(`${this.api}/site-manager-requests/${requestId}/reject`, {}, this.getAuthOptions());
+  }
+
   private getAuthOptions() {
     const token = this.userSubject.value?.token;
     if (!token) {

@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { forkJoin, Subscription } from 'rxjs';
@@ -24,7 +25,8 @@ import { TowerService } from '../services/tower.service';
     MatInputModule,
     MatSelectModule,
     MatTableModule,
-    MatDividerModule
+    MatDividerModule,
+    MatPaginatorModule
   ],
   selector: 'app-towers',
   templateUrl: './towers.page.html',
@@ -42,6 +44,12 @@ export class TowersPage implements OnInit, OnDestroy {
   isOperatorUser = false;
   canManageTowers = false;
   private authSubscription?: Subscription;
+
+  // Search & Pagination
+  searchTerm = '';
+  pageSize = 10;
+  pageIndex = 0;
+  pageSizeOptions = [5, 10, 25, 100];
 
   displayedColumns = [
     'towerCode',
@@ -111,7 +119,8 @@ export class TowersPage implements OnInit, OnDestroy {
     const role = this.currentUser?.role;
     this.isAdmin = role === 'ADMIN';
     this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
-    this.canManageTowers = this.isAdmin || this.isOperatorUser;
+    // Admin role is strictly governance read-only. Add/edit is reserved for Operator Managers & Site Managers.
+    this.canManageTowers = !this.isAdmin && this.isOperatorUser;
   }
 
   private syncPredefinedOperator(): void {
@@ -134,21 +143,66 @@ export class TowersPage implements OnInit, OnDestroy {
     return '';
   }
 
-  public getDisplayedTowers(): any[] {
+  public getRawDisplayedTowers(): any[] {
     if (this.isOperatorUser && !this.isAdmin && this.currentUser?.operatorId) {
       return this.towers.filter((t) => t.ownerOperator?.id === this.currentUser?.operatorId);
     }
     return this.towers;
   }
 
+  public getFilteredTowers(): any[] {
+    const raw = this.getRawDisplayedTowers();
+    const query = this.searchTerm.toLowerCase().trim();
+    if (!query) {
+      return raw;
+    }
+    return raw.filter((t) =>
+      `${t.towerCode || ''} ${t.name || ''} ${t.location || ''} ${t.city || ''} ${t.state || ''} ${t.status || ''} ${t.ownerOperator?.name || ''}`
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  public getPaginatedTowers(): any[] {
+    const filtered = this.getFilteredTowers();
+    const start = this.pageIndex * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
+  }
+
+  public onPageChange(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+  }
+
+  public onSearchChange(): void {
+    this.pageIndex = 0;
+  }
+
   public canEditTower(tower: any): boolean {
     if (this.isAdmin) {
-      return true;
+      return false; // Governance read-only for admin
     }
     if (this.isOperatorUser && this.currentUser?.operatorId) {
       return tower.ownerOperator?.id === this.currentUser.operatorId;
     }
     return false;
+  }
+
+  // Admin stats
+  public getActiveCount(): number {
+    return this.getRawDisplayedTowers().filter((t) => t.status === 'ACTIVE').length;
+  }
+
+  public getMaintenanceCount(): number {
+    return this.getRawDisplayedTowers().filter(
+      (t) => t.status === 'UNDER_MAINTENANCE' || t.status === 'MAINTENANCE'
+    ).length;
+  }
+
+  public getDisruptedCount(): number {
+    return this.getRawDisplayedTowers().filter(
+      (t) => t.status === 'DISASTER_AFFECTED' || t.status === 'INACTIVE_DAMAGED' || t.status === 'INACTIVE'
+    ).length;
   }
 
   private loadData(): void {
@@ -189,7 +243,7 @@ export class TowersPage implements OnInit, OnDestroy {
     if (!this.canManageTowers) {
       this.showNotification(
         'error',
-        'Only Company Site Managers, Operator Managers, or Administrators can add or edit towers.'
+        'Only Company Site Managers or Operator Managers can add or edit towers.'
       );
       return;
     }
@@ -339,7 +393,7 @@ export class TowersPage implements OnInit, OnDestroy {
     if (!this.canEditTower(tower)) {
       this.showNotification(
         'warning',
-        'You are only authorized to edit towers belonging to your operator company.'
+        'Administrator role is strictly governance read-only.'
       );
       return;
     }
@@ -381,7 +435,7 @@ export class TowersPage implements OnInit, OnDestroy {
     if (tower && !this.canEditTower(tower)) {
       this.showNotification(
         'error',
-        'You are only authorized to delete towers belonging to your operator company.'
+        'Administrator role is strictly governance read-only.'
       );
       return;
     }

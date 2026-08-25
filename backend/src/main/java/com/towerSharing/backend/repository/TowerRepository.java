@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface TowerRepository extends JpaRepository<Tower, Long> {
     Optional<Tower> findByTowerCode(String towerCode);
     List<Tower> findByOwnerOperatorId(Long operatorId);
+    long countByOwnerOperatorId(Long operatorId);
     List<Tower> findByStatus(TowerStatus status);
     List<Tower> findBySharingStatus(SharingStatus sharingStatus);
     long countBySharingStatus(SharingStatus sharingStatus);

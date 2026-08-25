@@ -807,6 +807,149 @@ h1 {
   border: 1px solid #203653;
 }
 
+.summary-card.active-card {
+  background: linear-gradient(135deg, #09261a, #0a1e16) !important;
+  border-color: #105937;
+}
+
+.active-card .summary-icon {
+  background: #0f613c;
+  color: #4ade80;
+}
+
+.summary-card.maintenance-card {
+  background: linear-gradient(135deg, #2b1d09, #1e1507) !important;
+  border-color: #634311;
+}
+
+.maintenance-card .summary-icon {
+  background: #784c0c;
+  color: #fbbf24;
+}
+
+/* Tower Search Bar */
+.tower-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 12px 18px 0;
+  border-radius: 12px;
+  background: rgba(11, 19, 36, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  transition: all 0.2s ease;
+}
+
+.tower-search-bar:focus-within {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.tower-search-bar .search-icon {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.tower-search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.tower-search-bar input::placeholder {
+  color: #64748b;
+}
+
+.clear-search {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+}
+
+.clear-search:hover {
+  color: #f87171;
+}
+
+.tower-paginator {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 8px 16px;
+}
+
+::ng-deep .tower-paginator .mat-mdc-paginator-container {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .tower-paginator .mat-mdc-select-value {
+  color: #f8fafc !important;
+}
+
+.empty-table-state {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+}
+
+.empty-table-state span {
+  font-size: 32px;
+}
+
+.empty-table-state strong {
+  font-size: 15px;
+  color: #f8fafc;
+}
+
+.empty-table-state small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Governance Info Card */
+.admin-governance-footer-card {
+  margin-top: 10px;
+}
+
+.governance-info-card {
+  padding: 20px 24px !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+.gov-info-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gov-icon {
+  font-size: 32px;
+}
+
+.gov-info-content h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.gov-info-content p {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
 .no-access-card {
   padding: 30px 20px;
   text-align: center;

@@ -21,16 +21,32 @@ export class LoginPage {
   hidePassword = true;
   isLoading = false;
 
+  presets = [
+    { label: 'Jio Admin', email: 'admin@jio.com', pass: 'admin123', role: 'ADMIN', color: '#0a2540' },
+    { label: 'Airtel Admin', email: 'admin@airtel.com', pass: 'admin123', role: 'ADMIN', color: '#e40000' },
+    { label: 'Vi Admin', email: 'admin@vodafoneidea.com', pass: 'admin123', role: 'ADMIN', color: '#ee1c25' },
+    { label: 'BSNL Admin', email: 'admin@bsnl.co.in', pass: 'admin123', role: 'ADMIN', color: '#005a9c' },
+    { label: 'Jio Manager', email: 'manager@jio.com', pass: 'pass123', role: 'OPERATOR_MANAGER', color: '#2563eb' },
+    { label: 'Site Engineer', email: 'mumbai.site@jio.com', pass: 'site123', role: 'SITE_MANAGER', color: '#10b981' }
+  ];
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router
   ) {}
 
+  selectPreset(preset: { email: string; pass: string; role: string }): void {
+    this.email = preset.email;
+    this.password = preset.pass;
+    this.role = preset.role;
+    this.errorMessage = '';
+  }
+
   login(): void {
     this.errorMessage = '';
 
     if (!this.email.trim() || !this.password) {
-      this.errorMessage = 'Please enter both Email and password.';
+      this.errorMessage = 'Please enter both Email/Username and password.';
       return;
     }
 
@@ -43,7 +59,7 @@ export class LoginPage {
       this.password,
       this.role
     ).subscribe({
-      next: () => {
+      next: (user) => {
         this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },

@@ -23,6 +23,7 @@ public class DashboardService {
     private final RepairRequestRepository repairRequestRepository;
     private final RepairInventoryUsageRepository usageRepository;
     private final SiteManagerRequestRepository registrationRequestRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public DashboardService(TowerRepository towerRepository, 
@@ -34,7 +35,8 @@ public class DashboardService {
                             InventoryItemRepository inventoryRepository, 
                             RepairRequestRepository repairRequestRepository, 
                             RepairInventoryUsageRepository usageRepository,
-                            SiteManagerRequestRepository registrationRequestRepository) {
+                            SiteManagerRequestRepository registrationRequestRepository,
+                            UserRepository userRepository) {
         this.towerRepository = towerRepository;
         this.operatorRepository = operatorRepository;
         this.leaseRepository = leaseRepository;
@@ -45,6 +47,37 @@ public class DashboardService {
         this.repairRequestRepository = repairRequestRepository;
         this.usageRepository = usageRepository;
         this.registrationRequestRepository = registrationRequestRepository;
+        this.userRepository = userRepository;
+    }
+
+    public AdminDashboardDto getAdminDashboardSummary(User adminUser) {
+        Operator operator = adminUser != null ? adminUser.getOperator() : null;
+        if (operator == null) {
+            return new AdminDashboardDto("General Admin", "GEN", null, 0, 0, 0, 0, 0, 0, List.of());
+        }
+        Long opId = operator.getId();
+        List<Tower> towers = towerRepository.findByOwnerOperatorId(opId);
+        long companyTowers = towers.size();
+        long activeTowers = towers.stream().filter(t -> t.getStatus() == TowerStatus.ACTIVE).count();
+        long maintenanceTowers = towers.stream().filter(t -> t.getStatus() == TowerStatus.UNDER_MAINTENANCE).count();
+        long inactiveTowers = towers.stream().filter(t -> t.getStatus() == TowerStatus.DISASTER_AFFECTED || t.getStatus() == TowerStatus.INACTIVE_DAMAGED).count();
+
+        long operatorManagers = userRepository.countByOperatorAndRole(operator, UserRole.OPERATOR_MANAGER);
+        long pendingRequests = registrationRequestRepository.findByOperatorAndStatus(operator, SiteManagerRequestStatus.PENDING).size();
+        List<SiteManagerRequest> recentRequests = registrationRequestRepository.findByOperatorAndStatus(operator, SiteManagerRequestStatus.PENDING);
+
+        return new AdminDashboardDto(
+                operator.getName(),
+                operator.getCode(),
+                operator.getId(),
+                companyTowers,
+                operatorManagers,
+                pendingRequests,
+                activeTowers,
+                maintenanceTowers,
+                inactiveTowers,
+                recentRequests
+        );
     }
 
     public DashboardSummaryDto getSummary() {

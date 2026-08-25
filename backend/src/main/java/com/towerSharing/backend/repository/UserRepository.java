@@ -16,4 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findFirstByEmailIgnoreCase(String email);
     boolean existsByFullName(String fullName);
     List<User> findByRole(UserRole role);
+    List<User> findByOperator(com.towerSharing.backend.model.Operator operator);
+    List<User> findByOperatorAndRole(com.towerSharing.backend.model.Operator operator, UserRole role);
+    long countByOperatorAndRole(com.towerSharing.backend.model.Operator operator, UserRole role);
 }

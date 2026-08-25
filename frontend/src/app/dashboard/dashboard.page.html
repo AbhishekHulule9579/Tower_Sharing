@@ -1,349 +1,436 @@
 <ng-container *ngIf="dashboardLoaded; else dashboardLoading">
-  <div class="dashboard-shell">
 
-    <!-- Header Section -->
-    <div class="dashboard-header">
+  <!-- ========================================================= -->
+  <!-- 1. OPERATOR ADMIN DASHBOARD (Role: ADMIN)                -->
+  <!-- ========================================================= -->
+  <div class="dashboard-shell admin-shell" *ngIf="isAdmin; else managerDashboard">
+
+    <!-- Admin Header Section -->
+    <div class="dashboard-header admin-header">
       <div class="header-main">
-        <div class="header-icon">📊</div>
+        <div class="header-icon admin-icon">🛡️</div>
         <div class="header-text">
           <div class="header-title-row">
-            <h1>Operations Dashboard</h1>
+            <h1>{{ adminSummary.operatorName || 'Telecom' }} Admin Command Center</h1>
             <span class="live-status-chip">
               <span class="status-dot"></span>
-              Live Telemetry
+              {{ adminSummary.operatorCode || 'OPERATOR' }} Governance Active
             </span>
           </div>
-          <p>Real-time telecom infrastructure overview, sharing metrics, and health indicators</p>
+          <p>Operator-isolated infrastructure governance, team management, and site manager access approvals</p>
         </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="header-actions">
-        <button mat-flat-button class="quick-btn" routerLink="/towers">
-          <span>📡</span> Add Tower
-        </button>
-        <button mat-stroked-button class="quick-btn-outline" routerLink="/disasters">
-          <span>🚨</span> Emergency Sharing
-        </button>
       </div>
     </div>
 
-    <!-- Top Key Metric Cards -->
-    <div class="dashboard-top-cards">
+    <!-- Admin Top 3 Statistics Cards -->
+    <div class="dashboard-top-cards admin-top-cards">
+      <!-- Card 1: Company Towers -->
       <mat-card class="stat-card stat-towers" routerLink="/towers">
         <div class="stat-card-header">
           <div class="stat-info">
-            <span class="stat-card-title">TOTAL TOWERS</span>
-            <div class="stat-card-value">{{ summary.totalTowers | number }}</div>
+            <span class="stat-card-title">COMPANY TOWERS</span>
+            <div class="stat-card-value">{{ adminSummary.companyTowers | number }}</div>
           </div>
           <div class="stat-icon-wrapper blue">
             <span>📡</span>
           </div>
         </div>
         <div class="stat-card-footer">
-          <span class="trend-indicator up">● Available: {{ summary.availableForLease + summary.availableForSale }}</span>
-          <span class="stat-subtext">Registered assets</span>
+          <span class="trend-indicator up">● Registered Sites</span>
+          <span class="stat-subtext">{{ adminSummary.operatorName }} Assets</span>
         </div>
       </mat-card>
 
-      <mat-card class="stat-card stat-disasters" [class.has-alert]="summary.activeIncidents > 0" routerLink="/disasters">
+      <!-- Card 2: Operator Managers -->
+      <mat-card class="stat-card stat-managers" routerLink="/operators">
         <div class="stat-card-header">
           <div class="stat-info">
-            <span class="stat-card-title">ACTIVE INCIDENTS</span>
-            <div class="stat-card-value">{{ summary.activeIncidents | number }}</div>
-          </div>
-          <div class="stat-icon-wrapper red">
-            <span>🚨</span>
-          </div>
-        </div>
-        <div class="stat-card-footer">
-          <span class="trend-indicator" [ngClass]="summary.activeIncidents > 0 ? 'alert' : 'up'">
-            {{ summary.activeIncidents > 0 ? '⚠️ Emergency Protocol Active' : '✓ Normal Operations' }}
-          </span>
-          <span class="stat-subtext">Disasters logged</span>
-        </div>
-      </mat-card>
-
-      <mat-card class="stat-card stat-leases" routerLink="/leases">
-        <div class="stat-card-header">
-          <div class="stat-info">
-            <span class="stat-card-title">PENDING LEASES</span>
-            <div class="stat-card-value">{{ summary.pendingLeaseRequests | number }}</div>
+            <span class="stat-card-title">OPERATOR MANAGERS</span>
+            <div class="stat-card-value">{{ adminSummary.operatorManagers | number }}</div>
           </div>
           <div class="stat-icon-wrapper purple">
-            <span>🤝</span>
+            <span>🏢</span>
           </div>
         </div>
         <div class="stat-card-footer">
-          <span class="trend-indicator up">● Deals: {{ summary.completedTransactions }}</span>
-          <span class="stat-subtext">Awaiting approval</span>
+          <span class="trend-indicator up">● Registered staff</span>
+          <span class="stat-subtext">{{ adminSummary.operatorName }} Team</span>
         </div>
       </mat-card>
 
-      <mat-card class="stat-card stat-managers" routerLink="/site-manager-requests">
+      <!-- Card 3: Pending Requests -->
+      <mat-card class="stat-card stat-requests" [class.has-alert]="adminSummary.pendingRequests > 0" routerLink="/site-manager-requests">
         <div class="stat-card-header">
           <div class="stat-info">
-            <span class="stat-card-title">ACCESS REQUESTS</span>
-            <div class="stat-card-value">{{ summary.pendingRegistrationRequests | number }}</div>
+            <span class="stat-card-title">PENDING REQUESTS</span>
+            <div class="stat-card-value">{{ adminSummary.pendingRequests | number }}</div>
           </div>
           <div class="stat-icon-wrapper amber">
-            <span>👨‍💼</span>
+            <span>📥</span>
           </div>
         </div>
         <div class="stat-card-footer">
-          <span class="trend-indicator" [ngClass]="summary.pendingRegistrationRequests > 0 ? 'alert' : 'up'">
-            {{ summary.pendingRegistrationRequests > 0 ? '● Pending Review' : '✓ Up to date' }}
+          <span class="trend-indicator" [ngClass]="adminSummary.pendingRequests > 0 ? 'alert' : 'up'">
+            {{ adminSummary.pendingRequests > 0 ? '● Awaiting Admin Review' : '✓ All verified' }}
           </span>
-          <span class="stat-subtext">Site manager approvals</span>
+          <span class="stat-subtext">Access approval pipeline</span>
         </div>
       </mat-card>
-
-      <mat-card class="stat-card stat-inventory" [class.has-alert]="summary.lowInventoryAlerts > 0" routerLink="/maintenance">
-        <div class="stat-card-header">
-          <div class="stat-info">
-            <span class="stat-card-title">LOW INVENTORY</span>
-            <div class="stat-card-value">{{ summary.lowInventoryAlerts | number }}</div>
-          </div>
-          <div class="stat-icon-wrapper orange">
-            <span>📦</span>
-          </div>
-        </div>
-        <div class="stat-card-footer">
-          <span class="trend-indicator" [ngClass]="summary.lowInventoryAlerts > 0 ? 'alert' : 'up'">
-            {{ summary.lowInventoryAlerts > 0 ? '⚠️ Restock Required' : '✓ Spares Optimal' }}
-          </span>
-          <span class="stat-subtext">Below threshold</span>
-        </div>
-      </mat-card>
-    </div>
-
-    <!-- Operations Insight Panels -->
-    <div class="dashboard-panels">
-
-      <!-- Panel 1: Disaster & Emergency Sharing -->
-      <mat-card class="panel-card disaster-panel">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-icon-badge red">🚨</div>
-            <div>
-              <h3>Disaster Monitoring</h3>
-              <p>Critical incident tracking and mutual aid telemetry</p>
-            </div>
-          </div>
-          <span class="panel-status-pill" [class.danger]="summary.activeIncidents > 0">
-            {{ summary.activeIncidents > 0 ? summary.activeIncidents + ' Critical' : 'Normal' }}
-          </span>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.activeIncidents }}</span>
-              <span class="metric-label">Open Incidents</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ disasterDetails?.totalAffectedTowersCount || 0 }}</span>
-              <span class="metric-label">Affected Towers</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ disasterDetails?.activeEmergencySharingsCount || 0 }}</span>
-              <span class="metric-label">Emergency Relays</span>
-            </div>
-          </div>
-          <p class="panel-description">
-            {{ summary.activeIncidents > 0
-              ? 'Active emergency response protocols are coordinating traffic redistribution across unaffected host towers.'
-              : 'All regional cell sectors are operating under steady-state parameters without disruption.' }}
-          </p>
-          <div class="panel-action-bar">
-            <a mat-button class="action-link" routerLink="/disasters">
-              View Disaster Center &rarr;
-            </a>
-          </div>
-        </div>
-      </mat-card>
-
-      <!-- Panel 2: Lease & Commercial Overview -->
-      <mat-card class="panel-card lease-panel">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-icon-badge purple">💰</div>
-            <div>
-              <h3>Lease & Revenue Flow</h3>
-              <p>Commercial capacity sharing and asset transactions</p>
-            </div>
-          </div>
-          <span class="panel-status-pill success">
-            {{ (revenueDetails?.activeLeasesCount || summary.pendingLeaseRequests) }} Active / Pending
-          </span>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-item">
-              <span class="metric-num">{{ (revenueDetails?.totalMonthlyLeaseRevenue || 0) | currency:'INR':'symbol':'1.0-0' }}</span>
-              <span class="metric-label">Monthly Lease Flow</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.pendingLeaseRequests }}</span>
-              <span class="metric-label">Pending Requests</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.completedTransactions }}</span>
-              <span class="metric-label">Completed Deals</span>
-            </div>
-          </div>
-          <p class="panel-description">
-            Infrastructure sharing agreements enable optimized co-location revenues and capital-efficient network scaling.
-          </p>
-          <div class="panel-action-bar">
-            <a mat-button class="action-link" routerLink="/leases">
-              Manage Leases &rarr;
-            </a>
-            <a mat-button class="action-link" routerLink="/transactions">
-              Ledger &rarr;
-            </a>
-          </div>
-        </div>
-      </mat-card>
-
-      <!-- Panel 3: Maintenance & Spares -->
-      <mat-card class="panel-card maintenance-panel">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-icon-badge orange">🔧</div>
-            <div>
-              <h3>Maintenance & Spares</h3>
-              <p>Field repair orders and critical inventory reserves</p>
-            </div>
-          </div>
-          <span class="panel-status-pill" [class.warning]="summary.openRepairs > 0 || summary.lowInventoryAlerts > 0">
-            {{ summary.openRepairs }} Repairs Active
-          </span>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.openRepairs }}</span>
-              <span class="metric-label">Open Repairs</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.lowInventoryAlerts }}</span>
-              <span class="metric-label">Low Stock Alerts</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ maintenanceDetails?.completedRepairsCount || 0 }}</span>
-              <span class="metric-label">Completed Repairs</span>
-            </div>
-          </div>
-          <p class="panel-description">
-            Continuous preventative maintenance schedules and automated warehouse triggers ensure high SLA uptime.
-          </p>
-          <div class="panel-action-bar">
-            <a mat-button class="action-link" routerLink="/maintenance">
-              Open Maintenance Workorders &rarr;
-            </a>
-          </div>
-        </div>
-      </mat-card>
-
-      <!-- Panel 4: Market & Asset Availability -->
-      <mat-card class="panel-card market-panel">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <div class="panel-icon-badge green">📈</div>
-            <div>
-              <h3>Market & Inventory Snapshot</h3>
-              <p>Tower availability and slot capacity distribution</p>
-            </div>
-          </div>
-          <span class="panel-status-pill">
-            {{ summary.totalTowers }} Total Sites
-          </span>
-        </div>
-        <mat-divider></mat-divider>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.availableForLease }}</span>
-              <span class="metric-label">For Lease</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ summary.availableForSale }}</span>
-              <span class="metric-label">For Sale</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-num">{{ ((utilizationDetails?.overallOccupancyRate || 0) * 100) | number:'1.0-0' }}%</span>
-              <span class="metric-label">Slot Occupancy</span>
-            </div>
-          </div>
-          <p class="panel-description">
-            Available towers are listed on the open marketplace for rapid cross-operator sharing and asset transfer.
-          </p>
-          <div class="panel-action-bar">
-            <a mat-button class="action-link" routerLink="/towers">
-              Explore All Towers &rarr;
-            </a>
-          </div>
-        </div>
-      </mat-card>
-
-    </div>
-
-    <!-- Quick Navigation Hub -->
-    <div class="quick-nav-hub">
-      <div class="hub-header">
-        <h4>System Modules</h4>
-        <span>Direct access to platform operations</span>
-      </div>
-      <div class="hub-grid">
-        <div class="hub-card" routerLink="/towers">
-          <span class="hub-icon">📡</span>
-          <div class="hub-info">
-            <strong>Towers</strong>
-            <small>Manage site inventory</small>
-          </div>
-        </div>
-        <div class="hub-card" routerLink="/leases">
-          <span class="hub-icon">🤝</span>
-          <div class="hub-info">
-            <strong>Leasing</strong>
-            <small>Shared tenancy contracts</small>
-          </div>
-        </div>
-        <div class="hub-card" routerLink="/transactions">
-          <span class="hub-icon">💰</span>
-          <div class="hub-info">
-            <strong>Transactions</strong>
-            <small>Buy & sell ledger</small>
-          </div>
-        </div>
-        <div class="hub-card" routerLink="/disasters">
-          <span class="hub-icon">🚨</span>
-          <div class="hub-info">
-            <strong>Disasters</strong>
-            <small>Emergency protocols</small>
-          </div>
-        </div>
-        <div class="hub-card" routerLink="/maintenance">
-          <span class="hub-icon">🔧</span>
-          <div class="hub-info">
-            <strong>Maintenance</strong>
-            <small>Repairs & spare parts</small>
-          </div>
-        </div>
-        <div class="hub-card" routerLink="/operators">
-          <span class="hub-icon">🏢</span>
-          <div class="hub-info">
-            <strong>Operators</strong>
-            <small>Telecom companies</small>
-          </div>
-        </div>
-      </div>
     </div>
 
   </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. OPERATIONS / SITE MANAGER DASHBOARD                   -->
+  <!-- ========================================================= -->
+  <ng-template #managerDashboard>
+    <div class="dashboard-shell">
+
+      <!-- Header Section -->
+      <div class="dashboard-header">
+        <div class="header-main">
+          <div class="header-icon">📊</div>
+          <div class="header-text">
+            <div class="header-title-row">
+              <h1>Operations Dashboard</h1>
+              <span class="live-status-chip">
+                <span class="status-dot"></span>
+                Live Telemetry
+              </span>
+            </div>
+            <p>Real-time telecom infrastructure overview, sharing metrics, and health indicators</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="header-actions">
+          <button mat-flat-button class="quick-btn" routerLink="/towers">
+            <span>📡</span> Add Tower
+          </button>
+          <button mat-stroked-button class="quick-btn-outline" routerLink="/disasters">
+            <span>🚨</span> Emergency Sharing
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Key Metric Cards -->
+      <div class="dashboard-top-cards">
+        <mat-card class="stat-card stat-towers" routerLink="/towers">
+          <div class="stat-card-header">
+            <div class="stat-info">
+              <span class="stat-card-title">TOTAL TOWERS</span>
+              <div class="stat-card-value">{{ summary.totalTowers | number }}</div>
+            </div>
+            <div class="stat-icon-wrapper blue">
+              <span>📡</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-indicator up">● Available: {{ summary.availableForLease + summary.availableForSale }}</span>
+            <span class="stat-subtext">Registered assets</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card stat-disasters" [class.has-alert]="summary.activeIncidents > 0" routerLink="/disasters">
+          <div class="stat-card-header">
+            <div class="stat-info">
+              <span class="stat-card-title">ACTIVE INCIDENTS</span>
+              <div class="stat-card-value">{{ summary.activeIncidents | number }}</div>
+            </div>
+            <div class="stat-icon-wrapper red">
+              <span>🚨</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-indicator" [ngClass]="summary.activeIncidents > 0 ? 'alert' : 'up'">
+              {{ summary.activeIncidents > 0 ? '⚠️ Emergency Protocol Active' : '✓ Normal Operations' }}
+            </span>
+            <span class="stat-subtext">Disasters logged</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card stat-leases" routerLink="/leases">
+          <div class="stat-card-header">
+            <div class="stat-info">
+              <span class="stat-card-title">PENDING LEASES</span>
+              <div class="stat-card-value">{{ summary.pendingLeaseRequests | number }}</div>
+            </div>
+            <div class="stat-icon-wrapper purple">
+              <span>🤝</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-indicator up">● Deals: {{ summary.completedTransactions }}</span>
+            <span class="stat-subtext">Awaiting approval</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card stat-managers" routerLink="/site-manager-requests">
+          <div class="stat-card-header">
+            <div class="stat-info">
+              <span class="stat-card-title">ACCESS REQUESTS</span>
+              <div class="stat-card-value">{{ summary.pendingRegistrationRequests | number }}</div>
+            </div>
+            <div class="stat-icon-wrapper amber">
+              <span>👨‍💼</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-indicator" [ngClass]="summary.pendingRegistrationRequests > 0 ? 'alert' : 'up'">
+              {{ summary.pendingRegistrationRequests > 0 ? '● Pending Review' : '✓ Up to date' }}
+            </span>
+            <span class="stat-subtext">Site manager approvals</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card stat-inventory" [class.has-alert]="summary.lowInventoryAlerts > 0" routerLink="/maintenance">
+          <div class="stat-card-header">
+            <div class="stat-info">
+              <span class="stat-card-title">LOW INVENTORY</span>
+              <div class="stat-card-value">{{ summary.lowInventoryAlerts | number }}</div>
+            </div>
+            <div class="stat-icon-wrapper orange">
+              <span>📦</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="trend-indicator" [ngClass]="summary.lowInventoryAlerts > 0 ? 'alert' : 'up'">
+              {{ summary.lowInventoryAlerts > 0 ? '⚠️ Restock Required' : '✓ Spares Optimal' }}
+            </span>
+            <span class="stat-subtext">Below threshold</span>
+          </div>
+        </mat-card>
+      </div>
+
+      <!-- Operations Insight Panels -->
+      <div class="dashboard-panels">
+
+        <!-- Panel 1: Disaster & Emergency Sharing -->
+        <mat-card class="panel-card disaster-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-icon-badge red">🚨</div>
+              <div>
+                <h3>Disaster Monitoring</h3>
+                <p>Critical incident tracking and mutual aid telemetry</p>
+              </div>
+            </div>
+            <span class="panel-status-pill" [class.danger]="summary.activeIncidents > 0">
+              {{ summary.activeIncidents > 0 ? summary.activeIncidents + ' Critical' : 'Normal' }}
+            </span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.activeIncidents }}</span>
+                <span class="metric-label">Open Incidents</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ disasterDetails?.totalAffectedTowersCount || 0 }}</span>
+                <span class="metric-label">Affected Towers</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ disasterDetails?.activeEmergencySharingsCount || 0 }}</span>
+                <span class="metric-label">Emergency Relays</span>
+              </div>
+            </div>
+            <p class="panel-description">
+              {{ summary.activeIncidents > 0
+                ? 'Active emergency response protocols are coordinating traffic redistribution across unaffected host towers.'
+                : 'All regional cell sectors are operating under steady-state parameters without disruption.' }}
+            </p>
+            <div class="panel-action-bar">
+              <a mat-button class="action-link" routerLink="/disasters">
+                View Disaster Center &rarr;
+              </a>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Panel 2: Lease & Commercial Overview -->
+        <mat-card class="panel-card lease-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-icon-badge purple">💰</div>
+              <div>
+                <h3>Lease & Revenue Flow</h3>
+                <p>Commercial capacity sharing and asset transactions</p>
+              </div>
+            </div>
+            <span class="panel-status-pill success">
+              {{ (revenueDetails?.activeLeasesCount || summary.pendingLeaseRequests) }} Active / Pending
+            </span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric-item">
+                <span class="metric-num">{{ (revenueDetails?.totalMonthlyLeaseRevenue || 0) | currency:'INR':'symbol':'1.0-0' }}</span>
+                <span class="metric-label">Monthly Lease Flow</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.pendingLeaseRequests }}</span>
+                <span class="metric-label">Pending Requests</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.completedTransactions }}</span>
+                <span class="metric-label">Completed Deals</span>
+              </div>
+            </div>
+            <p class="panel-description">
+              Infrastructure sharing agreements enable optimized co-location revenues and capital-efficient network scaling.
+            </p>
+            <div class="panel-action-bar">
+              <a mat-button class="action-link" routerLink="/leases">
+                Manage Leases &rarr;
+              </a>
+              <a mat-button class="action-link" routerLink="/transactions">
+                Ledger &rarr;
+              </a>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Panel 3: Maintenance & Spares -->
+        <mat-card class="panel-card maintenance-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-icon-badge orange">🔧</div>
+              <div>
+                <h3>Maintenance & Spares</h3>
+                <p>Field repair orders and critical inventory reserves</p>
+              </div>
+            </div>
+            <span class="panel-status-pill" [class.warning]="summary.openRepairs > 0 || summary.lowInventoryAlerts > 0">
+              {{ summary.openRepairs }} Repairs Active
+            </span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.openRepairs }}</span>
+                <span class="metric-label">Open Repairs</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.lowInventoryAlerts }}</span>
+                <span class="metric-label">Low Stock Alerts</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ maintenanceDetails?.completedRepairsCount || 0 }}</span>
+                <span class="metric-label">Completed Repairs</span>
+              </div>
+            </div>
+            <p class="panel-description">
+              Continuous preventative maintenance schedules and automated warehouse triggers ensure high SLA uptime.
+            </p>
+            <div class="panel-action-bar">
+              <a mat-button class="action-link" routerLink="/maintenance">
+                Open Maintenance Workorders &rarr;
+              </a>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Panel 4: Market & Asset Availability -->
+        <mat-card class="panel-card market-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-icon-badge green">📈</div>
+              <div>
+                <h3>Market & Inventory Snapshot</h3>
+                <p>Tower availability and slot capacity distribution</p>
+              </div>
+            </div>
+            <span class="panel-status-pill">
+              {{ summary.totalTowers }} Total Sites
+            </span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.availableForLease }}</span>
+                <span class="metric-label">For Lease</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ summary.availableForSale }}</span>
+                <span class="metric-label">For Sale</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-num">{{ ((utilizationDetails?.overallOccupancyRate || 0) * 100) | number:'1.0-0' }}%</span>
+                <span class="metric-label">Slot Occupancy</span>
+              </div>
+            </div>
+            <p class="panel-description">
+              Available towers are listed on the open marketplace for rapid cross-operator sharing and asset transfer.
+            </p>
+            <div class="panel-action-bar">
+              <a mat-button class="action-link" routerLink="/towers">
+                Explore All Towers &rarr;
+              </a>
+            </div>
+          </div>
+        </mat-card>
+
+      </div>
+
+      <!-- Quick Navigation Hub -->
+      <div class="quick-nav-hub">
+        <div class="hub-header">
+          <h4>System Modules</h4>
+          <span>Direct access to platform operations</span>
+        </div>
+        <div class="hub-grid">
+          <div class="hub-card" routerLink="/towers">
+            <span class="hub-icon">📡</span>
+            <div class="hub-info">
+              <strong>Towers</strong>
+              <small>Manage site inventory</small>
+            </div>
+          </div>
+          <div class="hub-card" routerLink="/leases">
+            <span class="hub-icon">🤝</span>
+            <div class="hub-info">
+              <strong>Leasing</strong>
+              <small>Shared tenancy contracts</small>
+            </div>
+          </div>
+          <div class="hub-card" routerLink="/transactions">
+            <span class="hub-icon">💰</span>
+            <div class="hub-info">
+              <strong>Transactions</strong>
+              <small>Buy & sell ledger</small>
+            </div>
+          </div>
+          <div class="hub-card" routerLink="/disasters">
+            <span class="hub-icon">🚨</span>
+            <div class="hub-info">
+              <strong>Disasters</strong>
+              <small>Emergency protocols</small>
+            </div>
+          </div>
+          <div class="hub-card" routerLink="/maintenance">
+            <span class="hub-icon">🔧</span>
+            <div class="hub-info">
+              <strong>Maintenance</strong>
+              <small>Repairs & spare parts</small>
+            </div>
+          </div>
+          <div class="hub-card" routerLink="/operators">
+            <span class="hub-icon">🏢</span>
+            <div class="hub-info">
+              <strong>Operators</strong>
+              <small>Telecom companies</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-template>
+
 </ng-container>
 
 <ng-template #dashboardLoading>

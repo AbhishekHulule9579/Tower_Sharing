@@ -32,7 +32,11 @@ public class TowerController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tower>> getAllTowers() {
+    public ResponseEntity<List<Tower>> getAllTowers(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User actor = getUserFromToken(authorization);
+        if (actor != null && actor.getRole() == UserRole.ADMIN && actor.getOperator() != null) {
+            return ResponseEntity.ok(towerService.getTowersByOperator(actor.getOperator().getId()));
+        }
         return ResponseEntity.ok(towerService.getAllTowers());
     }
 
@@ -46,6 +50,10 @@ public class TowerController {
                                          @RequestHeader(name = "Authorization", required = false) String authorization) {
         User actor = getUserFromToken(authorization);
         if (actor != null) {
+            if (actor.getRole() == UserRole.ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Administrator role is governance read-only for tower creation.");
+            }
             if (actor.getRole() == UserRole.OPERATOR_MANAGER || actor.getRole() == UserRole.SITE_MANAGER) {
                 if (actor.getOperator() == null) {
                     return ResponseEntity.badRequest().body("User has no associated operator company.");

@@ -30,37 +30,36 @@
 
       <div class="header-info">
         <div class="header-title-row">
-          <h1>Tower Inventory</h1>
+          <h1>{{ isAdmin ? (getOperatorDisplayName() + ' Tower Governance Registry') : 'Tower Inventory' }}</h1>
           <span class="user-role-chip" *ngIf="currentUser">
-            {{ isAdmin ? '👑 System Administrator' : ('🏢 ' + (getOperatorDisplayName() || 'Operator Manager')) }}
+            {{ isAdmin ? ('🛡️ ' + getOperatorDisplayName() + ' Admin (Governance)') : ('🏢 ' + (getOperatorDisplayName() || 'Operator Manager')) }}
           </span>
         </div>
         <p>
           {{
             isAdmin
-              ? 'View, create, and manage tower assets across all network operators.'
+              ? 'Governance oversight of registered cell sites and sharing telemetry owned by ' + getOperatorDisplayName() + '.'
               : isOperatorUser
               ? 'Manage ' + (getOperatorDisplayName() || 'your company') + ' tower infrastructure and inventory.'
-              : 'View tower assets across the network (Log in as Operator Manager or Admin to add/modify).'
+              : 'View tower assets across the network (Log in as Operator Manager or Admin to manage).'
           }}
         </p>
       </div>
     </div>
 
-    <div class="section-grid">
+    <!-- Commercial Summary Cards (Visible only for non-admin managers) -->
+    <div class="section-grid" *ngIf="!isAdmin">
       <mat-card class="summary-card total">
         <div class="summary-icon">📡</div>
-
         <div class="summary-info">
-          <span>{{ isOperatorUser && !isAdmin ? (getOperatorDisplayName() + ' Towers') : 'Total Towers' }}</span>
-          <strong>{{ getDisplayedTowers().length }}</strong>
-          <small>{{ isOperatorUser && !isAdmin ? 'Under your management' : 'Registered network towers' }}</small>
+          <span>{{ isOperatorUser ? (getOperatorDisplayName() + ' Towers') : 'Total Towers' }}</span>
+          <strong>{{ getRawDisplayedTowers().length }}</strong>
+          <small>{{ isOperatorUser ? 'Under your management' : 'Registered network towers' }}</small>
         </div>
       </mat-card>
 
       <mat-card class="summary-card lease">
         <div class="summary-icon">🔑</div>
-
         <div class="summary-info">
           <span>Available to Lease</span>
           <strong>{{ availableForLease.length }}</strong>
@@ -70,7 +69,6 @@
 
       <mat-card class="summary-card sale">
         <div class="summary-icon">🏷️</div>
-
         <div class="summary-info">
           <span>Available to Sell</span>
           <strong>{{ availableForSale.length }}</strong>
@@ -84,10 +82,12 @@
         <div class="title">
           <div class="title-icon">📡</div>
           <div>
-            <h2>All Towers</h2>
+            <h2>{{ isAdmin ? (getOperatorDisplayName() + ' Registered Towers') : 'All Towers' }}</h2>
             <p>
               {{
-                isOperatorUser && !isAdmin
+                isAdmin
+                  ? 'Showing isolated tower inventory for ' + getOperatorDisplayName() + ' (Governance oversight mode)'
+                  : isOperatorUser
                   ? 'Showing network inventory (You can edit and manage ' + getOperatorDisplayName() + ' towers)'
                   : 'Manage your existing tower inventory'
               }}
@@ -96,8 +96,26 @@
         </div>
 
         <span class="count">
-          {{ towers.length }} Towers
+          {{ getFilteredTowers().length }} Towers
         </span>
+      </div>
+
+      <!-- Dynamic Search Filter Bar -->
+      <div class="tower-search-bar">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Filter by Tower Code (e.g. TOW-MUM-01), Site Name, City/State, or Status (ACTIVE, MAINTENANCE)..."
+        />
+        <button
+          *ngIf="searchTerm"
+          type="button"
+          class="clear-search"
+          (click)="searchTerm=''; onSearchChange()">
+          ✕
+        </button>
       </div>
 
       <mat-divider></mat-divider>
@@ -105,7 +123,7 @@
       <div class="table-scroll">
         <table
           mat-table
-          [dataSource]="towers"
+          [dataSource]="getPaginatedTowers()"
           class="tower-table"
         >
           <ng-container matColumnDef="towerCode">
@@ -170,7 +188,7 @@
                 class="status-badge"
                 [ngClass]="{
                   'active': tower.status === 'ACTIVE',
-                  'inactive': tower.status === 'INACTIVE',
+                  'inactive': tower.status === 'INACTIVE' || tower.status === 'INACTIVE_DAMAGED',
                   'maintenance': tower.status === 'MAINTENANCE' || tower.status === 'UNDER_MAINTENANCE',
                   'disaster': tower.status === 'DISASTER_AFFECTED'
                 }"
@@ -233,7 +251,7 @@
               </div>
 
               <ng-template #lockedAction>
-                <span class="locked-badge" [title]="'Owned by ' + (tower.ownerOperator?.name || 'another operator')">
+                <span class="locked-badge" [title]="isAdmin ? 'Governance Oversight Mode' : 'Owned by ' + (tower.ownerOperator?.name || 'another operator')">
                   🔒 Read-only
                 </span>
               </ng-template>
@@ -250,10 +268,28 @@
             *matRowDef="let row; columns: displayedColumns"
           ></tr>
         </table>
+
+        <div class="empty-table-state" *ngIf="getFilteredTowers().length === 0">
+          <span>🔍</span>
+          <strong>No matching towers found</strong>
+          <small>Try adjusting your search criteria or check operator filter.</small>
+        </div>
       </div>
+
+      <!-- Angular Material Paginator -->
+      <mat-paginator
+        [length]="getFilteredTowers().length"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)"
+        class="tower-paginator"
+        showFirstLastButtons>
+      </mat-paginator>
     </mat-card>
 
-    <mat-card class="content-card form-card" *ngIf="canManageTowers; else noAccessCard">
+    <!-- Add / Edit Tower Form (Visible strictly for Operator / Site Managers, hidden for Admin) -->
+    <mat-card class="content-card form-card" *ngIf="canManageTowers">
       <div class="card-header">
         <div class="title">
           <div class="title-icon purple">
@@ -268,15 +304,13 @@
               {{
                 selectedTower
                   ? 'Update tower specifications and network sharing settings'
-                  : !isAdmin && isOperatorUser
-                  ? 'Add a new tower registered under ' + getOperatorDisplayName()
-                  : 'Add a new tower or update existing tower details'
+                  : 'Add a new tower registered under ' + getOperatorDisplayName()
               }}
             </p>
           </div>
         </div>
 
-        <span class="operator-lock-chip" *ngIf="!isAdmin && isOperatorUser">
+        <span class="operator-lock-chip" *ngIf="isOperatorUser">
           🔒 Registered under {{ getOperatorDisplayName() }}
         </span>
       </div>
@@ -340,7 +374,7 @@
             <mat-select
               name="ownerOperatorId"
               [(ngModel)]="towerForm.ownerOperatorId"
-              [disabled]="!isAdmin"
+              [disabled]="true"
             >
               <mat-option
                 *ngFor="let operator of operators"
@@ -363,8 +397,8 @@
               <mat-option value="INACTIVE">
                 INACTIVE
               </mat-option>
-              <mat-option value="MAINTENANCE">
-                MAINTENANCE
+              <mat-option value="UNDER_MAINTENANCE">
+                UNDER_MAINTENANCE
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -474,17 +508,20 @@
       </mat-card-content>
     </mat-card>
 
-    <ng-template #noAccessCard>
-      <mat-card class="content-card no-access-card">
-        <div class="no-access-content">
-          <span class="no-access-icon">🔒</span>
-          <h3>Tower Management Restricted</h3>
-          <p>
-            Only authorized Company Site Managers, Operator Managers, and Administrators can create new towers or modify existing inventory. Please log in with an authorized account to add towers.
-          </p>
+    <div *ngIf="isAdmin" class="admin-governance-footer-card">
+      <mat-card class="content-card governance-info-card">
+        <div class="gov-info-content">
+          <span class="gov-icon">🛡️</span>
+          <div>
+            <h3>Admin Governance Notice</h3>
+            <p>
+              As the {{ getOperatorDisplayName() }} Administrator, you have read-only governance and verification privileges over company tower infrastructure. New tower provisioning and operational maintenance changes are handled by assigned Site Engineers and Operations Managers.
+            </p>
+          </div>
         </div>
       </mat-card>
-    </ng-template>
+    </div>
+
   </div>
 </ng-container>
 
