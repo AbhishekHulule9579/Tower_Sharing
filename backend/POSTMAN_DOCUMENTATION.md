@@ -223,16 +223,29 @@
 
 
 
-SELECT * FROM USERS;
-ID  	EMAIL  	PASSWORD  	ROLE  	USERNAME  	OPERATOR_ID  	FULL_NAME  	PHONE_NUMBER  
-1	admin@jio.com	admin123	ADMIN	jio_admin	1	Jio System Administrator	+91-9820000001
-2	admin@airtel.com	admin123	ADMIN	airtel_admin	2	Airtel System Administrator	+91-9810000002
-3	admin@vodafoneidea.com	admin123	ADMIN	vi_admin	3	Vi System Administrator	+91-9830000003
-4	admin@bsnl.co.in	admin123	ADMIN	bsnl_admin	4	BSNL System Administrator	+91-9410000004
-2	manager@jio.com	pass123	OPERATOR_MANAGER	jio_mgr	1	null	null
-3	manager@airtel.com	pass123	OPERATOR_MANAGER	airtel_mgr	2	null	null
-4	manager@vi.com	pass123	OPERATOR_MANAGER	vi_mgr	3	null	null
-5	manager@bsnl.com	pass123	OPERATOR_MANAGER	bsnl_mgr	4	null	null
-6	mumbai.site@jio.com	site123	SITE_MANAGER	site_mgr_mumbai	1	null	null
-7	delhi.site@airtel.com	site123	SITE_MANAGER	site_mgr_delhi	2	null	null
-8	chennai.site@vi.com	site123	SITE_MANAGER	site_mgr_chennai	3	null	null
+## 6. Default Test Accounts
+
+Below are the default pre-configured accounts you can use to log in and test the system:
+
+### Admin Accounts
+| Operator | Email | Password | Role |
+|----------|-------|----------|------|
+| Jio | `admin@jio.com` | `admin123` | ADMIN |
+| Airtel | `admin@airtel.com` | `admin123` | ADMIN |
+| Vodafone Idea | `admin@vodafoneidea.com` | `admin123` | ADMIN |
+| BSNL | `admin@bsnl.co.in` | `admin123` | ADMIN |
+
+### Operator Manager Accounts
+| Operator | Email | Password | Role |
+|----------|-------|----------|------|
+| Jio | `manager@jio.com` | `pass123` | OPERATOR_MANAGER |
+| Airtel | `manager@airtel.com` | `pass123` | OPERATOR_MANAGER |
+| Vodafone Idea | `manager@vi.com` | `pass123` | OPERATOR_MANAGER |
+| BSNL | `manager@bsnl.com` | `pass123` | OPERATOR_MANAGER |
+
+### Site Manager Accounts
+| Location/Operator | Email | Password | Role |
+|-------------------|-------|----------|------|
+| Mumbai (Jio) | `mumbai.site@jio.com` | `site123` | SITE_MANAGER |
+| Delhi (Airtel) | `delhi.site@airtel.com` | `site123` | SITE_MANAGER |
+| Chennai (VI) | `chennai.site@vi.com` | `site123` | SITE_MANAGER |

@@ -151,7 +151,7 @@ public class AuthController {
             return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         if (actor.getRole() == UserRole.ADMIN) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByRequestedRoleAndStatus(UserRole.OPERATOR_MANAGER, SiteManagerRequestStatus.PENDING));
+            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.OPERATOR_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins or operator managers can view pending site manager requests.");
     }
@@ -170,7 +170,8 @@ public class AuthController {
         if (request.getStatus() != SiteManagerRequestStatus.PENDING) {
             return ResponseEntity.badRequest().body("Request has already been processed.");
         }
-        boolean canApprove = (actor.getRole() == UserRole.ADMIN && request.getRequestedRole() == UserRole.OPERATOR_MANAGER)
+        boolean canApprove = (actor.getRole() == UserRole.ADMIN && request.getRequestedRole() == UserRole.OPERATOR_MANAGER
+                    && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()))
                 || (actor.getRole() == UserRole.OPERATOR_MANAGER && request.getRequestedRole() == UserRole.SITE_MANAGER
                     && actor.getOperator() != null && actor.getOperator().getId().equals(request.getOperator().getId()));
         if (!canApprove) {

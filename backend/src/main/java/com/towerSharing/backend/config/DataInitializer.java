@@ -86,37 +86,22 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         // Seed 4 operator-specific ADMIN accounts
-        seedUserIfMissing("Jio Admin", "admin123", "admin@jio.com", "Jio Admin", "+91-9820000001", UserRole.ADMIN, jio);
-        seedUserIfMissing("Airtel Admin", "admin123", "admin@airtel.com", "Airtel Admin", "+91-9810000002", UserRole.ADMIN, airtel);
-        seedUserIfMissing("Vi Admin", "admin123", "admin@vodafoneidea.com", "Vi Admin", "+91-9830000003", UserRole.ADMIN, vi);
-        seedUserIfMissing("BSNL Admin", "admin123", "admin@bsnl.co.in", "BSNL Admin", "+91-9410000004", UserRole.ADMIN, bsnl);
+        seedUserIfMissing("jio_admin", "admin123", "admin@jio.com", "Jio System Administrator", "+91-9820000001", UserRole.ADMIN, jio);
+        seedUserIfMissing("airtel_admin", "admin123", "admin@airtel.com", "Airtel System Administrator", "+91-9810000002", UserRole.ADMIN, airtel);
+        seedUserIfMissing("vi_admin", "admin123", "admin@vodafoneidea.com", "Vi System Administrator", "+91-9830000003", UserRole.ADMIN, vi);
+        seedUserIfMissing("bsnl_admin", "admin123", "admin@bsnl.co.in", "BSNL System Administrator", "+91-9410000004", UserRole.ADMIN, bsnl);
 
         // Seed default operator managers & site managers if missing
-        seedUserIfMissing("Jio Operations Manager", "jio123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
-        seedUserIfMissing("Airtel Operations Manager", "airtel123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
-        seedUserIfMissing("Vi Operations Manager", "vi123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
-        seedUserIfMissing("BSNL Operations Manager", "bsnl123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
+        seedUserIfMissing("jio_mgr", "pass123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
+        seedUserIfMissing("airtel_mgr", "pass123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
+        seedUserIfMissing("vi_mgr", "pass123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
+        seedUserIfMissing("bsnl_mgr", "pass123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
 
-        seedUserIfMissing("Jio Site Engineer Mumbai", "site123", "sitemgr@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
-        seedUserIfMissing("Airtel Site Engineer Delhi", "site123", "sitemgr@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
-        seedUserIfMissing("Vi Site Engineer Chennai", "site123", "sitemgr@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
+        seedUserIfMissing("site_mgr_mumbai", "site123", "mumbai.site@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
+        seedUserIfMissing("site_mgr_delhi", "site123", "delhi.site@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
+        seedUserIfMissing("site_mgr_chennai", "site123", "chennai.site@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
 
-        // ── Always run: remove stale / obsolete user rows that have been superseded ──
-        // These are old user rows from previous seed runs with different names/usernames.
-        // Keep only rows whose full_name matches a canonical seeded name.
-        java.util.Set<String> canonicalNames = java.util.Set.of(
-            "Jio Admin", "Airtel Admin", "Vi Admin", "BSNL Admin",
-            "Jio Operations Manager", "Airtel Operations Manager",
-            "Vi Operations Manager", "BSNL Operations Manager",
-            "Jio Site Engineer Mumbai", "Airtel Site Engineer Delhi",
-            "Vi Site Engineer Chennai"
-        );
-        userRepository.findAll().stream()
-            .filter(u -> !canonicalNames.contains(u.getFullName()))
-            .forEach(u -> {
-                userRepository.delete(u);
-                System.out.println(">>> Removed obsolete user: " + u.getFullName() + " <" + u.getEmail() + ">");
-            });
+        // ── Removed stale / obsolete user rows deletion logic to preserve dynamic registrations ──
 
         // ── Always run: de-duplicate remaining rows by email (keep lowest ID) ──
         userRepository.findAll().stream()
