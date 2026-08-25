@@ -101,6 +101,39 @@ public class DataInitializer implements CommandLineRunner {
         seedUserIfMissing("Airtel Site Engineer Delhi", "site123", "sitemgr@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
         seedUserIfMissing("Vi Site Engineer Chennai", "site123", "sitemgr@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
 
+        // ── Always run: remove stale / obsolete user rows that have been superseded ──
+        // These are old user rows from previous seed runs with different names/usernames.
+        // Keep only rows whose full_name matches a canonical seeded name.
+        java.util.Set<String> canonicalNames = java.util.Set.of(
+            "Jio Admin", "Airtel Admin", "Vi Admin", "BSNL Admin",
+            "Jio Operations Manager", "Airtel Operations Manager",
+            "Vi Operations Manager", "BSNL Operations Manager",
+            "Jio Site Engineer Mumbai", "Airtel Site Engineer Delhi",
+            "Vi Site Engineer Chennai"
+        );
+        userRepository.findAll().stream()
+            .filter(u -> !canonicalNames.contains(u.getFullName()))
+            .forEach(u -> {
+                userRepository.delete(u);
+                System.out.println(">>> Removed obsolete user: " + u.getFullName() + " <" + u.getEmail() + ">");
+            });
+
+        // ── Always run: de-duplicate remaining rows by email (keep lowest ID) ──
+        userRepository.findAll().stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                u -> u.getEmail() == null ? "" : u.getEmail().toLowerCase()))
+            .values().stream()
+            .filter(list -> list.size() > 1)
+            .forEach(list -> {
+                list.stream()
+                    .sorted(java.util.Comparator.comparingLong(User::getId))
+                    .skip(1)
+                    .forEach(dup -> {
+                        userRepository.delete(dup);
+                        System.out.println(">>> Removed duplicate email entry: " + dup.getEmail() + " (id=" + dup.getId() + ")");
+                    });
+            });
+
         if (towerRepository.count() > 0) {
             System.out.println(">>> Base telecom towers & domain data already initialized.");
             return;
@@ -180,18 +213,6 @@ public class DataInitializer implements CommandLineRunner {
 
         // Record Inventory Usage for Repair Work Order
         usageRepository.save(new RepairInventoryUsage(rep1, inv4, 2));
-
-        // De-duplicate: if same email appears more than once, keep only the first row
-        userRepository.findAll().stream()
-            .collect(java.util.stream.Collectors.groupingBy(u -> u.getEmail() == null ? "" : u.getEmail().toLowerCase()))
-            .values().stream()
-            .filter(list -> list.size() > 1)
-            .forEach(list -> {
-                list.stream().skip(1).forEach(dup -> {
-                    userRepository.delete(dup);
-                    System.out.println(">>> Removed duplicate user entry for email: " + dup.getEmail());
-                });
-            });
 
         System.out.println(">>> Demo Core Setup Completed Successfully!");
     }
