@@ -131,12 +131,33 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Administrator registration is not available.");
         }
 
+        String state = request.getState() != null ? request.getState().trim() : null;
+        if (requestedRole == UserRole.OPERATOR_MANAGER) {
+            if (state == null || state.isBlank()) {
+                return ResponseEntity.badRequest().body("State jurisdiction is required for Operations Manager registration.");
+            }
+            if (userRepository.existsByOperatorAndRoleAndStateIgnoreCase(operator, UserRole.OPERATOR_MANAGER, state)) {
+                return ResponseEntity.badRequest().body("The state '" + state + "' is already assigned to an Operations Manager for " + operator.getName() + ".");
+            }
+            if (siteManagerRequestRepository.existsByOperatorAndRequestedRoleAndStatusAndStateIgnoreCase(operator, UserRole.OPERATOR_MANAGER, SiteManagerRequestStatus.PENDING, state)) {
+                return ResponseEntity.badRequest().body("The state '" + state + "' is already assigned and a registration request for " + operator.getName() + " Operations Manager is currently pending admin review.");
+            }
+        } else if (requestedRole == UserRole.SITE_MANAGER) {
+            if (state == null || state.isBlank()) {
+                return ResponseEntity.badRequest().body("Please select an assigned operating state jurisdiction.");
+            }
+            if (!userRepository.existsByOperatorAndRoleAndStateIgnoreCase(operator, UserRole.OPERATOR_MANAGER, state)) {
+                return ResponseEntity.badRequest().body("No Operations Manager is currently assigned for " + operator.getName() + " in '" + state + "'. Site Managers can only register in states with an active Operations Manager.");
+            }
+        }
+
         SiteManagerRequest newRequest = new SiteManagerRequest(
                 request.getUsername(),
                 request.getPassword(),
                 request.getEmail(),
                 request.getFullName(),
                 request.getPhoneNumber(),
+                state,
                 operator,
                 requestedRole
         );
@@ -151,7 +172,12 @@ public class AuthController {
         }
 
         if (actor.getRole() == UserRole.OPERATOR_MANAGER) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
+            if (actor.getState() != null && !actor.getState().isBlank()) {
+                return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatusAndStateIgnoreCase(
+                        actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING, actor.getState().trim()));
+            }
+            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(
+                    actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         if (actor.getRole() == UserRole.ADMIN) {
             return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndStatus(actor.getOperator(), SiteManagerRequestStatus.PENDING));
@@ -181,8 +207,20 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not allowed to approve this registration request.");
         }
 
+        if (actor.getRole() == UserRole.OPERATOR_MANAGER && actor.getState() != null && !actor.getState().isBlank()) {
+            if (request.getState() == null || !request.getState().equalsIgnoreCase(actor.getState().trim())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only approve Site Managers for your assigned state jurisdiction (" + actor.getState() + ").");
+            }
+        }
+
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("User with this username already exists.");
+        }
+
+        if (request.getRequestedRole() == UserRole.OPERATOR_MANAGER && request.getState() != null && !request.getState().isBlank()) {
+            if (userRepository.existsByOperatorAndRoleAndStateIgnoreCase(request.getOperator(), UserRole.OPERATOR_MANAGER, request.getState().trim())) {
+                return ResponseEntity.badRequest().body("The state '" + request.getState().trim() + "' is already assigned to an Operations Manager for " + request.getOperator().getName() + ".");
+            }
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -192,6 +230,7 @@ public class AuthController {
                 request.getEmail(),
                 request.getFullName(),
                 request.getPhoneNumber(),
+                request.getState(),
                 request.getRequestedRole(),
                 request.getOperator()
         );

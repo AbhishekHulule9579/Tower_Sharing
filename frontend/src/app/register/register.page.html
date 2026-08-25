@@ -15,13 +15,14 @@
 
       <p>
         Create your account and request access to manage telecom
-        operations, tower sites and network activities.
+        operations, state-level cell infrastructure and network telemetry.
       </p>
 
       <div class="features">
-        <div>✓ Secure account registration</div>
-        <div>✓ Operator and site management</div>
-        <div>✓ Role-based platform access</div>
+        <div>✓ Multi-tenant operator isolation</div>
+        <div>✓ Single Operator Manager per State constraint</div>
+        <div>✓ Direct routing to State Operator Manager / Admin</div>
+        <div>✓ Role-based platform governance</div>
       </div>
 
       <div class="status">
@@ -59,12 +60,13 @@
 
           <select
             name="requestedRole"
-            [(ngModel)]="requestedRole">
+            [(ngModel)]="requestedRole"
+            (change)="onOperatorOrRoleChange()">
             <option value="SITE_MANAGER">
               Site Manager
             </option>
             <option value="OPERATOR_MANAGER">
-              Operations Manager
+              Operations Manager (State Head)
             </option>
           </select>
 
@@ -81,8 +83,8 @@
             <strong>
               {{
                 requestedRole === 'SITE_MANAGER'
-                  ? 'Site Manager'
-                  : 'Operations Manager'
+                  ? 'Site Engineer / Manager (Reports to State Operations Manager)'
+                  : 'Operations Manager (Single per State - Reports to Admin)'
               }}
             </strong>
           </div>
@@ -119,7 +121,7 @@
             name="phoneNumber"
             type="tel"
             autocomplete="tel"
-            placeholder="Enter your phone number"
+            placeholder="Enter your 10-digit phone number"
             required
             [(ngModel)]="phoneNumber">
         </div>
@@ -131,7 +133,7 @@
             name="password"
             [type]="hidePassword ? 'password' : 'text'"
             autocomplete="new-password"
-            placeholder="Create a password"
+            placeholder="Create a password (min. 6 characters)"
             required
             [(ngModel)]="password">
 
@@ -143,12 +145,13 @@
           </button>
         </div>
 
-        <label>Operator</label>
+        <label>Telecom Operator</label>
         <div class="select-box">
           <span>🏢</span>
           <select
             name="operatorId"
             [(ngModel)]="operatorId"
+            (change)="onOperatorOrRoleChange()"
             [disabled]="isOperatorsLoading || operators.length === 0">
             <option [ngValue]="null" disabled>
               {{ isOperatorsLoading ? 'Loading telecom operators...' : 'Select your operator' }}
@@ -162,8 +165,54 @@
           <span class="arrow">⌄</span>
         </div>
 
-        <div class="operator-load-message" *ngIf="isOperatorsLoading">
-          Loading available telecom operators…
+        <!-- Dynamic State Jurisdiction Selector -->
+        <!-- Case 1: SITE_MANAGER -> Shows ONLY operating states where an Operations Manager exists for this operator -->
+        <ng-container *ngIf="requestedRole === 'SITE_MANAGER'">
+          <label>Assigned Operating State</label>
+          <div class="select-box" *ngIf="operatorId && operatingStates.length > 0">
+            <span>📍</span>
+            <select name="state" [(ngModel)]="state" required>
+              <option value="" disabled>Select State (Active Operator Manager Available)</option>
+              <option *ngFor="let s of operatingStates" [value]="s">
+                {{ s }}
+              </option>
+            </select>
+            <span class="arrow">⌄</span>
+          </div>
+
+          <div class="no-states-warning" *ngIf="operatorId && operatingStates.length === 0 && !isLoadingStates">
+            ⚠️ No Operations Manager is currently assigned for {{ selectedOperatorName }} in any state. A state Operations Manager must be registered first.
+          </div>
+
+          <div class="no-states-warning" *ngIf="!operatorId">
+            ℹ️ Please select an operator first to view active operating states.
+          </div>
+        </ng-container>
+
+        <!-- Case 2: OPERATOR_MANAGER -> Shows all Indian States, with already assigned states disabled -->
+        <ng-container *ngIf="requestedRole === 'OPERATOR_MANAGER'">
+          <label>Assigned State Jurisdiction (Single Manager per State)</label>
+          <div class="select-box" *ngIf="operatorId">
+            <span>📍</span>
+            <select name="state" [(ngModel)]="state" required>
+              <option value="" disabled>Select State Jurisdiction</option>
+              <option
+                *ngFor="let s of indianStates"
+                [value]="s"
+                [disabled]="isStateAssigned(s)">
+                {{ s }} {{ isStateAssigned(s) ? '(🔒 Already Assigned)' : '' }}
+              </option>
+            </select>
+            <span class="arrow">⌄</span>
+          </div>
+
+          <div class="no-states-warning" *ngIf="!operatorId">
+            ℹ️ Please select an operator first to choose an unassigned state jurisdiction.
+          </div>
+        </ng-container>
+
+        <div class="operator-load-message" *ngIf="isOperatorsLoading || isLoadingStates">
+          Loading jurisdiction data…
         </div>
 
         <div class="operator-load-message error" *ngIf="operatorsLoadError">
@@ -176,9 +225,9 @@
           *ngIf="operatorId !== null">
           <span>🏢</span>
           <div>
-            <small>SELECTED OPERATOR</small>
+            <small>TARGET OPERATOR & JURISDICTION</small>
             <strong>
-              {{ selectedOperatorName }}
+              {{ selectedOperatorName }} {{ state ? '• ' + state : '' }}
             </strong>
           </div>
         </div>
@@ -187,7 +236,7 @@
           mat-flat-button
           type="submit"
           class="submit-button"
-          [disabled]="isLoading">
+          [disabled]="isLoading || (requestedRole === 'SITE_MANAGER' && operatorId !== null && operatingStates.length === 0)">
           <span *ngIf="!isLoading">
             📝 &nbsp; Submit Registration Request
           </span>
@@ -207,7 +256,7 @@
       </form>
 
       <div class="security">
-        🔒 Your registration information is securely submitted
+        🔒 Enterprise Encrypted • Evaluated under Single Manager per State constraint
       </div>
     </mat-card>
   </div>

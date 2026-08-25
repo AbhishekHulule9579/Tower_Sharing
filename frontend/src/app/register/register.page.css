@@ -424,6 +424,17 @@ label {
   cursor: pointer;
 }
 
+.no-states-warning {
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fcd34d;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-bottom: 15px;
+}
+
 .security {
   margin-top: 17px;
   text-align: center;

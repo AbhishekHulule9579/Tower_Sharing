@@ -27,6 +27,7 @@ export class RegisterPage implements OnInit {
   requestedRole = 'SITE_MANAGER';
   password = '';
   operatorId: number | null = null;
+  state = '';
   errorMessage = '';
   successMessage = '';
   operators: any[] = [];
@@ -34,6 +35,42 @@ export class RegisterPage implements OnInit {
   operatorsLoadError = '';
   hidePassword = true;
   isLoading = false;
+
+  operatingStates: string[] = [];
+  assignedStates: string[] = [];
+  isLoadingStates = false;
+
+  readonly indianStates: string[] = [
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+    'Delhi'
+  ];
 
   constructor(
     private readonly authService: AuthService,
@@ -50,8 +87,8 @@ export class RegisterPage implements OnInit {
     this.operatorsLoadError = '';
 
     this.operatorService.getAllOperators().subscribe({
-      next: data => {
-        this.operators = (data || []).filter(operator => operator.active !== false);
+      next: (data) => {
+        this.operators = (data || []).filter((operator) => operator.active !== false);
         this.isOperatorsLoading = false;
 
         if (this.operators.length === 0) {
@@ -67,10 +104,46 @@ export class RegisterPage implements OnInit {
   }
 
   get selectedOperatorName(): string {
-    const operator = this.operators.find(op => op.id === this.operatorId);
+    const operator = this.operators.find((op) => op.id === this.operatorId);
     return operator
       ? `${operator.name} (${operator.code})`
       : 'Operator selected';
+  }
+
+  onOperatorOrRoleChange(): void {
+    this.state = '';
+    this.errorMessage = '';
+    this.operatingStates = [];
+    this.assignedStates = [];
+
+    if (!this.operatorId) return;
+
+    this.isLoadingStates = true;
+    this.operatorService.getOperatingStates(this.operatorId).subscribe({
+      next: (states) => {
+        this.operatingStates = states || [];
+        this.isLoadingStates = false;
+      },
+      error: () => {
+        this.operatingStates = [];
+        this.isLoadingStates = false;
+      }
+    });
+
+    this.operatorService.getAssignedStates(this.operatorId).subscribe({
+      next: (states) => {
+        this.assignedStates = states || [];
+      },
+      error: () => {
+        this.assignedStates = [];
+      }
+    });
+  }
+
+  isStateAssigned(stateName: string): boolean {
+    return this.assignedStates.some(
+      (s) => s.trim().toLowerCase() === stateName.trim().toLowerCase()
+    );
   }
 
   submit(): void {
@@ -82,9 +155,10 @@ export class RegisterPage implements OnInit {
       !this.email.trim() ||
       !this.phoneNumber.trim() ||
       !this.password ||
-      this.operatorId === null
+      this.operatorId === null ||
+      !this.state.trim()
     ) {
-      this.errorMessage = 'Please complete all fields to submit your request.';
+      this.errorMessage = 'Please complete all fields, including your assigned state jurisdiction.';
       return;
     }
 
@@ -110,6 +184,17 @@ export class RegisterPage implements OnInit {
       return;
     }
 
+    // Role-specific state validation
+    if (this.requestedRole === 'OPERATOR_MANAGER' && this.isStateAssigned(this.state)) {
+      this.errorMessage = `The state '${this.state}' is already assigned to an Operations Manager for ${this.selectedOperatorName}.`;
+      return;
+    }
+
+    if (this.requestedRole === 'SITE_MANAGER' && !this.operatingStates.includes(this.state)) {
+      this.errorMessage = `No active Operations Manager is assigned for ${this.selectedOperatorName} in '${this.state}'. Please select an available state from the list.`;
+      return;
+    }
+
     if (this.isLoading) return;
 
     this.isLoading = true;
@@ -120,6 +205,7 @@ export class RegisterPage implements OnInit {
       email: this.email.trim(),
       fullName: this.fullName.trim(),
       phoneNumber: this.phoneNumber.trim(),
+      state: this.state.trim(),
       operatorId: this.operatorId,
       requestedRole: this.requestedRole
     }).subscribe({
@@ -127,12 +213,12 @@ export class RegisterPage implements OnInit {
         this.isLoading = false;
         this.successMessage =
           this.requestedRole === 'SITE_MANAGER'
-            ? 'Request submitted. Your Operations Manager will review it.'
-            : 'Request submitted. The Platform Administrator will review it.';
+            ? `Request submitted. The ${this.selectedOperatorName} Operations Manager for ${this.state} will review it.`
+            : `Request submitted for ${this.state} jurisdiction. The ${this.selectedOperatorName} Administrator will review it.`;
 
-        setTimeout(() => this.router.navigate(['/login']), 1800);
+        setTimeout(() => this.router.navigate(['/login']), 2200);
       },
-      error: error => {
+      error: (error) => {
         this.isLoading = false;
         this.errorMessage =
           typeof error?.error === 'string'

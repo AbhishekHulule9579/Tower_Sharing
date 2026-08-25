@@ -59,7 +59,7 @@ export class AuthService {
     return this.userSubject.value?.role ?? null;
   }
 
-  registerSiteManagerRequest(data: { username: string; password: string; email: string; fullName: string; phoneNumber: string; operatorId: number; requestedRole: string }): Observable<any> {
+  registerSiteManagerRequest(data: { username: string; password: string; email: string; fullName: string; phoneNumber: string; state?: string; operatorId: number; requestedRole: string }): Observable<any> {
     return this.http.post<any>(`${this.api}/site-manager-requests`, data);
   }
 

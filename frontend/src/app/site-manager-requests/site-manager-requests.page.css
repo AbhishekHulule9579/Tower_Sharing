@@ -203,6 +203,15 @@
   color: #cbd5e1;
 }
 
+.state-pill {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #86efac;
+  font-weight: 500;
+}
+
 .request-actions {
   display: flex;
   align-items: center;

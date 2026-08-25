@@ -58,7 +58,7 @@ export class App {
   protected readonly apiBaseUrl = environment.apiBaseUrl;
   protected readonly currentUser$ = this.authService.currentUser$;
 
-  private readonly allNavItems: AppNavItem[] = [
+  private readonly operatorManagerNavItems: AppNavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
     { label: 'Towers', path: '/towers', icon: '📡' },
     { label: 'Leases', path: '/leases', icon: '🤝', badge: 0, badgeColor: 'accent' },
@@ -67,6 +67,16 @@ export class App {
     { label: 'Maintenance', path: '/maintenance', icon: '🔧', badge: 0, badgeColor: 'warn' },
     { label: 'Operators & Managers', path: '/operators', icon: '🏢' },
     { label: 'Site Manager Requests', path: '/site-manager-requests', icon: '✓' }
+  ];
+
+  private readonly siteManagerNavItems: AppNavItem[] = [
+    { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
+    { label: 'Towers', path: '/towers', icon: '📡' },
+    { label: 'Leases', path: '/leases', icon: '🤝', badge: 0, badgeColor: 'accent' },
+    { label: 'Transactions', path: '/transactions', icon: '💰' },
+    { label: 'Disasters', path: '/disasters', icon: '🚨', badge: 0, badgeColor: 'warn' },
+    { label: 'Maintenance', path: '/maintenance', icon: '🔧', badge: 0, badgeColor: 'warn' },
+    { label: 'Operators & Managers', path: '/operators', icon: '🏢' }
   ];
 
   private readonly adminNavItems: AppNavItem[] = [
@@ -81,7 +91,10 @@ export class App {
     if (user?.role === 'ADMIN') {
       return this.adminNavItems;
     }
-    return this.allNavItems;
+    if (user?.role === 'SITE_MANAGER') {
+      return this.siteManagerNavItems;
+    }
+    return this.operatorManagerNavItems;
   }
 
   logout(): void {

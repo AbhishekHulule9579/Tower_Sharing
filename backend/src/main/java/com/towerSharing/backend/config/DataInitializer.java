@@ -86,20 +86,20 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         // Seed 4 operator-specific ADMIN accounts
-        seedUserIfMissing("jio_admin", "admin123", "admin@jio.com", "Jio System Administrator", "+91-9820000001", UserRole.ADMIN, jio);
-        seedUserIfMissing("airtel_admin", "admin123", "admin@airtel.com", "Airtel System Administrator", "+91-9810000002", UserRole.ADMIN, airtel);
-        seedUserIfMissing("vi_admin", "admin123", "admin@vodafoneidea.com", "Vi System Administrator", "+91-9830000003", UserRole.ADMIN, vi);
-        seedUserIfMissing("bsnl_admin", "admin123", "admin@bsnl.co.in", "BSNL System Administrator", "+91-9410000004", UserRole.ADMIN, bsnl);
+        seedUserIfMissing("jio_admin", "admin123", "admin@jio.com", "Jio System Administrator", "+91-9820000001", "Maharashtra", UserRole.ADMIN, jio);
+        seedUserIfMissing("airtel_admin", "admin123", "admin@airtel.com", "Airtel System Administrator", "+91-9810000002", "Delhi", UserRole.ADMIN, airtel);
+        seedUserIfMissing("vi_admin", "admin123", "admin@vodafoneidea.com", "Vi System Administrator", "+91-9830000003", "Tamil Nadu", UserRole.ADMIN, vi);
+        seedUserIfMissing("bsnl_admin", "admin123", "admin@bsnl.co.in", "BSNL System Administrator", "+91-9410000004", "Karnataka", UserRole.ADMIN, bsnl);
 
         // Seed default operator managers & site managers if missing
-        seedUserIfMissing("jio_mgr", "pass123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", UserRole.OPERATOR_MANAGER, jio);
-        seedUserIfMissing("airtel_mgr", "pass123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", UserRole.OPERATOR_MANAGER, airtel);
-        seedUserIfMissing("vi_mgr", "pass123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", UserRole.OPERATOR_MANAGER, vi);
-        seedUserIfMissing("bsnl_mgr", "pass123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", UserRole.OPERATOR_MANAGER, bsnl);
+        seedUserIfMissing("jio_mgr", "pass123", "manager@jio.com", "Jio Operations Manager", "+91-9820099001", "Maharashtra", UserRole.OPERATOR_MANAGER, jio);
+        seedUserIfMissing("airtel_mgr", "pass123", "manager@airtel.com", "Airtel Operations Manager", "+91-9810099002", "Delhi", UserRole.OPERATOR_MANAGER, airtel);
+        seedUserIfMissing("vi_mgr", "pass123", "manager@vi.com", "Vi Operations Manager", "+91-9830099003", "Tamil Nadu", UserRole.OPERATOR_MANAGER, vi);
+        seedUserIfMissing("bsnl_mgr", "pass123", "manager@bsnl.com", "BSNL Operations Manager", "+91-9410099004", "Karnataka", UserRole.OPERATOR_MANAGER, bsnl);
 
-        seedUserIfMissing("site_mgr_mumbai", "site123", "mumbai.site@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", UserRole.SITE_MANAGER, jio);
-        seedUserIfMissing("site_mgr_delhi", "site123", "delhi.site@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", UserRole.SITE_MANAGER, airtel);
-        seedUserIfMissing("site_mgr_chennai", "site123", "chennai.site@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", UserRole.SITE_MANAGER, vi);
+        seedUserIfMissing("site_mgr_mumbai", "site123", "mumbai.site@jio.com", "Jio Site Engineer Mumbai", "+91-9820088001", "Maharashtra", UserRole.SITE_MANAGER, jio);
+        seedUserIfMissing("site_mgr_delhi", "site123", "delhi.site@airtel.com", "Airtel Site Engineer Delhi", "+91-9810088002", "Delhi", UserRole.SITE_MANAGER, airtel);
+        seedUserIfMissing("site_mgr_chennai", "site123", "chennai.site@vi.com", "Vi Site Engineer Chennai", "+91-9830088003", "Tamil Nadu", UserRole.SITE_MANAGER, vi);
 
         // ── Removed stale / obsolete user rows deletion logic to preserve dynamic registrations ──
 
@@ -202,13 +202,18 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println(">>> Demo Core Setup Completed Successfully!");
     }
 
-    private void seedUserIfMissing(String username, String rawPassword, String email, String fullName, String phone, UserRole role, Operator operator) {
-        boolean exists = userRepository.existsByFullName(fullName)
-                || userRepository.findByUsername(username).isPresent()
-                || !userRepository.findByEmailIgnoreCase(email).isEmpty();
-        if (!exists) {
-            userRepository.save(new User(username, passwordEncoder.encode(rawPassword), email, fullName, phone, role, operator));
-            System.out.println(">>> Predefined account created: " + fullName + " (" + role + ") for " + (operator != null ? operator.getName() : "All"));
+    private void seedUserIfMissing(String username, String rawPassword, String email, String fullName, String phone, String state, UserRole role, Operator operator) {
+        User existing = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByFullNameIgnoreCase(fullName))
+                .or(() -> userRepository.findFirstByEmailIgnoreCase(email))
+                .orElse(null);
+        if (existing == null) {
+            userRepository.save(new User(username, passwordEncoder.encode(rawPassword), email, fullName, phone, state, role, operator));
+            System.out.println(">>> Predefined account created: " + fullName + " (" + role + ") for " + (operator != null ? operator.getName() : "All") + " [" + state + "]");
+        } else if (existing.getState() == null || existing.getState().isBlank()) {
+            existing.setState(state);
+            userRepository.save(existing);
+            System.out.println(">>> Updated state for predefined account: " + fullName + " -> " + state);
         }
     }
 }

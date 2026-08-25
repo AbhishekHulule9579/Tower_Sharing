@@ -92,6 +92,7 @@
               <div class="user-meta-row">
                 <span>✉️ {{ manager.email }}</span>
                 <span>📱 {{ manager.phoneNumber || '+91-9800000000' }}</span>
+                <span *ngIf="manager.state" class="state-tag">📍 {{ manager.state }}</span>
               </div>
             </div>
 
@@ -145,6 +146,7 @@
               <div class="user-meta-row">
                 <span>✉️ {{ staff.email }}</span>
                 <span>📱 {{ staff.phoneNumber || '+91-9800000000' }}</span>
+                <span *ngIf="staff.state" class="state-tag">📍 {{ staff.state }}</span>
               </div>
             </div>
 

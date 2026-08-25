@@ -37,6 +37,9 @@ public class SiteManagerRequest {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "state")
+    private String state;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "requested_role", nullable = false)
     private UserRole requestedRole = UserRole.SITE_MANAGER;
@@ -64,6 +67,19 @@ public class SiteManagerRequest {
         this.email = email;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
+        this.operator = operator;
+        this.requestedRole = requestedRole;
+        this.status = SiteManagerRequestStatus.PENDING;
+        this.requestedDate = LocalDate.now();
+    }
+
+    public SiteManagerRequest(String username, String password, String email, String fullName, String phoneNumber, String state, Operator operator, UserRole requestedRole) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.state = state;
         this.operator = operator;
         this.requestedRole = requestedRole;
         this.status = SiteManagerRequestStatus.PENDING;
@@ -116,6 +132,14 @@ public class SiteManagerRequest {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public UserRole getRequestedRole() { return requestedRole; }

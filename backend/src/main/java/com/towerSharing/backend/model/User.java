@@ -37,6 +37,9 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "state")
+    private String state;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
@@ -61,6 +64,17 @@ public class User {
         this.email = email;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
+        this.role = role;
+        this.operator = operator;
+    }
+
+    public User(String username, String password, String email, String fullName, String phoneNumber, String state, UserRole role, Operator operator) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.state = state;
         this.role = role;
         this.operator = operator;
     }
@@ -111,6 +125,14 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public UserRole getRole() {

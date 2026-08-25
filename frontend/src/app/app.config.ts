@@ -3,7 +3,6 @@ import { ApplicationConfig } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { routes } from './app.routes';
 import { HttpErrorInterceptor } from './core/http-error.interceptor';
 import { LoadingInterceptor } from './core/loading.interceptor';
@@ -22,7 +21,6 @@ export const appConfig: ApplicationConfig = {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpErrorInterceptor,
       multi: true
-    },
-    provideClientHydration(withEventReplay())
+    }
   ]
 };

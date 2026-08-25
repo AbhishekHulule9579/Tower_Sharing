@@ -165,7 +165,7 @@
           </div>
         </mat-card>
 
-        <mat-card class="stat-card stat-managers" routerLink="/site-manager-requests">
+        <mat-card class="stat-card stat-managers" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'" routerLink="/site-manager-requests">
           <div class="stat-card-header">
             <div class="stat-info">
               <span class="stat-card-title">ACCESS REQUESTS</span>
@@ -183,21 +183,21 @@
           </div>
         </mat-card>
 
-        <mat-card class="stat-card stat-inventory" [class.has-alert]="summary.lowInventoryAlerts > 0" routerLink="/maintenance">
+        <mat-card class="stat-card stat-inventory" [class.has-alert]="summary.openRepairs > 0" routerLink="/maintenance">
           <div class="stat-card-header">
             <div class="stat-info">
-              <span class="stat-card-title">LOW INVENTORY</span>
-              <div class="stat-card-value">{{ summary.lowInventoryAlerts | number }}</div>
+              <span class="stat-card-title">OPEN REPAIRS</span>
+              <div class="stat-card-value">{{ summary.openRepairs | number }}</div>
             </div>
             <div class="stat-icon-wrapper orange">
-              <span>📦</span>
+              <span>🔧</span>
             </div>
           </div>
           <div class="stat-card-footer">
-            <span class="trend-indicator" [ngClass]="summary.lowInventoryAlerts > 0 ? 'alert' : 'up'">
-              {{ summary.lowInventoryAlerts > 0 ? '⚠️ Restock Required' : '✓ Spares Optimal' }}
+            <span class="trend-indicator" [ngClass]="summary.openRepairs > 0 ? 'alert' : 'up'">
+              {{ summary.openRepairs > 0 ? '● Active Work Orders' : '✓ All Repaired' }}
             </span>
-            <span class="stat-subtext">Below threshold</span>
+            <span class="stat-subtext">Maintenance queue</span>
           </div>
         </mat-card>
       </div>
@@ -409,13 +409,6 @@
             <div class="hub-info">
               <strong>Disasters</strong>
               <small>Emergency protocols</small>
-            </div>
-          </div>
-          <div class="hub-card" routerLink="/maintenance">
-            <span class="hub-icon">🔧</span>
-            <div class="hub-info">
-              <strong>Maintenance</strong>
-              <small>Repairs & spare parts</small>
             </div>
           </div>
           <div class="hub-card" routerLink="/operators">

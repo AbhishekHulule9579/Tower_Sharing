@@ -1,5 +1,6 @@
 package com.towerSharing.backend.repository;
 
+import com.towerSharing.backend.model.Operator;
 import com.towerSharing.backend.model.User;
 import com.towerSharing.backend.model.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,7 +17,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findFirstByEmailIgnoreCase(String email);
     boolean existsByFullName(String fullName);
     List<User> findByRole(UserRole role);
-    List<User> findByOperator(com.towerSharing.backend.model.Operator operator);
-    List<User> findByOperatorAndRole(com.towerSharing.backend.model.Operator operator, UserRole role);
-    long countByOperatorAndRole(com.towerSharing.backend.model.Operator operator, UserRole role);
+    List<User> findByOperator(Operator operator);
+    List<User> findByOperatorAndRole(Operator operator, UserRole role);
+    long countByOperatorAndRole(Operator operator, UserRole role);
+    boolean existsByOperatorAndRoleAndStateIgnoreCase(Operator operator, UserRole role, String state);
+    Optional<User> findByOperatorAndRoleAndStateIgnoreCase(Operator operator, UserRole role, String state);
 }

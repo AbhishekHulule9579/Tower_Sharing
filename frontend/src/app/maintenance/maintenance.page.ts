@@ -37,7 +37,6 @@ import { TowerService } from '../services/tower.service';
   styleUrls: ['./maintenance.page.css']
 })
 export class MaintenancePage implements OnInit, OnDestroy {
-  inventoryItems: any[] = [];
   repairRequests: any[] = [];
   towers: any[] = [];
   siteManagers: any[] = [];
@@ -48,17 +47,7 @@ export class MaintenancePage implements OnInit, OnDestroy {
   isOperatorUser = false;
   private authSubscription?: Subscription;
 
-  inventoryColumns = ['itemCode', 'itemName', 'quantity', 'location', 'threshold'];
   repairColumns = ['tower', 'priority', 'status', 'siteManager', 'actions'];
-
-  inventoryForm: any = {
-    itemCode: '',
-    itemName: '',
-    quantity: 0,
-    unitPrice: 0,
-    location: '',
-    minThreshold: 0
-  };
 
   repairForm: any = {
     towerId: null,
@@ -66,12 +55,6 @@ export class MaintenancePage implements OnInit, OnDestroy {
     priority: 'HIGH',
     description: '',
     assignedSiteManagerId: null
-  };
-
-  consumeForm: any = {
-    repairRequestId: null,
-    inventoryItemId: null,
-    quantityUsed: 0
   };
 
   restoreForm: any = {
@@ -126,9 +109,7 @@ export class MaintenancePage implements OnInit, OnDestroy {
 
   public getSelectableSiteManagers(): any[] {
     if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.siteManagers.filter(
-        (m) => m.operator?.id === this.currentUser?.operatorId || m.operatorId === this.currentUser?.operatorId
-      );
+      return this.siteManagers.filter((m) => m.operator?.id === this.currentUser?.operatorId);
     }
     return this.siteManagers;
   }
@@ -142,8 +123,14 @@ export class MaintenancePage implements OnInit, OnDestroy {
     return this.repairRequests;
   }
 
+  public getHighPriorityCount(): number {
+    return this.getDisplayedRepairs().filter((r) => r.priority === 'HIGH').length;
+  }
+
   public getManageableRepairs(): any[] {
-    return this.getDisplayedRepairs().filter((r) => r.status !== 'COMPLETED');
+    return this.getDisplayedRepairs().filter(
+      (r) => r.status === 'REPORTED' || r.status === 'IN_PROGRESS' || r.status === 'PENDING'
+    );
   }
 
   public canManageRepair(rep: any): boolean {
@@ -154,161 +141,88 @@ export class MaintenancePage implements OnInit, OnDestroy {
     return false;
   }
 
-  public selectForAction(rep: any): void {
-    this.consumeForm.repairRequestId = rep.id;
-    this.restoreForm.repairRequestId = rep.id;
-    this.snackBar.open(`Selected work order ${rep.requestTicketCode || rep.id} for tower ${rep.tower?.towerCode}`, 'Close', {
-      duration: 3000
-    });
-  }
-
   private loadData(): void {
     forkJoin({
-      inventory: this.maintenanceService.getInventory(),
-      repairRequests: this.maintenanceService.getRepairRequests(),
+      repairs: this.maintenanceService.getRepairRequests(),
       towers: this.towerService.getAll(),
       siteManagers: this.operatorService.getSiteManagers()
     }).subscribe({
-      next: ({ inventory, repairRequests, towers, siteManagers }) => {
-        this.inventoryItems = inventory || [];
-        this.repairRequests = repairRequests || [];
-        this.towers = towers || [];
-        this.siteManagers = siteManagers || [];
+      next: (result) => {
+        this.repairRequests = result.repairs || [];
+        this.towers = result.towers || [];
+        this.siteManagers = result.siteManagers || [];
         this.dataLoaded = true;
         this.changeDetector.detectChanges();
       },
       error: () => {
         this.dataLoaded = true;
-        this.snackBar.open('Unable to load maintenance data.', 'Close', { duration: 3000 });
+        this.snackBar.open('Unable to load maintenance records.', 'Dismiss', {
+          duration: 4000
+        });
+        this.changeDetector.detectChanges();
       }
     });
   }
 
-  public createInventoryItem(): void {
-    if (!this.inventoryForm.itemCode?.trim()) {
-      this.snackBar.open('⚠️ Part Code is required (e.g. PART-ANT-5G).', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (!this.inventoryForm.itemName?.trim()) {
-      this.snackBar.open('⚠️ Part Name is required (e.g. 5G Panel Antenna).', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (this.inventoryForm.quantity === null || this.inventoryForm.quantity === undefined || this.inventoryForm.quantity < 0) {
-      this.snackBar.open('⚠️ Stock quantity cannot be negative.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (this.inventoryForm.unitPrice === null || this.inventoryForm.unitPrice === undefined || this.inventoryForm.unitPrice < 0) {
-      this.snackBar.open('⚠️ Unit price cannot be negative.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (!this.inventoryForm.location?.trim()) {
-      this.snackBar.open('⚠️ Depot location is required (e.g. Mumbai Depot).', 'Close', { duration: 3500 });
-      return;
-    }
-
-    this.maintenanceService.addInventoryItem(this.inventoryForm).subscribe({
-      next: () => {
-        this.snackBar.open('✓ Inventory item added successfully.', 'Close', { duration: 3500 });
-        this.inventoryForm = { itemCode: '', itemName: '', quantity: 0, unitPrice: 0, location: '', minThreshold: 0 };
-        this.loadData();
-      },
-      error: (err) => {
-        const msg = err?.error?.message || err?.error || '⚠️ Unable to add inventory item.';
-        this.snackBar.open(msg, 'Close', { duration: 3500 });
-      }
+  public selectForAction(rep: any): void {
+    this.restoreForm.repairRequestId = rep.id;
+    this.snackBar.open(`Selected Ticket #${rep.requestTicketCode || rep.id} for status restoration.`, 'OK', {
+      duration: 3000
     });
   }
 
   public createRepairRequest(): void {
     if (!this.repairForm.towerId) {
-      this.snackBar.open('⚠️ Please select a tower requiring repair.', 'Close', { duration: 3500 });
+      this.snackBar.open('Please select a target tower.', 'Dismiss', { duration: 3000 });
       return;
     }
 
-    if (!this.repairForm.assignedSiteManagerId) {
-      this.snackBar.open('⚠️ Please assign a Site Manager to this work order.', 'Close', { duration: 3500 });
-      return;
-    }
+    const payload = {
+      tower: { id: this.repairForm.towerId },
+      incident: this.repairForm.incidentId ? { id: this.repairForm.incidentId } : null,
+      priority: this.repairForm.priority || 'HIGH',
+      description: this.repairForm.description || 'Routine maintenance and inspection request',
+      assignedSiteManager: this.repairForm.assignedSiteManagerId
+        ? { id: this.repairForm.assignedSiteManagerId }
+        : null
+    };
 
-    if (!this.repairForm.description?.trim()) {
-      this.snackBar.open('⚠️ Please enter a description of the required repair work.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    this.maintenanceService.createRepairRequest(this.repairForm).subscribe({
+    this.maintenanceService.createRepairRequest(payload).subscribe({
       next: () => {
-        this.snackBar.open('✓ Repair request created successfully.', 'Close', { duration: 3500 });
-        this.repairForm = { towerId: null, incidentId: null, priority: 'HIGH', description: '', assignedSiteManagerId: null };
+        this.snackBar.open('Repair request work order created successfully.', 'Dismiss', { duration: 3500 });
+        this.repairForm = {
+          towerId: null,
+          incidentId: null,
+          priority: 'HIGH',
+          description: '',
+          assignedSiteManagerId: null
+        };
         this.loadData();
       },
-      error: (err) => {
-        const msg = err?.error?.message || err?.error || '⚠️ Unable to create repair request.';
-        this.snackBar.open(msg, 'Close', { duration: 4000 });
-      }
-    });
-  }
-
-  public consumeParts(): void {
-    const id = this.consumeForm.repairRequestId;
-    if (!id) {
-      this.snackBar.open('⚠️ Please select a repair request ticket.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (!this.consumeForm.inventoryItemId) {
-      this.snackBar.open('⚠️ Please select a spare part inventory item.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    if (!this.consumeForm.quantityUsed || this.consumeForm.quantityUsed <= 0) {
-      this.snackBar.open('⚠️ Quantity used must be greater than 0.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    const selectedItem = this.inventoryItems.find((i) => i.id === this.consumeForm.inventoryItemId);
-    if (selectedItem && this.consumeForm.quantityUsed > selectedItem.quantity) {
-      this.snackBar.open(`⚠️ Insufficient stock. Only ${selectedItem.quantity} units available.`, 'Close', { duration: 4000 });
-      return;
-    }
-
-    this.maintenanceService.consumeParts(id, this.consumeForm).subscribe({
-      next: () => {
-        this.snackBar.open('✓ Parts consumed and inventory deducted successfully.', 'Close', { duration: 3500 });
-        this.consumeForm = { repairRequestId: null, inventoryItemId: null, quantityUsed: 0 };
-        this.loadData();
-      },
-      error: (err) => {
-        const msg = err?.error?.message || err?.error || '⚠️ Unable to record inventory usage.';
-        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      error: () => {
+        this.snackBar.open('Failed to create repair request.', 'Dismiss', { duration: 4000 });
       }
     });
   }
 
   public restoreTower(): void {
-    const id = this.restoreForm.repairRequestId;
-    if (!id) {
-      this.snackBar.open('⚠️ Please select a repair request to mark restored.', 'Close', { duration: 3500 });
+    if (!this.restoreForm.repairRequestId) {
+      this.snackBar.open('Please select a repair request ticket to mark as restored.', 'Dismiss', { duration: 3000 });
       return;
     }
 
-    if (!this.restoreForm.maintenanceNotes?.trim()) {
-      this.snackBar.open('⚠️ Please enter maintenance completion notes before restoring.', 'Close', { duration: 3500 });
-      return;
-    }
-
-    this.maintenanceService.restoreTower(id, this.restoreForm).subscribe({
+    const notes = this.restoreForm.maintenanceNotes || 'Maintenance completed successfully. Cell site returned to ACTIVE service.';
+    this.maintenanceService.restoreTower(this.restoreForm.repairRequestId, { maintenanceNotes: notes }).subscribe({
       next: () => {
-        this.snackBar.open('✓ Tower restored to ACTIVE status successfully.', 'Close', { duration: 3500 });
-        this.restoreForm = { repairRequestId: null, maintenanceNotes: '' };
+        this.snackBar.open('Tower status successfully restored to ACTIVE service.', 'Dismiss', { duration: 3500 });
+        this.restoreForm = {
+          repairRequestId: null,
+          maintenanceNotes: ''
+        };
         this.loadData();
       },
-      error: (err) => {
-        const msg = err?.error?.message || err?.error || '⚠️ Unable to restore tower.';
-        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      error: () => {
+        this.snackBar.open('Failed to restore tower status.', 'Dismiss', { duration: 4000 });
       }
     });
   }

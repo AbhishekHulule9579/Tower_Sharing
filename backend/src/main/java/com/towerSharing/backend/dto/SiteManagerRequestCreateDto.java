@@ -6,6 +6,7 @@ public class SiteManagerRequestCreateDto {
     private String email;
     private String fullName;
     private String phoneNumber;
+    private String state;
     private Long operatorId;
     private String requestedRole;
 
@@ -18,6 +19,17 @@ public class SiteManagerRequestCreateDto {
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.operatorId = operatorId;
+    }
+
+    public SiteManagerRequestCreateDto(String username, String password, String email, String fullName, String phoneNumber, String state, Long operatorId, String requestedRole) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.state = state;
+        this.operatorId = operatorId;
+        this.requestedRole = requestedRole;
     }
 
     public String getUsername() {
@@ -60,6 +72,14 @@ public class SiteManagerRequestCreateDto {
         this.phoneNumber = phoneNumber;
     }
 
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
     public Long getOperatorId() {
         return operatorId;
     }
@@ -68,6 +88,11 @@ public class SiteManagerRequestCreateDto {
         this.operatorId = operatorId;
     }
 
-    public String getRequestedRole() { return requestedRole; }
-    public void setRequestedRole(String requestedRole) { this.requestedRole = requestedRole; }
+    public String getRequestedRole() {
+        return requestedRole;
+    }
+
+    public void setRequestedRole(String requestedRole) {
+        this.requestedRole = requestedRole;
+    }
 }

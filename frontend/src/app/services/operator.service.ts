@@ -14,6 +14,14 @@ export class OperatorService {
     return this.http.get<any[]>(`${this.api}`, this.authHeaders());
   }
 
+  getOperatingStates(operatorId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.api}/${operatorId}/operating-states`);
+  }
+
+  getAssignedStates(operatorId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.api}/${operatorId}/assigned-states`);
+  }
+
   getAllUsers(): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiBaseUrl}/api/users`, this.authHeaders());
   }

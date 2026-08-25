@@ -52,6 +52,7 @@
               <span>📱 {{ request.phoneNumber || '+91-9800000000' }}</span>
               <span class="role-pill">{{ request.requestedRole === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager' }}</span>
               <span class="operator-pill">🏢 {{ request.operator?.name || request.operator?.code }}</span>
+              <span class="state-pill" *ngIf="request.state">📍 {{ request.state }}</span>
             </div>
           </div>
           <div class="request-actions" *ngIf="canApprove(request); else statusOnly">
