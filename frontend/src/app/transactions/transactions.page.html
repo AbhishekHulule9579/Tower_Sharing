@@ -29,12 +29,12 @@
           <p>Historical log of asset purchases and acquisitions</p>
         </div>
       </div>
-      <span class="count-badge">{{ transactions.length }} Transactions</span>
+      <span class="count-badge">{{ getDisplayedTransactions().length }} Transactions</span>
     </div>
     <mat-divider></mat-divider>
     <mat-card-content>
       <div class="table-scroll">
-        <table mat-table [dataSource]="transactions" class="tx-table">
+        <table mat-table [dataSource]="getDisplayedTransactions()" class="tx-table">
           <ng-container matColumnDef="tower">
             <th mat-header-cell *matHeaderCellDef> TOWER ASSET </th>
             <td mat-cell *matCellDef="let tx">
@@ -62,9 +62,50 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef> STATUS </th>
             <td mat-cell *matCellDef="let tx">
-              <span class="status-badge">
+              <span class="status-badge" [ngClass]="tx.status?.toLowerCase()">
                 <span class="status-dot"></span>
-                {{ tx.status }}
+                <span *ngIf="tx.status === 'PROPOSED'">⏳ PROPOSED</span>
+                <span *ngIf="tx.status === 'COMPLETED'">✓ COMPLETED</span>
+                <span *ngIf="tx.status === 'CANCELLED' || tx.status === 'REJECTED'">✕ REJECTED</span>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> ACTIONS </th>
+            <td mat-cell *matCellDef="let tx">
+              <ng-container *ngIf="tx.status === 'PROPOSED'">
+                <div class="action-btn-group" *ngIf="canApproveTransaction(tx); else awaitingSeller">
+                  <button
+                    type="button"
+                    class="btn-action approve"
+                    title="Approve Tower Sale & Transfer Ownership"
+                    (click)="approveTransaction(tx.id)"
+                  >
+                    ✓ Approve
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-action reject"
+                    title="Reject Purchase Request"
+                    (click)="rejectTransaction(tx.id)"
+                  >
+                    ✕ Reject
+                  </button>
+                </div>
+                <ng-template #awaitingSeller>
+                  <span class="awaiting-badge" [title]="'Only ' + (tx.sellerOperator?.name || 'the seller') + ' can approve or reject'">
+                    ⏳ Awaiting Seller Approval
+                  </span>
+                </ng-template>
+              </ng-container>
+
+              <span *ngIf="tx.status === 'COMPLETED'" class="status-completed-label">
+                ✓ Ownership Transferred
+              </span>
+
+              <span *ngIf="tx.status === 'CANCELLED' || tx.status === 'REJECTED'" class="status-rejected-label">
+                ✕ Rejected by Seller
               </span>
             </td>
           </ng-container>
@@ -72,6 +113,12 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+
+        <div class="empty-table-state" *ngIf="getDisplayedTransactions().length === 0">
+          <span class="empty-icon">💰</span>
+          <strong>No transaction records found</strong>
+          <small>{{ isOperatorUser ? 'No asset buy/sell transactions recorded for ' + (getOperatorDisplayName() || 'your operator') + (currentUser?.state ? ' in ' + currentUser?.state : '') + '.' : 'No transaction records found.' }}</small>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>
@@ -82,31 +129,39 @@
         <div class="title-icon purple">🛒</div>
         <div>
           <h3>Buy a Tower Asset</h3>
-          <p>Acquire registered towers from other telecom operators</p>
+          <p>Acquire registered towers from other telecom operators{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</p>
         </div>
       </div>
       <span class="operator-lock-chip" *ngIf="!isAdmin && isOperatorUser">
-        🔒 Purchasing as {{ getOperatorDisplayName() }}
+        🔒 Purchasing as {{ getOperatorDisplayName() }} {{ currentUser?.state ? ('(' + currentUser?.state + ')') : '' }}
       </span>
     </div>
     <mat-divider></mat-divider>
     <mat-card-content class="form-content">
-      <div class="form-grid">
+      <div class="no-towers-alert" *ngIf="getSelectableSaleTowers().length === 0">
+        <div class="alert-icon">📡</div>
+        <div class="alert-body">
+          <strong>No Towers Available for Sale{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</strong>
+          <span>
+            There are currently no towers available for purchase from other operators in {{ currentUser?.state || 'your jurisdiction' }}. When another operator lists a tower for sale, it will appear here.
+          </span>
+        </div>
+      </div>
+
+      <div class="form-grid" [class.form-disabled]="getSelectableSaleTowers().length === 0">
         <mat-form-field appearance="outline">
           <mat-label>Tower Available for Sale</mat-label>
           <mat-select
-  name="towerId"
-  [(ngModel)]="transactionForm.towerId"
-  (selectionChange)="onTowerSelected()">
-  <mat-option *ngFor="let tower of getSelectableSaleTowers()" [value]="tower.id">
-    {{ tower.towerCode }}
-    (Seller: {{ tower.ownerOperator?.name }})
-    - ₹{{ tower.salePrice | number }}
-  </mat-option>
+            name="towerId"
+            [(ngModel)]="transactionForm.towerId"
+            (selectionChange)="onTowerSelected()"
+            [disabled]="getSelectableSaleTowers().length === 0"
+            [placeholder]="getSelectableSaleTowers().length === 0 ? 'No towers available for sale' : 'Select a tower'"
+          >
+            <mat-option *ngFor="let tower of getSelectableSaleTowers()" [value]="tower.id">
+              {{ tower.towerCode }} — {{ tower.name }} ({{ tower.city }} | Seller: {{ tower.ownerOperator?.name }}) - ₹{{ tower.salePrice | number }}
+            </mat-option>
           </mat-select>
-          <mat-hint *ngIf="getSelectableSaleTowers().length === 0">
-            No towers currently listed for sale by other operators.
-          </mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" *ngIf="selectedTower">
           <mat-label>Seller Operator</mat-label>
@@ -125,15 +180,20 @@
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Agreed Price (INR)</mat-label>
-          <input matInput type="number" name="agreedPrice" [(ngModel)]="transactionForm.agreedPrice" readonly/>
+          <input matInput type="number" name="agreedPrice" [(ngModel)]="transactionForm.agreedPrice" readonly [disabled]="getSelectableSaleTowers().length === 0"/>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Notes / Acquisition Terms</mat-label>
-          <input matInput name="notes" [(ngModel)]="transactionForm.notes" />
+          <input matInput name="notes" [(ngModel)]="transactionForm.notes" [disabled]="getSelectableSaleTowers().length === 0" />
         </mat-form-field>
       </div>
       <div class="form-actions">
-        <button mat-raised-button class="submit-button" (click)="buyTower()">
+        <button
+          mat-raised-button
+          class="submit-button"
+          [disabled]="getSelectableSaleTowers().length === 0"
+          (click)="buyTower()"
+        >
           <span>💳</span> Complete Purchase
         </button>
       </div>

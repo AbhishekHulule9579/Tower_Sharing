@@ -39,13 +39,12 @@ export class TransactionsPage implements OnInit, OnDestroy {
   transactions: any[] = [];
   saleTowers: any[] = [];
   buyers: any[] = [];
-  displayedColumns = ['tower', 'seller', 'buyer', 'agreedPrice', 'status'];
+  displayedColumns = ['tower', 'seller', 'buyer', 'agreedPrice', 'status', 'actions'];
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
   isOperatorUser = false;
   private authSubscription?: Subscription;
-
 
   transactionForm: any = {
     towerId: null,
@@ -109,10 +108,81 @@ export class TransactionsPage implements OnInit, OnDestroy {
   }
 
   public getSelectableSaleTowers(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.saleTowers.filter((t) => t.ownerOperator?.id !== this.currentUser?.operatorId);
+    if (!this.isAdmin && this.isOperatorUser) {
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.saleTowers.filter((t) => {
+        const notMine = this.currentUser?.operatorId ? t.ownerOperator?.id !== this.currentUser.operatorId : true;
+        const sameState = userState ? (t.state || '').trim().toLowerCase() === userState : true;
+        return notMine && sameState;
+      });
     }
     return this.saleTowers;
+  }
+
+  public getDisplayedTransactions(): any[] {
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.transactions.filter((tx) => {
+        const isRelatedOp = opId ? (tx.buyerOperator?.id === opId || tx.sellerOperator?.id === opId || tx.tower?.ownerOperator?.id === opId) : true;
+        const towerState = (tx.tower?.state || '').trim().toLowerCase();
+        const isSameState = userState ? (towerState === userState) : true;
+        return isRelatedOp && isSameState;
+      });
+    }
+    return this.transactions;
+  }
+
+  public canApproveTransaction(tx: any): boolean {
+    if (this.isAdmin) return true;
+    if (this.isOperatorUser && this.currentUser?.operatorId) {
+      const sellerId = tx.sellerOperator?.id || tx.tower?.ownerOperator?.id;
+      return sellerId === this.currentUser.operatorId;
+    }
+    return false;
+  }
+
+  public approveTransaction(id: number): void {
+    const tx = this.transactions.find((t) => t.id === id);
+    const towerLabel = tx?.tower?.name || tx?.tower?.towerCode || 'this tower';
+    const buyerName = tx?.buyerOperator?.name || 'the buyer operator';
+    const priceFormatted = tx?.agreedPrice ? `₹${tx.agreedPrice.toLocaleString()}` : '';
+
+    if (!window.confirm(`Are you sure you want to APPROVE the sale of tower "${towerLabel}" to ${buyerName} for ${priceFormatted}?\n\nThis will transfer full tower asset ownership to ${buyerName}.`)) {
+      return;
+    }
+
+    this.transactionService.approveTransaction(id).subscribe({
+      next: () => {
+        this.snackBar.open(`Tower sale approved! Ownership has been transferred to ${buyerName}.`, 'Close', { duration: 4000 });
+        this.loadData();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error || 'Unable to approve transaction.';
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      }
+    });
+  }
+
+  public rejectTransaction(id: number): void {
+    const tx = this.transactions.find((t) => t.id === id);
+    const towerLabel = tx?.tower?.name || tx?.tower?.towerCode || 'this tower';
+    const buyerName = tx?.buyerOperator?.name || 'the buyer operator';
+
+    if (!window.confirm(`Are you sure you want to REJECT the purchase request for tower "${towerLabel}" from ${buyerName}?`)) {
+      return;
+    }
+
+    this.transactionService.rejectTransaction(id).subscribe({
+      next: () => {
+        this.snackBar.open(`Purchase request from ${buyerName} has been rejected.`, 'Close', { duration: 3500 });
+        this.loadData();
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.error || 'Unable to reject transaction.';
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
+      }
+    });
   }
 
   private loadData(): void {
@@ -159,34 +229,36 @@ export class TransactionsPage implements OnInit, OnDestroy {
 
     const towerLabel = selectedTower ? `"${selectedTower.name}" (${selectedTower.towerCode})` : 'this tower';
     const sellerName = selectedTower?.ownerOperator?.name || 'seller operator';
-    if (!window.confirm(`Are you sure you want to PURCHASE tower ${towerLabel} from ${sellerName} for ₹${this.transactionForm.agreedPrice.toLocaleString()}?`)) {
+    if (!window.confirm(`Are you sure you want to send a purchase request for tower ${towerLabel} to ${sellerName} for ₹${this.transactionForm.agreedPrice.toLocaleString()}?`)) {
       return;
     }
 
     this.transactionService.buyTower(this.transactionForm).subscribe({
       next: () => {
-        this.snackBar.open('Tower purchase recorded successfully.', 'Close', { duration: 3000 });
+        this.snackBar.open(`Purchase request submitted to ${sellerName} for approval.`, 'Close', { duration: 3500 });
         this.transactionForm = {
           towerId: null,
           buyerOperatorId: (!this.isAdmin && this.currentUser?.operatorId) ? this.currentUser.operatorId : null,
           agreedPrice: 0,
           notes: ''
         };
+        this.selectedTower = null;
         this.loadData();
       },
-      error: () => this.snackBar.open('Unable to submit purchase.', 'Close', { duration: 3000 })
+      error: () => this.snackBar.open('Unable to submit purchase request.', 'Close', { duration: 3000 })
     });
   }
-public selectedTower: any = null;
 
-onTowerSelected(): void {
-  this.selectedTower = this.saleTowers.find(
-    t => t.id === this.transactionForm.towerId
-  );
+  public selectedTower: any = null;
 
-  if (this.selectedTower) {
-    this.transactionForm.agreedPrice =
-      this.selectedTower.salePrice || 0;
+  onTowerSelected(): void {
+    this.selectedTower = this.saleTowers.find(
+      t => t.id === this.transactionForm.towerId
+    );
+
+    if (this.selectedTower) {
+      this.transactionForm.agreedPrice =
+        this.selectedTower.salePrice || 0;
+    }
   }
-}
 }

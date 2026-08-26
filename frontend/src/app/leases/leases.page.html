@@ -167,7 +167,7 @@
           </div>
         </div>
         <span class="operator-lock-chip" *ngIf="!isAdmin && isOperatorUser">
-          🔒 Requesting as {{ getOperatorDisplayName() }}
+          🔒 Requesting as {{ getOperatorDisplayName() }} {{ currentUser?.state ? ('(' + currentUser?.state + ')') : '' }}
         </span>
       </div>
       <mat-divider></mat-divider>
@@ -175,9 +175,9 @@
         <div class="no-towers-alert" *ngIf="getSelectableTowers().length === 0">
           <div class="alert-icon">📡</div>
           <div class="alert-body">
-            <strong>No External Towers Available for Lease</strong>
+            <strong>No External Towers Available for Lease{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</strong>
             <span>
-              There are currently no towers available for leasing from other network operators. When another operator lists tower capacity for lease, it will automatically appear in the selection list.
+              There are currently no towers available for leasing from other network operators in {{ currentUser?.state || 'your jurisdiction' }}. When another operator lists tower capacity for lease, it will automatically appear in the selection list.
             </span>
           </div>
         </div>

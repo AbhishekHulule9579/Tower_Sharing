@@ -339,6 +339,10 @@
   gap: 18px;
 }
 
+.dual-form-grid.single-card {
+  grid-template-columns: 1fr;
+}
+
 .form-content {
   padding: 20px !important;
 }

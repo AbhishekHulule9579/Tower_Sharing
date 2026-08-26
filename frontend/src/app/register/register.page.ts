@@ -183,11 +183,10 @@ export class RegisterPage implements OnInit {
 
     const cleanPhone = this.phoneNumber.replace(/[\s-]/g, '');
 
-    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      this.errorMessage = 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.';
+    if (!/^[6-9]\d{9}$/.test(cleanPhone) || /^(\d)\1{9}$/.test(cleanPhone)) {
+      this.errorMessage = 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9 (dummy numbers like 0000000000 or repetitive digits are not allowed).';
       return;
     }
-
 
     if (this.password.length < 6) {
       this.errorMessage = 'Password must be at least 6 characters long.';
@@ -214,7 +213,7 @@ export class RegisterPage implements OnInit {
       password: this.password,
       email: this.email.trim(),
       fullName: this.fullName.trim(),
-      phoneNumber: this.phoneNumber.trim(),
+      phoneNumber: cleanPhone,
       state: this.state.trim(),
       operatorId: this.operatorId,
       requestedRole: this.requestedRole

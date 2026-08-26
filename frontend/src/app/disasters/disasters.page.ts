@@ -46,6 +46,8 @@ export class DisastersPage implements OnInit, OnDestroy {
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
+  isOperatorManager = false;
+  isSiteManager = false;
   isOperatorUser = false;
   private authSubscription?: Subscription;
 
@@ -102,7 +104,13 @@ export class DisastersPage implements OnInit, OnDestroy {
   private updateUserPermissions(): void {
     const role = this.currentUser?.role;
     this.isAdmin = role === 'ADMIN';
-    this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
+    this.isOperatorManager = role === 'OPERATOR_MANAGER';
+    this.isSiteManager = role === 'SITE_MANAGER';
+    this.isOperatorUser = this.isOperatorManager || this.isSiteManager;
+
+    if (this.currentUser?.state && !this.incidentForm.region) {
+      this.incidentForm.region = this.currentUser.state;
+    }
   }
 
   private syncPredefinedOperator(): void {
@@ -116,27 +124,50 @@ export class DisastersPage implements OnInit, OnDestroy {
   }
 
   public getSelectableTowers(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.towers.filter((t) => t.ownerOperator?.id === this.currentUser?.operatorId);
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.towers.filter((t) => {
+        const matchesOp = opId ? t.ownerOperator?.id === opId : true;
+        const matchesState = userState ? (t.state || '').trim().toLowerCase() === userState : true;
+        return matchesOp && matchesState;
+      });
     }
     return this.towers;
   }
 
   public getSelectableDamagedTowers(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.towers.filter((t) => t.ownerOperator?.id === this.currentUser?.operatorId);
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.towers.filter((t) => {
+        const matchesOp = opId ? t.ownerOperator?.id === opId : true;
+        const matchesState = userState ? (t.state || '').trim().toLowerCase() === userState : true;
+        return matchesOp && matchesState;
+      });
     }
     return this.towers;
   }
 
   public getSelectableHostTowers(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.towers.filter((t) => t.ownerOperator?.id !== this.currentUser?.operatorId);
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.towers.filter((t) => {
+        const notMine = opId ? t.ownerOperator?.id !== opId : true;
+        const matchesState = userState ? (t.state || '').trim().toLowerCase() === userState : true;
+        return notMine && matchesState;
+      });
     }
     return this.towers;
   }
 
   public getSelectableHostOperators(): any[] {
+    const hostTowers = this.getSelectableHostTowers();
+    const hostOpIds = new Set(hostTowers.map((t) => t.ownerOperator?.id).filter(Boolean));
+    if (hostOpIds.size > 0) {
+      return this.operators.filter((op) => hostOpIds.has(op.id));
+    }
     if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
       return this.operators.filter((op) => op.id !== this.currentUser?.operatorId);
     }
@@ -144,12 +175,17 @@ export class DisastersPage implements OnInit, OnDestroy {
   }
 
   public getDisplayedSharings(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.emergencySharings.filter(
-        (s) =>
-          s.affectedOperator?.id === this.currentUser?.operatorId ||
-          s.hostOperator?.id === this.currentUser?.operatorId
-      );
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.emergencySharings.filter((s) => {
+        const isRelatedOp = opId
+          ? s.affectedOperator?.id === opId || s.hostOperator?.id === opId
+          : true;
+        const towerState = (s.damagedTower?.state || s.hostTower?.state || '').trim().toLowerCase();
+        const matchesState = userState ? towerState === userState : true;
+        return isRelatedOp && matchesState;
+      });
     }
     return this.emergencySharings;
   }
@@ -199,10 +235,21 @@ export class DisastersPage implements OnInit, OnDestroy {
       return;
     }
 
+    const title = this.incidentForm.title.trim();
+    if (!window.confirm(`Are you sure you want to REGISTER disaster incident "${title}" for region ${this.incidentForm.region}?`)) {
+      return;
+    }
+
     this.disasterService.createIncident(this.incidentForm).subscribe({
       next: () => {
         this.snackBar.open('✓ Incident created successfully.', 'Close', { duration: 3500 });
-        this.incidentForm = { title: '', disasterType: 'FLOOD', description: '', region: '', affectedTowerIds: [] };
+        this.incidentForm = {
+          title: '',
+          disasterType: 'FLOOD',
+          description: '',
+          region: this.currentUser?.state || '',
+          affectedTowerIds: []
+        };
         this.loadData();
       },
       error: () => this.snackBar.open('⚠️ Unable to create incident.', 'Close', { duration: 3500 })
@@ -269,9 +316,17 @@ export class DisastersPage implements OnInit, OnDestroy {
       return;
     }
 
+    const hostTower = this.towers.find((t) => t.id === this.sharingForm.hostTowerId);
+    const hostOp = this.operators.find((op) => op.id === this.sharingForm.hostOperatorId);
+    const hostOpName = hostOp?.name || hostTower?.ownerOperator?.name || 'host operator';
+
+    if (!window.confirm(`Are you sure you want to REQUEST emergency sharing on tower "${hostTower?.towerCode || 'host'}" from ${hostOpName} for ${this.sharingForm.sharedCapacity} TRX at ₹${this.sharingForm.dailyRate}/day?`)) {
+      return;
+    }
+
     this.disasterService.createEmergencySharing(this.sharingForm).subscribe({
       next: () => {
-        this.snackBar.open('Emergency sharing arrangement recorded.', 'Close', { duration: 3000 });
+        this.snackBar.open(`Emergency mutual aid sharing request sent to ${hostOpName}.`, 'Close', { duration: 3500 });
         this.sharingForm = {
           incidentId: null,
           damagedTowerId: null,

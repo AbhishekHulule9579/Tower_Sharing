@@ -20,4 +20,5 @@ public interface SiteManagerRequestRepository extends JpaRepository<SiteManagerR
     List<SiteManagerRequest> findByOperatorAndRequestedRoleAndStatusAndStateIgnoreCase(Operator operator, UserRole requestedRole, SiteManagerRequestStatus status, String state);
     boolean existsByUsername(String username);
     boolean existsByOperatorAndRequestedRoleAndStatusAndStateIgnoreCase(Operator operator, UserRole requestedRole, SiteManagerRequestStatus status, String state);
+    boolean existsByPhoneNumberAndStatus(String phoneNumber, SiteManagerRequestStatus status);
 }

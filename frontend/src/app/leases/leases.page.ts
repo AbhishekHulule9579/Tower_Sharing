@@ -98,22 +98,30 @@ export class LeasesPage implements OnInit, OnDestroy {
   }
 
   public getDisplayedLeases(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      const opId = this.currentUser.operatorId;
+    if (!this.isAdmin && this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
       return this.leases.filter((l) => {
         const ownerId = l.tower?.ownerOperator?.id || l.lessorOperator?.id;
         const lesseeId = l.lesseeOperator?.id;
-        return ownerId === opId || lesseeId === opId;
+        const isRelatedOp = opId ? (ownerId === opId || lesseeId === opId) : true;
+        const towerState = (l.tower?.state || '').trim().toLowerCase();
+        const isSameState = userState ? (towerState === userState) : true;
+        return isRelatedOp && isSameState;
       });
     }
     return this.leases;
   }
 
   public getSelectableTowers(): any[] {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      return this.allAvailableLeaseTowers.filter(
-        (t) => t.ownerOperator?.id !== this.currentUser?.operatorId
-      );
+    if (!this.isAdmin && this.isOperatorUser) {
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.allAvailableLeaseTowers.filter((t) => {
+        const notMine = this.currentUser?.operatorId ? t.ownerOperator?.id !== this.currentUser.operatorId : true;
+        const towerState = (t.state || '').trim().toLowerCase();
+        const isSameState = userState ? (towerState === userState) : true;
+        return notMine && isSameState;
+      });
     }
     return this.allAvailableLeaseTowers;
   }

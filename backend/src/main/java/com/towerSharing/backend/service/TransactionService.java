@@ -78,34 +78,40 @@ public class TransactionService {
     return transactionRepository.save(tx);
     }
     @Transactional
-public TowerTransaction approveTransaction(Long id) {
+    public TowerTransaction approveTransaction(Long id) {
+        TowerTransaction tx = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
-    TowerTransaction tx = transactionRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        if (tx.getStatus() != TransactionStatus.PROPOSED) {
+            throw new RuntimeException("Transaction has already been processed (" + tx.getStatus() + ").");
+        }
 
-    if (tx.getStatus() != TransactionStatus.PROPOSED) {
-        throw new RuntimeException("Transaction already processed.");
+        Tower tower = tx.getTower();
+        tower.setOwnerOperator(tx.getBuyerOperator());
+        tower.setSharingStatus(SharingStatus.NOT_AVAILABLE);
+        towerRepository.save(tower);
+
+        tx.setStatus(TransactionStatus.COMPLETED);
+        String sellerName = tx.getSellerOperator() != null ? tx.getSellerOperator().getName() : "Seller";
+        String buyerName = tx.getBuyerOperator() != null ? tx.getBuyerOperator().getName() : "Buyer";
+        tx.setNotes("Approved by " + sellerName + " Operations Manager. Tower asset ownership transferred to " + buyerName + ".");
+
+        return transactionRepository.save(tx);
     }
 
-    Tower tower = tx.getTower();
+    @Transactional
+    public TowerTransaction rejectTransaction(Long id) {
+        TowerTransaction tx = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
 
-    tower.setOwnerOperator(tx.getBuyerOperator());
-    tower.setSharingStatus(SharingStatus.NOT_AVAILABLE);
+        if (tx.getStatus() != TransactionStatus.PROPOSED) {
+            throw new RuntimeException("Transaction has already been processed (" + tx.getStatus() + ").");
+        }
 
-    towerRepository.save(tower);
+        tx.setStatus(TransactionStatus.CANCELLED);
+        String sellerName = tx.getSellerOperator() != null ? tx.getSellerOperator().getName() : "Seller";
+        tx.setNotes("Purchase request rejected by " + sellerName + " Operations Manager.");
 
-    tx.setStatus(TransactionStatus.COMPLETED);
-
-    return transactionRepository.save(tx);
-}
-@Transactional
-public TowerTransaction rejectTransaction(Long id) {
-
-    TowerTransaction tx = transactionRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Transaction not found"));
-
-    tx.setStatus(TransactionStatus.CANCELLED);
-
-    return transactionRepository.save(tx);
-}
+        return transactionRepository.save(tx);
+    }
 }

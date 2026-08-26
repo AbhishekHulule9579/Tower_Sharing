@@ -147,8 +147,14 @@ export class TowersPage implements OnInit, OnDestroy {
   }
 
   public getRawDisplayedTowers(): any[] {
-    if (this.isOperatorUser && !this.isAdmin && this.currentUser?.operatorId) {
-      return this.towers.filter((t) => t.ownerOperator?.id === this.currentUser?.operatorId);
+    if (this.isOperatorUser && !this.isAdmin) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      return this.towers.filter((t) => {
+        const matchesOp = opId ? t.ownerOperator?.id === opId : true;
+        const matchesState = userState ? (t.state || '').trim().toLowerCase() === userState : true;
+        return matchesOp && matchesState;
+      });
     }
     return this.towers;
   }
@@ -185,8 +191,12 @@ export class TowersPage implements OnInit, OnDestroy {
     if (this.isAdmin) {
       return false; // Governance read-only for admin
     }
-    if (this.isOperatorUser && this.currentUser?.operatorId) {
-      return tower.ownerOperator?.id === this.currentUser.operatorId;
+    if (this.isOperatorUser) {
+      const opId = this.currentUser?.operatorId;
+      const userState = (this.currentUser?.state || '').trim().toLowerCase();
+      const matchesOp = opId ? tower.ownerOperator?.id === opId : true;
+      const matchesState = userState ? (tower.state || '').trim().toLowerCase() === userState : true;
+      return matchesOp && matchesState;
     }
     return false;
   }
@@ -217,11 +227,12 @@ export class TowersPage implements OnInit, OnDestroy {
         this.towers = result.towers || [];
         this.operators = result.operators || [];
 
-        this.availableForLease = this.towers.filter(
+        const raw = this.getRawDisplayedTowers();
+        this.availableForLease = raw.filter(
           (tower) => tower.sharingStatus === 'AVAILABLE_FOR_LEASE'
         );
 
-        this.availableForSale = this.towers.filter(
+        this.availableForSale = raw.filter(
           (tower) => tower.sharingStatus === 'AVAILABLE_FOR_SALE'
         );
 

@@ -18,6 +18,14 @@ export class TransactionService {
     return this.http.post<any>(`${this.api}/buy`, payload, this.authHeaders());
   }
 
+  approveTransaction(id: number): Observable<any> {
+    return this.http.put<any>(`${this.api}/${id}/approve`, {}, this.authHeaders());
+  }
+
+  rejectTransaction(id: number): Observable<any> {
+    return this.http.put<any>(`${this.api}/${id}/reject`, {}, this.authHeaders());
+  }
+
   private authHeaders() {
     const token = this.authService.getCurrentUser()?.token;
     if (!token) return {};

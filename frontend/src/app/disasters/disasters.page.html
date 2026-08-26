@@ -5,45 +5,61 @@
         <div class="header-title-row">
           <div class="header-icon">🚨</div>
           <div>
-            <h2>Disaster Response & Network Roaming</h2>
+            <h2>
+              {{
+                isSiteManager
+                  ? 'Disaster Incident Reporting'
+                  : isOperatorManager
+                  ? 'Emergency Sharing Arrangement'
+                  : 'Disaster Response & Network Roaming'
+              }}
+            </h2>
             <p>
               {{
                 isAdmin
                   ? 'Register incidents, coordinate intra-operator emergency tower sharing, and restore network outages.'
-                  : 'Manage emergency sharing and disaster rerouting for ' + (getOperatorDisplayName() || 'your company') + ' tower infrastructure.'
+                  : isOperatorManager
+                  ? 'Request and manage emergency mutual aid capacity sharing for ' + (getOperatorDisplayName() || 'your company') + (currentUser?.state ? ' in ' + currentUser?.state : '') + '.'
+                  : 'Log disaster incidents and report network disruptions for ' + (getOperatorDisplayName() || 'your company') + (currentUser?.state ? ' in ' + currentUser?.state : '') + '.'
               }}
             </p>
           </div>
         </div>
       </div>
       <span class="user-role-chip" *ngIf="currentUser">
-        {{ isAdmin ? '👑 Administrator' : ('🏢 ' + (getOperatorDisplayName() || 'Operator Manager')) }}
+        {{
+          isAdmin
+            ? '👑 Administrator'
+            : isOperatorManager
+            ? ('🏢 ' + (getOperatorDisplayName() || 'Operations Manager') + (currentUser?.state ? ' (' + currentUser?.state + ')' : ''))
+            : ('👷 ' + (getOperatorDisplayName() || 'Site Manager') + (currentUser?.state ? ' (' + currentUser?.state + ')' : ''))
+        }}
       </span>
     </div>
 
     <!-- Summary Cards -->
     <div class="section-grid">
-      <mat-card class="summary-card stat-alert">
+      <mat-card class="summary-card stat-alert" *ngIf="isAdmin || isSiteManager">
         <div class="summary-icon red">🚨</div>
         <div class="summary-info">
           <span>ACTIVE INCIDENTS</span>
           <strong>{{ activeIncidentCount }}</strong>
-          <small>Monitored natural events</small>
+          <small>Monitored events{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</small>
         </div>
       </mat-card>
 
-      <mat-card class="summary-card stat-shares">
+      <mat-card class="summary-card stat-shares" *ngIf="isAdmin || isOperatorManager">
         <div class="summary-icon purple">📡</div>
         <div class="summary-info">
-          <span>{{ !isAdmin && isOperatorUser ? (getOperatorDisplayName() + ' SHARES') : 'EMERGENCY RELAYS' }}</span>
+          <span>{{ !isAdmin && isOperatorUser ? (getOperatorDisplayName() + ' EMERGENCY RELAYS') : 'EMERGENCY RELAYS' }}</span>
           <strong>{{ getDisplayedSharings().length }}</strong>
-          <small>Active mutual aid links</small>
+          <small>Active mutual aid links{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</small>
         </div>
       </mat-card>
     </div>
 
-    <!-- Disaster Incidents Table -->
-    <mat-card class="content-card">
+    <!-- Disaster Incidents Table (Visible to Admin & Site Manager) -->
+    <mat-card class="content-card" *ngIf="isAdmin || isSiteManager">
       <div class="card-header">
         <div class="title">
           <div class="title-icon red">⚠️</div>
@@ -95,7 +111,7 @@
                 <button
                   type="button"
                   class="btn-action resolve"
-                  *ngIf="incident.status !== 'RESOLVED' && isAdmin"
+                  *ngIf="incident.status !== 'RESOLVED' && (isAdmin || isSiteManager)"
                   (click)="resolveIncident(incident.id)"
                   title="Mark Incident Resolved"
                 >
@@ -112,14 +128,14 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Emergency Tower Capacity Sharing Table -->
-    <mat-card class="content-card">
+    <!-- Emergency Tower Capacity Sharing Table (Visible to Admin & Operator Manager) -->
+    <mat-card class="content-card" *ngIf="isAdmin || isOperatorManager">
       <div class="card-header">
         <div class="title">
           <div class="title-icon purple">📡</div>
           <div>
-            <h3>Emergency Tower Capacity Sharing</h3>
-            <p>Active mutual aid and capacity offloading agreements</p>
+            <h3>Emergency Sharing Arrangement</h3>
+            <p>Active mutual aid and capacity offloading agreements{{ currentUser?.state ? ' in ' + currentUser?.state : '' }}</p>
           </div>
         </div>
         <span class="count-badge">{{ getDisplayedSharings().length }} Active Relays</span>
@@ -166,15 +182,16 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Incident & Sharing Registration Forms -->
-    <div class="dual-form-grid">
-      <mat-card class="content-card form-card">
+    <!-- Forms Section: Conditionally displayed based on role -->
+    <div class="dual-form-grid" [class.single-card]="!isAdmin">
+      <!-- Register Incident Form Card (Visible ONLY to Admin & Site Manager) -->
+      <mat-card class="content-card form-card" *ngIf="isAdmin || isSiteManager">
         <div class="card-header">
           <div class="title">
             <div class="title-icon red">📝</div>
             <div>
               <h3>Register Incident</h3>
-              <p>Log a disaster or critical network disruption</p>
+              <p>Log a disaster or critical network disruption for {{ getOperatorDisplayName() }}</p>
             </div>
           </div>
         </div>
@@ -183,7 +200,7 @@
           <div class="form-grid-inner">
             <mat-form-field appearance="outline">
               <mat-label>Incident Title</mat-label>
-              <input matInput [(ngModel)]="incidentForm.title" name="title" placeholder="e.g. Mumbai Cyclone Disruption" />
+              <input matInput [(ngModel)]="incidentForm.title" name="title" placeholder="e.g. Cyclone Disruption Sector 4" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -197,8 +214,8 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Region</mat-label>
-              <input matInput [(ngModel)]="incidentForm.region" name="region" placeholder="e.g. Maharashtra Coast" />
+              <mat-label>Region / State</mat-label>
+              <input matInput [(ngModel)]="incidentForm.region" name="region" [placeholder]="currentUser?.state || 'e.g. Maharashtra'" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-full">
@@ -207,10 +224,10 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-full">
-              <mat-label>Affected Towers</mat-label>
+              <mat-label>Affected Towers ({{ getOperatorDisplayName() }}{{ currentUser?.state ? ' in ' + currentUser?.state : '' }})</mat-label>
               <mat-select [(ngModel)]="incidentForm.affectedTowerIds" name="affectedTowerIds" multiple>
                 <mat-option *ngFor="let tower of getSelectableTowers()" [value]="tower.id">
-                  {{ tower.towerCode }} ({{ tower.city }} - {{ tower.ownerOperator?.name }})
+                  {{ tower.towerCode }} — {{ tower.name }} ({{ tower.city }})
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -223,43 +240,46 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="content-card form-card">
+      <!-- Emergency Sharing Arrangement Form Card (Visible ONLY to Admin & Operator Manager) -->
+      <mat-card class="content-card form-card" *ngIf="isAdmin || isOperatorManager">
         <div class="card-header">
           <div class="title">
             <div class="title-icon purple">🔄</div>
             <div>
               <h3>Emergency Sharing Arrangement</h3>
-              <p *ngIf="!isAdmin && isOperatorUser">Requesting emergency backup for {{ getOperatorDisplayName() }}</p>
+              <p>Request mutual aid emergency capacity from available operators in {{ currentUser?.state || 'your jurisdiction' }}</p>
             </div>
           </div>
           <span class="operator-lock-chip" *ngIf="!isAdmin && isOperatorUser">
-            🔒 Affected: {{ getOperatorDisplayName() }}
+            🔒 Requesting as {{ getOperatorDisplayName() }} {{ currentUser?.state ? ('(' + currentUser?.state + ')') : '' }}
           </span>
         </div>
         <mat-divider></mat-divider>
         <mat-card-content class="form-content">
           <div class="form-grid-inner">
             <mat-form-field appearance="outline">
-              <mat-label>Incident</mat-label>
+              <mat-label>Active Disaster Incident</mat-label>
               <mat-select [(ngModel)]="sharingForm.incidentId" name="incidentId">
-                <mat-option *ngFor="let incident of incidents" [value]="incident.id">{{ incident.title }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Damaged Tower (Your Operator)</mat-label>
-              <mat-select [(ngModel)]="sharingForm.damagedTowerId" name="damagedTowerId">
-                <mat-option *ngFor="let tower of getSelectableDamagedTowers()" [value]="tower.id">
-                  {{ tower.towerCode }} — {{ tower.name }}
+                <mat-option *ngFor="let incident of incidents" [value]="incident.id">
+                  {{ incident.title }} ({{ incident.region }})
                 </mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Host Tower (Other Operator)</mat-label>
+              <mat-label>Damaged Tower ({{ getOperatorDisplayName() }})</mat-label>
+              <mat-select [(ngModel)]="sharingForm.damagedTowerId" name="damagedTowerId">
+                <mat-option *ngFor="let tower of getSelectableDamagedTowers()" [value]="tower.id">
+                  {{ tower.towerCode }} — {{ tower.name }} ({{ tower.city }})
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Host Tower (Other Operator in {{ currentUser?.state || 'Region' }})</mat-label>
               <mat-select [(ngModel)]="sharingForm.hostTowerId" name="hostTowerId" (selectionChange)="onHostTowerChange($event.value)">
                 <mat-option *ngFor="let tower of getSelectableHostTowers()" [value]="tower.id">
-                  {{ tower.towerCode }} (Host: {{ tower.ownerOperator?.name }})
+                  {{ tower.towerCode }} — {{ tower.name }} (Host: {{ tower.ownerOperator?.name }} | {{ tower.city }})
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -295,7 +315,7 @@
           </div>
           <div class="form-actions">
             <button mat-raised-button class="submit-button" (click)="createEmergencySharing()">
-              <span>📡</span> Create Emergency Share
+              <span>📡</span> Submit Emergency Sharing Request
             </button>
           </div>
         </mat-card-content>

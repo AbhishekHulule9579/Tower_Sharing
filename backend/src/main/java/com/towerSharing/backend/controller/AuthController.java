@@ -163,12 +163,22 @@ public class AuthController {
             }
         }
 
-        //added here
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+            return ResponseEntity.badRequest().body("Mobile number is required.");
+        }
+
         String cleanPhone = request.getPhoneNumber().replaceAll("[\\s-]", "");
 
+        if (!cleanPhone.matches("^[6-9]\\d{9}$") || cleanPhone.matches("^(\\d)\\1{9}$")) {
+            return ResponseEntity.badRequest().body("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9 (dummy/repeated numbers like 0000000000 are not allowed).");
+        }
+
         if (userRepository.existsByPhoneNumber(cleanPhone)) {
-            return ResponseEntity.badRequest()
-                .body("Phone number already exists.");       
+            return ResponseEntity.badRequest().body("An account with this mobile number already exists.");
+        }
+
+        if (siteManagerRequestRepository.existsByPhoneNumberAndStatus(cleanPhone, SiteManagerRequestStatus.PENDING)) {
+            return ResponseEntity.badRequest().body("A registration request with this mobile number is already pending review.");
         }
 
         request.setPhoneNumber(cleanPhone);
