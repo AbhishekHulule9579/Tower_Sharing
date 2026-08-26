@@ -29,12 +29,31 @@
           <p>Historical log of asset purchases and acquisitions</p>
         </div>
       </div>
-      <span class="count-badge">{{ getDisplayedTransactions().length }} Transactions</span>
+      <span class="count-badge">{{ getFilteredTransactions().length }} Transactions</span>
     </div>
+
+    <!-- Search Filter Bar -->
+    <div class="table-search-bar">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Filter by Tower Code, Site Name, City/State, Seller/Buyer Operator, Price, or Status..."
+      />
+      <button
+        *ngIf="searchTerm"
+        type="button"
+        class="clear-search"
+        (click)="searchTerm=''; onSearchChange()">
+        ✕
+      </button>
+    </div>
+
     <mat-divider></mat-divider>
     <mat-card-content>
       <div class="table-scroll">
-        <table mat-table [dataSource]="getDisplayedTransactions()" class="tx-table">
+        <table mat-table [dataSource]="getPaginatedTransactions()" class="tx-table">
           <ng-container matColumnDef="tower">
             <th mat-header-cell *matHeaderCellDef> TOWER ASSET </th>
             <td mat-cell *matCellDef="let tx">
@@ -114,12 +133,45 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
 
-        <div class="empty-table-state" *ngIf="getDisplayedTransactions().length === 0">
+        <div class="empty-table-state" *ngIf="getFilteredTransactions().length === 0">
           <span class="empty-icon">💰</span>
           <strong>No transaction records found</strong>
-          <small>{{ isOperatorUser ? 'No asset buy/sell transactions recorded for ' + (getOperatorDisplayName() || 'your operator') + (currentUser?.state ? ' in ' + currentUser?.state : '') + '.' : 'No transaction records found.' }}</small>
+          <small>{{ isOperatorUser ? 'No matching asset buy/sell transactions found for ' + (getOperatorDisplayName() || 'your operator') + (currentUser?.state ? ' in ' + currentUser?.state : '') + '.' : 'No matching transaction records found.' }}</small>
         </div>
       </div>
+
+      <!-- Custom Pagination Bar & Material Paginator -->
+      <div class="pagination-bar" *ngIf="getFilteredTransactions().length > 0">
+        <div class="pagination-info">
+          Showing <strong>{{ startIndex }}</strong> – <strong>{{ endIndex }}</strong> of <strong>{{ getFilteredTransactions().length }}</strong> transactions
+          <span class="page-badge">(Page {{ pageIndex + 1 }} of {{ totalPages }})</span>
+        </div>
+        <div class="pagination-controls">
+          <button type="button" class="page-btn" (click)="firstPage()" [disabled]="pageIndex === 0" title="First Page">
+            ⏮ First
+          </button>
+          <button type="button" class="page-btn" (click)="prevPage()" [disabled]="pageIndex === 0" title="Previous Page">
+            ◀ Prev
+          </button>
+          <span class="page-current">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+          <button type="button" class="page-btn" (click)="nextPage()" [disabled]="pageIndex >= totalPages - 1" title="Next Page">
+            Next ▶
+          </button>
+          <button type="button" class="page-btn" (click)="lastPage()" [disabled]="pageIndex >= totalPages - 1" title="Last Page">
+            Last ⏭
+          </button>
+        </div>
+      </div>
+
+      <mat-paginator
+        [length]="getFilteredTransactions().length"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)"
+        class="custom-paginator"
+        showFirstLastButtons
+      ></mat-paginator>
     </mat-card-content>
   </mat-card>
 

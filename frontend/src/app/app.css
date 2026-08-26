@@ -61,14 +61,68 @@
 }
 .navigation-list a[mat-list-item]:hover { background: rgba(96, 165, 250, .12); transform: translateX(3px); }
 .navigation-list a[mat-list-item].active-link { background: linear-gradient(90deg, rgba(37, 99, 235, .48), rgba(124, 58, 237, .3)); box-shadow: inset 3px 0 #93c5fd; }
-.theme-toggle { margin-right: 10px; color: #fcd34d; }
-.theme-emoji { font-size: 20px; line-height: 1; }
-.light-theme, .light-theme .layout-shell, .light-theme .main-content { background: #f8fafc !important; color: #0f172a !important; }
-.light-theme .sidebar, .light-theme .topbar { background: #fff !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
-.light-theme .sidebar-brand, .light-theme .navigation-list a, .light-theme .topbar, .light-theme .user-details { color: #0f172a !important; }
-.light-theme .sidebar-subtitle, .light-theme .status-text small { color: #64748b !important; }
-.light-theme .panel-card, .light-theme .mat-card { background: #fff !important; color: #0f172a !important; border-color: #e2e8f0 !important; }
-.light-theme .theme-toggle { color: #475569; }
+
+/* Theme Toggle Button in Topbar */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #0d1e34;
+  border: 1px solid #203c62;
+  color: #93c5fd;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle-btn:hover {
+  background: #173356;
+  border-color: #3b82f6;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.theme-toggle-btn .theme-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Floating Corner Theme Switch */
+.floating-theme-corner-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #1e3a8a, #4338ca);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+}
+
+.floating-theme-corner-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.55);
+}
+
+.corner-theme-icon {
+  font-size: 16px;
+  line-height: 1;
+}
 
 .sidebar-icon {
   width: 24px;

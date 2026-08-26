@@ -1,7 +1,6 @@
 :host {
   display: block;
   min-height: 100%;
-  color: #f1f5f9;
 }
 
 .dashboard-shell {
@@ -793,4 +792,253 @@
     flex: 1;
   }
 }
+
+.two-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.admin-hub-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.requests-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quick-req-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #0a192e;
+  border: 1px solid #1e3a5f;
+  border-radius: 10px;
+  gap: 12px;
+}
+
+.req-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.req-user-info strong {
+  font-size: 13px;
+  color: #f8fafc;
+}
+
+.req-user-info small {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.req-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-approve-sm {
+  padding: 4px 10px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-approve-sm:hover {
+  background: #10b981;
+}
+
+.btn-reject-sm {
+  padding: 4px 8px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reject-sm:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.empty-state-sm {
+  text-align: center;
+  padding: 20px 10px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.empty-state-sm span {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.empty-state-sm p {
+  margin: 0;
+}
+
+/* ========================================================= */
+/* LIGHT MODE STYLES                                         */
+/* ========================================================= */
+:host-context(body.theme-light) {
+  color: #0f172a;
+}
+
+:host-context(body.theme-light) .dashboard-shell {
+  background: transparent !important;
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .header-title-row h1 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .header-text p {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .stat-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .stat-card:hover {
+  border-color: #2563eb !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12) !important;
+}
+
+:host-context(body.theme-light) .stat-card.has-alert {
+  background: #fff5f5 !important;
+  border-color: #fca5a5 !important;
+}
+
+:host-context(body.theme-light) .stat-card-title {
+  color: #64748b !important;
+  font-weight: 700 !important;
+}
+
+:host-context(body.theme-light) .stat-card-value {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .stat-subtext {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .panel-card,
+:host-context(body.theme-light) .hub-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .panel-header h3,
+:host-context(body.theme-light) .hub-header h4 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .panel-header p,
+:host-context(body.theme-light) .hub-header span,
+:host-context(body.theme-light) .panel-description {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .metric-num {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .metric-label {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .panel-status-pill {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:host-context(body.theme-light) .hub-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .hub-card:hover {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12) !important;
+}
+
+:host-context(body.theme-light) .hub-stat strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .hub-stat span {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .quick-req-row {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .req-user-info strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .req-user-info small {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .metric-row {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .metric-num {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .metric-label {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .metric-num.text-success {
+  color: #059669 !important;
+}
+
+:host-context(body.theme-light) .metric-num.text-warning {
+  color: #d97706 !important;
+}
+
+:host-context(body.theme-light) .metric-num.text-danger {
+  color: #dc2626 !important;
+}
+
+:host-context(body.theme-light) .panel-description {
+  color: #475569 !important;
+}
+
+
+
 

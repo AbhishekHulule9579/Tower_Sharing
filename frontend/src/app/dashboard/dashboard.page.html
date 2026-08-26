@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- Admin Top 3 Statistics Cards -->
+    <!-- Admin Top Statistics Cards -->
     <div class="dashboard-top-cards admin-top-cards">
       <!-- Card 1: Company Towers -->
       <mat-card class="stat-card stat-towers" routerLink="/towers">
@@ -76,6 +76,175 @@
           <span class="stat-subtext">Access approval pipeline</span>
         </div>
       </mat-card>
+
+      <!-- Card 4: Active Sites -->
+      <mat-card class="stat-card stat-active" routerLink="/towers">
+        <div class="stat-card-header">
+          <div class="stat-info">
+            <span class="stat-card-title">ACTIVE CELL SITES</span>
+            <div class="stat-card-value">{{ adminSummary.activeTowers | number }}</div>
+          </div>
+          <div class="stat-icon-wrapper green">
+            <span>🟢</span>
+          </div>
+        </div>
+        <div class="stat-card-footer">
+          <span class="trend-indicator up">● Live Operations</span>
+          <span class="stat-subtext">{{ adminSummary.maintenanceTowers }} under maintenance</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Admin Infrastructure Overview & Access Review -->
+    <div class="dashboard-panels">
+      <mat-card class="panel-card admin-health-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <div class="panel-icon-badge blue">📊</div>
+            <div>
+              <h3>Infrastructure Operational Health</h3>
+              <p>Fleet status across monitored telecommunication towers</p>
+            </div>
+          </div>
+          <span class="panel-status-pill success">
+            {{ adminSummary.companyTowers }} Total Managed Sites
+          </span>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="panel-body">
+          <div class="metric-row">
+            <div class="metric-item">
+              <span class="metric-num text-success">{{ adminSummary.activeTowers }}</span>
+              <span class="metric-label">Online & Active</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-num text-warning">{{ adminSummary.maintenanceTowers }}</span>
+              <span class="metric-label">Under Maintenance</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-num text-danger">{{ adminSummary.inactiveTowers }}</span>
+              <span class="metric-label">Disaster / Damaged</span>
+            </div>
+          </div>
+          <p class="panel-description">
+            Complete platform oversight of tower assets, commercial sharing capacity, and field access management.
+          </p>
+          <div class="panel-action-bar">
+            <a mat-button class="action-link" routerLink="/towers">
+              Manage All Towers &rarr;
+            </a>
+            <a mat-button class="action-link" routerLink="/operators">
+              View Operator Directory &rarr;
+            </a>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- Admin Pending Requests Review List -->
+      <mat-card class="panel-card admin-requests-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <div class="panel-icon-badge amber">📥</div>
+            <div>
+              <h3>Pending Staff Approvals</h3>
+              <p>Site Manager & Operator Manager registration queue</p>
+            </div>
+          </div>
+          <span class="panel-status-pill" [class.danger]="adminSummary.pendingRequests > 0">
+            {{ adminSummary.pendingRequests }} Pending
+          </span>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="panel-body">
+          <div class="requests-quick-list" *ngIf="adminSummary.recentRequests && adminSummary.recentRequests.length > 0; else noPendingReqs">
+            <div class="quick-req-row" *ngFor="let req of adminSummary.recentRequests.slice(0, 3)">
+              <div class="req-user-info">
+                <strong>{{ req.fullName }}</strong>
+                <small>{{ req.requestedRole }} • {{ req.phone || req.mobileNumber }} ({{ req.state || 'National' }})</small>
+              </div>
+              <div class="req-actions">
+                <button
+                  type="button"
+                  class="btn-approve-sm"
+                  (click)="approveRequest(req.id)"
+                  [disabled]="processingRequestId === req.id">
+                  ✓ Approve
+                </button>
+                <button
+                  type="button"
+                  class="btn-reject-sm"
+                  (click)="rejectRequest(req.id)"
+                  [disabled]="processingRequestId === req.id">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+          <ng-template #noPendingReqs>
+            <div class="empty-state-sm">
+              <span>✅</span>
+              <p>No pending access requests at this time.</p>
+            </div>
+          </ng-template>
+          <div class="panel-action-bar">
+            <a mat-button class="action-link" routerLink="/site-manager-requests">
+              View All Access Requests &rarr;
+            </a>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Admin System Modules Hub -->
+    <div class="quick-nav-hub">
+      <div class="hub-header">
+        <h4>Administrator Command Modules</h4>
+        <span>Direct platform management and governance shortcuts</span>
+      </div>
+      <div class="hub-grid admin-hub-grid">
+        <div class="hub-card" routerLink="/towers">
+          <span class="hub-icon">📡</span>
+          <div class="hub-info">
+            <strong>Towers</strong>
+            <small>Manage site inventory</small>
+          </div>
+        </div>
+        <div class="hub-card" routerLink="/leases">
+          <span class="hub-icon">🤝</span>
+          <div class="hub-info">
+            <strong>Leasing</strong>
+            <small>Shared tenancy contracts</small>
+          </div>
+        </div>
+        <div class="hub-card" routerLink="/transactions">
+          <span class="hub-icon">💰</span>
+          <div class="hub-info">
+            <strong>Transactions</strong>
+            <small>Buy & sell ledger</small>
+          </div>
+        </div>
+        <div class="hub-card" routerLink="/disasters">
+          <span class="hub-icon">🚨</span>
+          <div class="hub-info">
+            <strong>Disasters</strong>
+            <small>Emergency protocols</small>
+          </div>
+        </div>
+        <div class="hub-card" routerLink="/operators">
+          <span class="hub-icon">🏢</span>
+          <div class="hub-info">
+            <strong>Operators</strong>
+            <small>Telecom companies & staff</small>
+          </div>
+        </div>
+        <div class="hub-card" routerLink="/site-manager-requests">
+          <span class="hub-icon">📥</span>
+          <div class="hub-info">
+            <strong>Approvals</strong>
+            <small>Access review pipeline</small>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -92,29 +261,19 @@
           <div class="header-icon">📊</div>
           <div class="header-text">
             <div class="header-title-row">
-              <h1>Operations Dashboard</h1>
+              <h1>{{ currentUser?.role === 'OPERATOR_MANAGER' ? 'Operations Manager Dashboard' : 'Site Manager Dashboard' }}</h1>
               <span class="live-status-chip">
                 <span class="status-dot"></span>
-                Live Telemetry
+                {{ (currentUser?.operatorName || 'Telecom') + (currentUser?.state ? ' (' + currentUser?.state + ')' : '') }}
               </span>
             </div>
-            <p>Real-time telecom infrastructure overview, sharing metrics, and health indicators</p>
+            <p>{{ currentUser?.role === 'OPERATOR_MANAGER' ? 'Regional telecom infrastructure overview, sharing metrics, and health indicators' : 'Cell site telemetry, field monitoring, and disaster response' }}</p>
           </div>
         </div>
-
-        <!-- Quick Actions -->
-        <!-- <div class="header-actions">
-          <button mat-flat-button class="quick-btn" routerLink="/towers">
-            <span>📡</span> Add Tower
-          </button>
-          <button mat-stroked-button class="quick-btn-outline" routerLink="/disasters">
-            <span>🚨</span> Emergency Sharing
-          </button>
-        </div> -->
       </div>
 
       <!-- Top Key Metric Cards -->
-      <div class="dashboard-top-cards">
+      <div class="dashboard-top-cards" [class.two-cards]="currentUser?.role === 'SITE_MANAGER'">
         <mat-card class="stat-card stat-towers" routerLink="/towers">
           <div class="stat-card-header">
             <div class="stat-info">
@@ -127,7 +286,7 @@
           </div>
           <div class="stat-card-footer">
             <span class="trend-indicator up">● Available: {{ summary.availableForLease + summary.availableForSale }}</span>
-            <span class="stat-subtext">Registered assets</span>
+            <span class="stat-subtext">{{ (currentUser?.operatorName || 'Company') + (currentUser?.state ? ' in ' + currentUser?.state : '') }}</span>
           </div>
         </mat-card>
 
@@ -145,11 +304,11 @@
             <span class="trend-indicator" [ngClass]="summary.activeIncidents > 0 ? 'alert' : 'up'">
               {{ summary.activeIncidents > 0 ? '⚠️ Emergency Protocol Active' : '✓ Normal Operations' }}
             </span>
-            <span class="stat-subtext">Disasters logged</span>
+            <span class="stat-subtext">{{ currentUser?.state ? 'Events in ' + currentUser?.state : 'Disasters logged' }}</span>
           </div>
         </mat-card>
 
-        <mat-card class="stat-card stat-leases" routerLink="/leases">
+        <mat-card class="stat-card stat-leases" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'" routerLink="/leases">
           <div class="stat-card-header">
             <div class="stat-info">
               <span class="stat-card-title">PENDING LEASES</span>
@@ -161,7 +320,7 @@
           </div>
           <div class="stat-card-footer">
             <span class="trend-indicator up">● Deals: {{ summary.completedTransactions }}</span>
-            <span class="stat-subtext">Awaiting approval</span>
+            <span class="stat-subtext">{{ currentUser?.state ? 'Leases in ' + currentUser?.state : 'Awaiting approval' }}</span>
           </div>
         </mat-card>
 
@@ -179,25 +338,7 @@
             <span class="trend-indicator" [ngClass]="summary.pendingRegistrationRequests > 0 ? 'alert' : 'up'">
               {{ summary.pendingRegistrationRequests > 0 ? '● Pending Review' : '✓ Up to date' }}
             </span>
-            <span class="stat-subtext">Site manager approvals</span>
-          </div>
-        </mat-card>
-
-        <mat-card class="stat-card stat-inventory" *ngIf="currentUser?.role !== 'OPERATOR_MANAGER'" [class.has-alert]="summary.openRepairs > 0" routerLink="/maintenance">
-          <div class="stat-card-header">
-            <div class="stat-info">
-              <span class="stat-card-title">OPEN REPAIRS</span>
-              <div class="stat-card-value">{{ summary.openRepairs | number }}</div>
-            </div>
-            <div class="stat-icon-wrapper orange">
-              <span>🔧</span>
-            </div>
-          </div>
-          <div class="stat-card-footer">
-            <span class="trend-indicator" [ngClass]="summary.openRepairs > 0 ? 'alert' : 'up'">
-              {{ summary.openRepairs > 0 ? '● Active Work Orders' : '✓ All Repaired' }}
-            </span>
-            <span class="stat-subtext">Maintenance queue</span>
+            <span class="stat-subtext">{{ currentUser?.state ? 'Requests in ' + currentUser?.state : 'Site manager approvals' }}</span>
           </div>
         </mat-card>
       </div>
@@ -230,7 +371,7 @@
                 <span class="metric-num">{{ disasterDetails?.totalAffectedTowersCount || 0 }}</span>
                 <span class="metric-label">Affected Towers</span>
               </div>
-              <div class="metric-item">
+              <div class="metric-item" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'">
                 <span class="metric-num">{{ disasterDetails?.activeEmergencySharingsCount || 0 }}</span>
                 <span class="metric-label">Emergency Relays</span>
               </div>
@@ -248,8 +389,8 @@
           </div>
         </mat-card>
 
-        <!-- Panel 2: Lease & Commercial Overview -->
-        <mat-card class="panel-card lease-panel">
+        <!-- Panel 2: Lease & Revenue Flow (Visible only to Operator Manager) -->
+        <mat-card class="panel-card lease-panel" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'">
           <div class="panel-header">
             <div class="panel-title-group">
               <div class="panel-icon-badge purple">💰</div>
@@ -292,97 +433,15 @@
           </div>
         </mat-card>
 
-        <!-- Panel 3: Maintenance & Spares -->
-        <!-- <mat-card class="panel-card maintenance-panel">
-          <div class="panel-header">
-            <div class="panel-title-group">
-              <div class="panel-icon-badge orange">🔧</div>
-              <div>
-                <h3>Maintenance & Spares</h3>
-                <p>Field repair orders and critical inventory reserves</p>
-              </div>
-            </div>
-            <span class="panel-status-pill" [class.warning]="summary.openRepairs > 0 || summary.lowInventoryAlerts > 0">
-              {{ summary.openRepairs }} Repairs Active
-            </span>
-          </div>
-          <mat-divider></mat-divider>
-          <div class="panel-body">
-            <div class="metric-row">
-              <div class="metric-item">
-                <span class="metric-num">{{ summary.openRepairs }}</span>
-                <span class="metric-label">Open Repairs</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-num">{{ summary.lowInventoryAlerts }}</span>
-                <span class="metric-label">Low Stock Alerts</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-num">{{ maintenanceDetails?.completedRepairsCount || 0 }}</span>
-                <span class="metric-label">Completed Repairs</span>
-              </div>
-            </div>
-            <p class="panel-description">
-              Continuous preventative maintenance schedules and automated warehouse triggers ensure high SLA uptime.
-            </p>
-            <div class="panel-action-bar">
-              <a mat-button class="action-link" routerLink="/maintenance">
-                Open Maintenance Workorders &rarr;
-              </a>
-            </div>
-          </div>
-        </mat-card> -->
-
-        <!-- Panel 4: Market & Asset Availability -->
-        <!-- <mat-card class="panel-card market-panel">
-          <div class="panel-header">
-            <div class="panel-title-group">
-              <div class="panel-icon-badge green">📈</div>
-              <div>
-                <h3>Market & Inventory Snapshot</h3>
-                <p>Tower availability and slot capacity distribution</p>
-              </div>
-            </div>
-            <span class="panel-status-pill">
-              {{ summary.totalTowers }} Total Sites
-            </span>
-          </div>
-          <mat-divider></mat-divider>
-          <div class="panel-body">
-            <div class="metric-row">
-              <div class="metric-item">
-                <span class="metric-num">{{ summary.availableForLease }}</span>
-                <span class="metric-label">For Lease</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-num">{{ summary.availableForSale }}</span>
-                <span class="metric-label">For Sale</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-num">{{ ((utilizationDetails?.overallOccupancyRate || 0) * 100) | number:'1.0-0' }}%</span>
-                <span class="metric-label">Slot Occupancy</span>
-              </div>
-            </div>
-            <p class="panel-description">
-              Available towers are listed on the open marketplace for rapid cross-operator sharing and asset transfer.
-            </p>
-            <div class="panel-action-bar">
-              <a mat-button class="action-link" routerLink="/towers">
-                Explore All Towers &rarr;
-              </a>
-            </div>
-          </div>
-        </mat-card> -->
-
       </div>
 
       <!-- Quick Navigation Hub -->
-      <!-- <div class="quick-nav-hub">
+      <div class="quick-nav-hub">
         <div class="hub-header">
           <h4>System Modules</h4>
           <span>Direct access to platform operations</span>
         </div>
-        <div class="hub-grid">
+        <div class="hub-grid" [class.two-cards]="currentUser?.role === 'SITE_MANAGER'">
           <div class="hub-card" routerLink="/towers">
             <span class="hub-icon">📡</span>
             <div class="hub-info">
@@ -390,14 +449,14 @@
               <small>Manage site inventory</small>
             </div>
           </div>
-          <div class="hub-card" routerLink="/leases">
+          <div class="hub-card" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'" routerLink="/leases">
             <span class="hub-icon">🤝</span>
             <div class="hub-info">
               <strong>Leasing</strong>
               <small>Shared tenancy contracts</small>
             </div>
           </div>
-          <div class="hub-card" routerLink="/transactions">
+          <div class="hub-card" *ngIf="currentUser?.role === 'OPERATOR_MANAGER'" routerLink="/transactions">
             <span class="hub-icon">💰</span>
             <div class="hub-info">
               <strong>Transactions</strong>
@@ -411,15 +470,8 @@
               <small>Emergency protocols</small>
             </div>
           </div>
-          <div class="hub-card" routerLink="/operators">
-            <span class="hub-icon">🏢</span>
-            <div class="hub-info">
-              <strong>Operators</strong>
-              <small>Telecom companies</small>
-            </div>
-          </div>
         </div>
-      </div> -->
+      </div>
 
     </div>
   </ng-template>

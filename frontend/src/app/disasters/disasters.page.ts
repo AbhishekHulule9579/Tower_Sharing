@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -29,7 +30,8 @@ import { TowerService } from '../services/tower.service';
     MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
-    MatDividerModule
+    MatDividerModule,
+    MatPaginatorModule
   ],
   selector: 'app-disasters',
   templateUrl: './disasters.page.html',
@@ -43,6 +45,82 @@ export class DisastersPage implements OnInit, OnDestroy {
   disastersLoaded = false;
   incidentColumns = ['title', 'type', 'region', 'status', 'actions'];
   sharingColumns = ['incident', 'hostTower', 'sharedCapacity', 'days'];
+
+  incidentSearchTerm = '';
+  incidentPageSize = 2;
+  incidentPageIndex = 0;
+  incidentPageSizeOptions = [2, 5, 10, 25];
+
+  get totalIncidentPages(): number {
+    return Math.ceil(this.getFilteredIncidents().length / this.incidentPageSize) || 1;
+  }
+
+  get startIncidentIndex(): number {
+    if (this.getFilteredIncidents().length === 0) return 0;
+    return this.incidentPageIndex * this.incidentPageSize + 1;
+  }
+
+  get endIncidentIndex(): number {
+    return Math.min((this.incidentPageIndex + 1) * this.incidentPageSize, this.getFilteredIncidents().length);
+  }
+
+  nextIncidentPage(): void {
+    if ((this.incidentPageIndex + 1) * this.incidentPageSize < this.getFilteredIncidents().length) {
+      this.incidentPageIndex++;
+    }
+  }
+
+  prevIncidentPage(): void {
+    if (this.incidentPageIndex > 0) {
+      this.incidentPageIndex--;
+    }
+  }
+
+  firstIncidentPage(): void {
+    this.incidentPageIndex = 0;
+  }
+
+  lastIncidentPage(): void {
+    this.incidentPageIndex = Math.max(0, this.totalIncidentPages - 1);
+  }
+
+  sharingSearchTerm = '';
+  sharingPageSize = 2;
+  sharingPageIndex = 0;
+  sharingPageSizeOptions = [2, 5, 10, 25];
+
+  get totalSharingPages(): number {
+    return Math.ceil(this.getFilteredSharings().length / this.sharingPageSize) || 1;
+  }
+
+  get startSharingIndex(): number {
+    if (this.getFilteredSharings().length === 0) return 0;
+    return this.sharingPageIndex * this.sharingPageSize + 1;
+  }
+
+  get endSharingIndex(): number {
+    return Math.min((this.sharingPageIndex + 1) * this.sharingPageSize, this.getFilteredSharings().length);
+  }
+
+  nextSharingPage(): void {
+    if ((this.sharingPageIndex + 1) * this.sharingPageSize < this.getFilteredSharings().length) {
+      this.sharingPageIndex++;
+    }
+  }
+
+  prevSharingPage(): void {
+    if (this.sharingPageIndex > 0) {
+      this.sharingPageIndex--;
+    }
+  }
+
+  firstSharingPage(): void {
+    this.sharingPageIndex = 0;
+  }
+
+  lastSharingPage(): void {
+    this.sharingPageIndex = Math.max(0, this.totalSharingPages - 1);
+  }
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
@@ -123,6 +201,15 @@ export class DisastersPage implements OnInit, OnDestroy {
     return this.currentUser?.operatorName || this.currentUser?.operatorCode || '';
   }
 
+  public getUserRoleBadge(): string {
+    if (this.isAdmin) return '👑 Administrator';
+    const stateSuffix = this.currentUser?.state ? ` (${this.currentUser.state})` : '';
+    if (this.isOperatorManager) {
+      return `🏢 ${this.getOperatorDisplayName() || 'Operations Manager'}${stateSuffix}`;
+    }
+    return `👷 ${this.getOperatorDisplayName() || 'Site Manager'}${stateSuffix}`;
+  }
+
   public getSelectableTowers(): any[] {
     if (!this.isAdmin && this.isOperatorUser) {
       const opId = this.currentUser?.operatorId;
@@ -188,6 +275,58 @@ export class DisastersPage implements OnInit, OnDestroy {
       });
     }
     return this.emergencySharings;
+  }
+
+  public getFilteredIncidents(): any[] {
+    const raw = this.incidents;
+    const query = this.incidentSearchTerm.toLowerCase().trim();
+    if (!query) return raw;
+    return raw.filter((i) =>
+      `${i.title || ''} ${i.disasterType || ''} ${i.region || ''} ${i.status || ''} ${i.description || ''}`
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  public getPaginatedIncidents(): any[] {
+    const filtered = this.getFilteredIncidents();
+    const start = this.incidentPageIndex * this.incidentPageSize;
+    return filtered.slice(start, start + this.incidentPageSize);
+  }
+
+  public onIncidentPageChange(event: PageEvent): void {
+    this.incidentPageSize = event.pageSize;
+    this.incidentPageIndex = event.pageIndex;
+  }
+
+  public onIncidentSearchChange(): void {
+    this.incidentPageIndex = 0;
+  }
+
+  public getFilteredSharings(): any[] {
+    const raw = this.getDisplayedSharings();
+    const query = this.sharingSearchTerm.toLowerCase().trim();
+    if (!query) return raw;
+    return raw.filter((s) =>
+      `${s.incident?.title || ''} ${s.hostTower?.towerCode || ''} ${s.hostTower?.name || ''} ${s.hostOperator?.name || ''} ${s.damagedTower?.towerCode || ''} ${s.affectedOperator?.name || ''} ${s.status || ''}`
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  public getPaginatedSharings(): any[] {
+    const filtered = this.getFilteredSharings();
+    const start = this.sharingPageIndex * this.sharingPageSize;
+    return filtered.slice(start, start + this.sharingPageSize);
+  }
+
+  public onSharingPageChange(event: PageEvent): void {
+    this.sharingPageSize = event.pageSize;
+    this.sharingPageIndex = event.pageIndex;
+  }
+
+  public onSharingSearchChange(): void {
+    this.sharingPageIndex = 0;
   }
 
   public onHostTowerChange(towerId: number): void {

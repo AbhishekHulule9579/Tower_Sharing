@@ -14,6 +14,7 @@ import { Router, RouterLink, RouterLinkActive, RouterModule, RouterOutlet } from
 import { environment } from '../environments/environment';
 import { BackendStatusService } from './core/backend-status.service';
 import { LoadingService } from './core/loading.service';
+import { ThemeService } from './core/theme.service';
 import { AuthService, AuthUser } from './services/auth.service';
 
 export interface AppNavItem {
@@ -53,11 +54,20 @@ export class App {
   private readonly router = inject(Router);
   protected readonly loadingService = inject(LoadingService);
   protected readonly backendStatus = inject(BackendStatusService);
+  public readonly themeService = inject(ThemeService);
 
   protected readonly loading$ = this.loadingService.loading$;
   protected readonly offline$ = this.backendStatus.offline$;
   protected readonly apiBaseUrl = environment.apiBaseUrl;
   protected readonly currentUser$ = this.authService.currentUser$;
+
+  get isDark(): boolean {
+    return this.themeService.isDark;
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
 
   private readonly operatorManagerNavItems: AppNavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
@@ -71,11 +81,7 @@ export class App {
   private readonly siteManagerNavItems: AppNavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
     { label: 'Towers', path: '/towers', icon: '📡' },
-    { label: 'Leases', path: '/leases', icon: '🤝', badge: 0, badgeColor: 'accent' },
-    { label: 'Transactions', path: '/transactions', icon: '💰' },
-    { label: 'Disasters', path: '/disasters', icon: '🚨', badge: 0, badgeColor: 'warn' },
-    { label: 'Maintenance', path: '/maintenance', icon: '🔧', badge: 0, badgeColor: 'warn' },
-    { label: 'Operators & Managers', path: '/operators', icon: '🏢' }
+    { label: 'Disasters', path: '/disasters', icon: '🚨', badge: 0, badgeColor: 'warn' }
   ];
 
   private readonly adminNavItems: AppNavItem[] = [

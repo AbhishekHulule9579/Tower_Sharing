@@ -513,3 +513,176 @@
     display: none;
   }
 }
+
+/* ========================================================= */
+/* LIGHT MODE STYLES                                         */
+/* ========================================================= */
+:host-context(body.theme-light) {
+  color: #0f172a;
+}
+
+:host-context(body.theme-light) .page-shell {
+  background: transparent !important;
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .page-header h1 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .page-header p {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .eyebrow {
+  color: #2563eb !important;
+}
+
+:host-context(body.theme-light) .refresh-button {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #2563eb !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .summary-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .summary-card span {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .summary-card strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .summary-card small {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .blue .summary-icon {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+:host-context(body.theme-light) .purple .summary-icon {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
+}
+
+:host-context(body.theme-light) .green .summary-icon {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+}
+
+:host-context(body.theme-light) .orange .summary-icon {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+}
+
+:host-context(body.theme-light) .data-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .card-header h2 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .card-header p {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .search-box {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+:host-context(body.theme-light) .search-box:focus-within {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+:host-context(body.theme-light) .search-box input {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .search-box input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:host-context(body.theme-light) .team-row,
+:host-context(body.theme-light) .data-row {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .team-row:hover,
+:host-context(body.theme-light) .data-row:hover {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+:host-context(body.theme-light) .user-primary-row strong,
+:host-context(body.theme-light) .row-content strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .username-tag {
+  color: #2563eb !important;
+}
+
+:host-context(body.theme-light) .user-meta-row span,
+:host-context(body.theme-light) .row-content span {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .state-tag {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #bae6fd !important;
+}
+
+:host-context(body.theme-light) .role-mgr {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+:host-context(body.theme-light) .role-site {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+:host-context(body.theme-light) .role-admin {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+}
+
+:host-context(body.theme-light) .active-badge {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+}
+
+:host-context(body.theme-light) .empty-state {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .empty-state strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .empty-state small {
+  color: #64748b !important;
+}
+
+

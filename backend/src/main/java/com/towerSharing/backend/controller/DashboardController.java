@@ -38,27 +38,32 @@ public class DashboardController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<DashboardSummaryDto> getSummary() {
-        return ResponseEntity.ok(dashboardService.getSummary());
+    public ResponseEntity<DashboardSummaryDto> getSummary(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
+        return ResponseEntity.ok(dashboardService.getSummary(user));
     }
 
     @GetMapping("/tower-utilization")
-    public ResponseEntity<TowerUtilizationDashboardDto> getTowerUtilizationDashboard() {
+    public ResponseEntity<TowerUtilizationDashboardDto> getTowerUtilizationDashboard(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
         return ResponseEntity.ok(dashboardService.getTowerUtilizationDashboard());
     }
 
     @GetMapping("/disaster-monitoring")
-    public ResponseEntity<DisasterMonitoringDashboardDto> getDisasterMonitoringDashboard() {
-        return ResponseEntity.ok(dashboardService.getDisasterMonitoringDashboard());
+    public ResponseEntity<DisasterMonitoringDashboardDto> getDisasterMonitoringDashboard(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
+        return ResponseEntity.ok(dashboardService.getDisasterMonitoringDashboard(user));
     }
 
     @GetMapping("/revenue-lease")
-    public ResponseEntity<RevenueLeaseDashboardDto> getRevenueLeaseDashboard() {
-        return ResponseEntity.ok(dashboardService.getRevenueLeaseDashboard());
+    public ResponseEntity<RevenueLeaseDashboardDto> getRevenueLeaseDashboard(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
+        return ResponseEntity.ok(dashboardService.getRevenueLeaseDashboard(user));
     }
 
     @GetMapping("/maintenance-report")
-    public ResponseEntity<MaintenanceReportDashboardDto> getMaintenanceReportDashboard() {
+    public ResponseEntity<MaintenanceReportDashboardDto> getMaintenanceReportDashboard(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
         return ResponseEntity.ok(dashboardService.getMaintenanceReportDashboard());
     }
 

@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -29,7 +30,8 @@ import { TowerService } from '../services/tower.service';
     MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
-    MatDividerModule
+    MatDividerModule,
+    MatPaginatorModule
   ],
   selector: 'app-leases',
   templateUrl: './leases.page.html',
@@ -41,6 +43,44 @@ export class LeasesPage implements OnInit, OnDestroy {
   operators: any[] = [];
   displayedColumns = ['tower', 'operator', 'sharedCapacity', 'status', 'actions'];
   leaseLoaded = false;
+
+  searchTerm = '';
+  pageSize = 2;
+  pageIndex = 0;
+  pageSizeOptions = [2, 5, 10, 25];
+
+  get totalPages(): number {
+    return Math.ceil(this.getFilteredLeases().length / this.pageSize) || 1;
+  }
+
+  get startIndex(): number {
+    if (this.getFilteredLeases().length === 0) return 0;
+    return this.pageIndex * this.pageSize + 1;
+  }
+
+  get endIndex(): number {
+    return Math.min((this.pageIndex + 1) * this.pageSize, this.getFilteredLeases().length);
+  }
+
+  nextPage(): void {
+    if ((this.pageIndex + 1) * this.pageSize < this.getFilteredLeases().length) {
+      this.pageIndex++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.pageIndex > 0) {
+      this.pageIndex--;
+    }
+  }
+
+  firstPage(): void {
+    this.pageIndex = 0;
+  }
+
+  lastPage(): void {
+    this.pageIndex = Math.max(0, this.totalPages - 1);
+  }
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
@@ -111,6 +151,32 @@ export class LeasesPage implements OnInit, OnDestroy {
       });
     }
     return this.leases;
+  }
+
+  public getFilteredLeases(): any[] {
+    const raw = this.getDisplayedLeases();
+    const query = this.searchTerm.toLowerCase().trim();
+    if (!query) return raw;
+    return raw.filter((l) =>
+      `${l.tower?.towerCode || ''} ${l.tower?.name || ''} ${l.tower?.city || ''} ${l.tower?.state || ''} ${l.lessorOperator?.name || l.tower?.ownerOperator?.name || ''} ${l.lesseeOperator?.name || ''} ${l.status || ''}`
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  public getPaginatedLeases(): any[] {
+    const filtered = this.getFilteredLeases();
+    const start = this.pageIndex * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
+  }
+
+  public onPageChange(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+  }
+
+  public onSearchChange(): void {
+    this.pageIndex = 0;
   }
 
   public getSelectableTowers(): any[] {

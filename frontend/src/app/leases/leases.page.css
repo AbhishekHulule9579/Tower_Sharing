@@ -478,8 +478,192 @@
   border: 1px solid #1c3049 !important;
 }
 
+/* Search Bar */
+.table-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0d1e34;
+  border: 1px solid #1e3a5f;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 0 20px 14px;
+  transition: all 0.2s ease;
+}
+
+.table-search-bar:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.table-search-bar .search-icon {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+.table-search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.table-search-bar input::placeholder {
+  color: #64748b;
+}
+
+.clear-search {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+}
+
+.clear-search:hover {
+  color: #f87171;
+}
+
+/* Paginator */
+.custom-paginator {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 8px 16px;
+}
+
+::ng-deep .custom-paginator .mat-mdc-paginator-container {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-select-value {
+  color: #f1f5f9 !important;
+}
+
+::ng-deep .custom-paginator .mat-mdc-paginator-range-label {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .custom-paginator button.mat-mdc-icon-button {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .custom-paginator button.mat-mdc-icon-button[disabled] {
+  color: #475569 !important;
+}
+
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================= */
+/* LIGHT MODE STYLES                                         */
+/* ========================================================= */
+:host-context(body.theme-light) {
+  color: #0f172a;
+}
+
+:host-context(body.theme-light) .page-shell {
+  background: transparent !important;
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .header-title-row h1 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .header-text p {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .content-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+:host-context(body.theme-light) .title-icon {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+:host-context(body.theme-light) .title-icon.purple {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
+}
+
+:host-context(body.theme-light) .title h3 {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .title p {
+  color: #475569 !important;
+}
+
+:host-context(body.theme-light) .count-badge {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:host-context(body.theme-light) .table-scroll {
+  background: #ffffff !important;
+}
+
+:host-context(body.theme-light) .lease-table {
+  background: #ffffff !important;
+}
+
+:host-context(body.theme-light) .lease-table th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .lease-table td {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:host-context(body.theme-light) .lease-table tr:hover td {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .table-search-bar {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:host-context(body.theme-light) .table-search-bar input {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .table-search-bar input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:host-context(body.theme-light) .form-grid {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .empty-table-state {
+  color: #64748b !important;
+}
+
+:host-context(body.theme-light) .empty-table-state strong {
+  color: #0f172a !important;
+}
+
+:host-context(body.theme-light) .empty-table-state small {
+  color: #64748b !important;
+}
+

@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -29,7 +30,8 @@ import { TransactionService } from '../services/transaction.service';
     MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
-    MatDividerModule
+    MatDividerModule,
+    MatPaginatorModule
   ],
   selector: 'app-transactions',
   templateUrl: './transactions.page.html',
@@ -40,6 +42,44 @@ export class TransactionsPage implements OnInit, OnDestroy {
   saleTowers: any[] = [];
   buyers: any[] = [];
   displayedColumns = ['tower', 'seller', 'buyer', 'agreedPrice', 'status', 'actions'];
+
+  searchTerm = '';
+  pageSize = 2;
+  pageIndex = 0;
+  pageSizeOptions = [2, 5, 10, 25];
+
+  get totalPages(): number {
+    return Math.ceil(this.getFilteredTransactions().length / this.pageSize) || 1;
+  }
+
+  get startIndex(): number {
+    if (this.getFilteredTransactions().length === 0) return 0;
+    return this.pageIndex * this.pageSize + 1;
+  }
+
+  get endIndex(): number {
+    return Math.min((this.pageIndex + 1) * this.pageSize, this.getFilteredTransactions().length);
+  }
+
+  nextPage(): void {
+    if ((this.pageIndex + 1) * this.pageSize < this.getFilteredTransactions().length) {
+      this.pageIndex++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.pageIndex > 0) {
+      this.pageIndex--;
+    }
+  }
+
+  firstPage(): void {
+    this.pageIndex = 0;
+  }
+
+  lastPage(): void {
+    this.pageIndex = Math.max(0, this.totalPages - 1);
+  }
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
@@ -69,7 +109,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
     this.authSubscription = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
       this.updateUserPermissions();
-      this.syncPredefinedBuyer();
+      this.syncPredefinedOperator();
     });
 
     this.loadData();
@@ -87,7 +127,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
     this.isOperatorUser = role === 'OPERATOR_MANAGER' || role === 'SITE_MANAGER';
   }
 
-  private syncPredefinedBuyer(): void {
+  private syncPredefinedOperator(): void {
     if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
       this.transactionForm.buyerOperatorId = this.currentUser.operatorId;
     }
@@ -131,6 +171,32 @@ export class TransactionsPage implements OnInit, OnDestroy {
       });
     }
     return this.transactions;
+  }
+
+  public getFilteredTransactions(): any[] {
+    const raw = this.getDisplayedTransactions();
+    const query = this.searchTerm.toLowerCase().trim();
+    if (!query) return raw;
+    return raw.filter((tx) =>
+      `${tx.tower?.towerCode || ''} ${tx.tower?.name || ''} ${tx.tower?.city || ''} ${tx.tower?.state || ''} ${tx.sellerOperator?.name || ''} ${tx.buyerOperator?.name || ''} ${tx.status || ''} ${tx.agreedPrice || ''}`
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  public getPaginatedTransactions(): any[] {
+    const filtered = this.getFilteredTransactions();
+    const start = this.pageIndex * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
+  }
+
+  public onPageChange(event: PageEvent): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+  }
+
+  public onSearchChange(): void {
+    this.pageIndex = 0;
   }
 
   public canApproveTransaction(tx: any): boolean {
@@ -196,7 +262,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
     });
     this.operatorService.getAllOperators().subscribe((data) => {
       this.buyers = data || [];
-      this.syncPredefinedBuyer();
+      this.syncPredefinedOperator();
       this.changeDetector.detectChanges();
     });
   }
