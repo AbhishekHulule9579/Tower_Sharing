@@ -3,6 +3,7 @@ package com.towerSharing.backend.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +25,6 @@ import com.towerSharing.backend.model.UserRole;
 import com.towerSharing.backend.repository.OperatorRepository;
 import com.towerSharing.backend.repository.SiteManagerRequestRepository;
 import com.towerSharing.backend.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -151,6 +151,16 @@ public class AuthController {
             }
         }
 
+        //added here
+        String cleanPhone = request.getPhoneNumber().replaceAll("[\\s-]", "");
+
+        if (userRepository.existsByPhoneNumber(cleanPhone)) {
+            return ResponseEntity.badRequest()
+                .body("Phone number already exists.");       
+        }
+
+        request.setPhoneNumber(cleanPhone);
+
         SiteManagerRequest newRequest = new SiteManagerRequest(
                 request.getUsername(),
                 request.getPassword(),
@@ -180,7 +190,13 @@ public class AuthController {
                     actor.getOperator(), UserRole.SITE_MANAGER, SiteManagerRequestStatus.PENDING));
         }
         if (actor.getRole() == UserRole.ADMIN) {
-            return ResponseEntity.ok(siteManagerRequestRepository.findByOperatorAndStatus(actor.getOperator(), SiteManagerRequestStatus.PENDING));
+            return ResponseEntity.ok(
+                siteManagerRequestRepository.findByOperatorAndRequestedRoleAndStatus(
+                    actor.getOperator(),
+                    UserRole.OPERATOR_MANAGER,
+                    SiteManagerRequestStatus.PENDING
+                )
+            );
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admins or operator managers can view pending registration requests.");
     }
@@ -213,27 +229,27 @@ public class AuthController {
             }
         }
 
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("User with this username already exists.");
-        }
-
         if (request.getRequestedRole() == UserRole.OPERATOR_MANAGER && request.getState() != null && !request.getState().isBlank()) {
-            if (userRepository.existsByOperatorAndRoleAndStateIgnoreCase(request.getOperator(), UserRole.OPERATOR_MANAGER, request.getState().trim())) {
-                return ResponseEntity.badRequest().body("The state '" + request.getState().trim() + "' is already assigned to an Operations Manager for " + request.getOperator().getName() + ".");
-            }
+            userRepository.findByOperatorAndRoleAndStateIgnoreCase(request.getOperator(), UserRole.OPERATOR_MANAGER, request.getState().trim())
+                .ifPresent(existingManager -> {
+                    if (!existingManager.getUsername().equalsIgnoreCase(request.getUsername())) {
+                        existingManager.setState(null);
+                        userRepository.save(existingManager);
+                    }
+                });
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User siteManager = new User(
-                request.getUsername(),
-                encodedPassword,
-                request.getEmail(),
-                request.getFullName(),
-                request.getPhoneNumber(),
-                request.getState(),
-                request.getRequestedRole(),
-                request.getOperator()
-        );
+        User siteManager = userRepository.findByUsername(request.getUsername())
+                .orElseGet(User::new);
+        siteManager.setUsername(request.getUsername());
+        siteManager.setPassword(encodedPassword);
+        siteManager.setEmail(request.getEmail());
+        siteManager.setFullName(request.getFullName());
+        siteManager.setPhoneNumber(request.getPhoneNumber());
+        siteManager.setState(request.getState());
+        siteManager.setRole(request.getRequestedRole());
+        siteManager.setOperator(request.getOperator());
         userRepository.save(siteManager);
 
         request.setStatus(SiteManagerRequestStatus.APPROVED);

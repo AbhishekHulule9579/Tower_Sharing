@@ -1,6 +1,7 @@
 package com.towerSharing.backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.towerSharing.backend.dto.SiteManagerRequestCreateDto;
@@ -9,8 +10,6 @@ import com.towerSharing.backend.model.SiteManagerRequestStatus;
 import com.towerSharing.backend.repository.OperatorRepository;
 import com.towerSharing.backend.repository.SiteManagerRequestRepository;
 import com.towerSharing.backend.repository.UserRepository;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class AuthService {
@@ -35,6 +34,13 @@ public class AuthService {
         if (siteManagerRequestRepository.existsByUsername(request.getUsername()) || userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists.");
         }
+
+        //added here
+        // String cleanPhone = request.getPhoneNumber().replaceAll("[\\s-]", "");
+        // if (userRepository.existsByPhoneNumber(cleanPhone)) {
+        //     throw new RuntimeException("Phone number already exists.");
+        // }
+        
         return operatorRepository.findById(request.getOperatorId())
                 .map(operator -> siteManagerRequestRepository.save(new SiteManagerRequest(
                         request.getUsername(),

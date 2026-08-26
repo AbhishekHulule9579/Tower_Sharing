@@ -1,16 +1,21 @@
 package com.towerSharing.backend.service;
 
-import com.towerSharing.backend.dto.BuyTowerDto;
-import com.towerSharing.backend.model.*;
-import com.towerSharing.backend.repository.OperatorRepository;
-import com.towerSharing.backend.repository.TowerRepository;
-import com.towerSharing.backend.repository.TowerTransactionRepository;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.towerSharing.backend.dto.BuyTowerDto;
+import com.towerSharing.backend.model.Operator;
+import com.towerSharing.backend.model.SharingStatus;
+import com.towerSharing.backend.model.Tower;
+import com.towerSharing.backend.model.TowerTransaction;
+import com.towerSharing.backend.model.TransactionStatus;
+import com.towerSharing.backend.repository.OperatorRepository;
+import com.towerSharing.backend.repository.TowerRepository;
+import com.towerSharing.backend.repository.TowerTransactionRepository;
 
 @Service
 public class TransactionService {
@@ -32,6 +37,14 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
+    public List<TowerTransaction> getPendingApprovals(Long operatorId) {
+
+        return transactionRepository
+                .findBySellerOperatorIdAndStatus(
+                        operatorId,
+                        TransactionStatus.PROPOSED
+                );
+    }
     @Transactional
     public TowerTransaction buyTower(BuyTowerDto dto) {
         Tower tower = towerRepository.findById(dto.getTowerId())
@@ -53,20 +66,46 @@ public class TransactionService {
         Double agreedPrice = dto.getAgreedPrice() != null ? dto.getAgreedPrice() : tower.getSalePrice();
 
         TowerTransaction tx = new TowerTransaction(
-                tower,
-                seller,
-                buyer,
-                agreedPrice,
-                LocalDate.now(),
-                TransactionStatus.COMPLETED,
-                dto.getNotes() != null ? dto.getNotes() : "Asset ownership transfer completed."
-        );
-
-        // Transfer ownership of tower
-        tower.setOwnerOperator(buyer);
-        tower.setSharingStatus(SharingStatus.NOT_AVAILABLE); // reset sharing status post purchase
-        towerRepository.save(tower);
-
-        return transactionRepository.save(tx);
+            tower,
+            seller,
+            buyer,
+            agreedPrice,
+            LocalDate.now(),
+            TransactionStatus.PROPOSED,
+            dto.getNotes() != null ? dto.getNotes() : "Awaiting seller approval."
+    );
+    
+    return transactionRepository.save(tx);
     }
+    @Transactional
+public TowerTransaction approveTransaction(Long id) {
+
+    TowerTransaction tx = transactionRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+    if (tx.getStatus() != TransactionStatus.PROPOSED) {
+        throw new RuntimeException("Transaction already processed.");
+    }
+
+    Tower tower = tx.getTower();
+
+    tower.setOwnerOperator(tx.getBuyerOperator());
+    tower.setSharingStatus(SharingStatus.NOT_AVAILABLE);
+
+    towerRepository.save(tower);
+
+    tx.setStatus(TransactionStatus.COMPLETED);
+
+    return transactionRepository.save(tx);
+}
+@Transactional
+public TowerTransaction rejectTransaction(Long id) {
+
+    TowerTransaction tx = transactionRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+    tx.setStatus(TransactionStatus.CANCELLED);
+
+    return transactionRepository.save(tx);
+}
 }

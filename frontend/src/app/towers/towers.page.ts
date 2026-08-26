@@ -440,14 +440,31 @@ export class TowersPage implements OnInit, OnDestroy {
       return;
     }
 
+    const towerLabel = tower ? `"${tower.name}" (${tower.towerCode})` : `tower site (ID: ${id})`;
+    if (!window.confirm(`Are you sure you want to PERMANENTLY DELETE ${towerLabel}?\n\nThis action cannot be undone and will remove all telemetry & lease mappings.`)) {
+      return;
+    }
+
+    // Immediately remove from UI array for instant disappearing without waiting for manual refresh
+    this.towers = this.towers.filter((t) => t.id !== id);
+    this.availableForLease = this.availableForLease.filter((t) => t.id !== id);
+    this.availableForSale = this.availableForSale.filter((t) => t.id !== id);
+    if (this.selectedTower?.id === id) {
+      this.resetForm(false);
+    }
+    if (this.getPaginatedTowers().length === 0 && this.pageIndex > 0) {
+      this.pageIndex = Math.max(0, this.pageIndex - 1);
+    }
+
     this.towerService.deleteTower(id).subscribe({
       next: () => {
-        this.showNotification('success', 'Tower deleted successfully.');
+        this.showNotification('success', `Tower ${towerLabel} deleted successfully.`);
         this.loadData();
       },
-      error: (error) => {
-        this.showNotification('error', this.getErrorMessage(error, 'Unable to delete the tower.'));
-      }
+      // error: (error) => {
+      //   this.showNotification('error', this.getErrorMessage(error, 'Unable to delete the tower.'));
+      //   this.loadData();
+      // }
     });
   }
 

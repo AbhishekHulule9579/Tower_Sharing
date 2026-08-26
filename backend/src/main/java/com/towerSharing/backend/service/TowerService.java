@@ -1,15 +1,21 @@
 package com.towerSharing.backend.service;
 
-import com.towerSharing.backend.model.RepairInventoryUsage;
-import com.towerSharing.backend.model.RepairRequest;
-import com.towerSharing.backend.model.SharingStatus;
-import com.towerSharing.backend.model.Tower;
-import com.towerSharing.backend.repository.*;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.towerSharing.backend.model.RepairInventoryUsage;
+import com.towerSharing.backend.model.RepairRequest;
+import com.towerSharing.backend.model.SharingStatus;
+import com.towerSharing.backend.model.Tower;
+import com.towerSharing.backend.repository.EmergencySharingRepository;
+import com.towerSharing.backend.repository.RepairInventoryUsageRepository;
+import com.towerSharing.backend.repository.RepairRequestRepository;
+import com.towerSharing.backend.repository.TowerLeaseRepository;
+import com.towerSharing.backend.repository.TowerRepository;
+import com.towerSharing.backend.repository.TowerTransactionRepository;
 
 @Service
 public class TowerService {
@@ -113,6 +119,20 @@ public class TowerService {
 
     public List<Tower> getAvailableForSale() {
         return towerRepository.findBySharingStatus(SharingStatus.AVAILABLE_FOR_SALE);
+    }
+    public List<Tower> getAvailableForLeaseByState(String state) {
+
+        return towerRepository.findBySharingStatusAndState(
+                SharingStatus.AVAILABLE_FOR_LEASE,
+                state
+        );
+    }
+    public List<Tower> getAvailableForLeaseExcludingOperator(Long operatorId) {
+
+        return towerRepository.findBySharingStatusAndOwnerOperatorIdNot(
+                SharingStatus.AVAILABLE_FOR_LEASE,
+                operatorId
+        );
     }
 }
 

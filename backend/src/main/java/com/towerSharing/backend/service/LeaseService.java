@@ -1,17 +1,23 @@
 package com.towerSharing.backend.service;
 
-import com.towerSharing.backend.dto.LeaseApprovalDto;
-import com.towerSharing.backend.dto.LeaseRequestDto;
-import com.towerSharing.backend.model.*;
-import com.towerSharing.backend.repository.OperatorRepository;
-import com.towerSharing.backend.repository.TowerLeaseRepository;
-import com.towerSharing.backend.repository.TowerRepository;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.towerSharing.backend.dto.LeaseApprovalDto;
+import com.towerSharing.backend.dto.LeaseRequestDto;
+import com.towerSharing.backend.model.LeaseStatus;
+import com.towerSharing.backend.model.Operator;
+import com.towerSharing.backend.model.SharingStatus;
+import com.towerSharing.backend.model.Tower;
+import com.towerSharing.backend.model.TowerLease;
+import com.towerSharing.backend.repository.OperatorRepository;
+import com.towerSharing.backend.repository.TowerLeaseRepository;
+import com.towerSharing.backend.repository.TowerRepository;
 
 @Service
 public class LeaseService {
@@ -37,6 +43,20 @@ public class LeaseService {
         return leaseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lease not found with id: " + id));
     }
+    public List<TowerLease> getLeasesForOperator(Long operatorId) {
+
+    List<TowerLease> leases = new ArrayList<>();
+
+    leases.addAll(
+        leaseRepository.findByLesseeOperatorId(operatorId)
+    );
+
+    leases.addAll(
+        leaseRepository.findByLessorOperatorId(operatorId)
+    );
+
+    return leases;
+}
 
     @Transactional
     public TowerLease requestLease(LeaseRequestDto dto) {

@@ -1,14 +1,49 @@
 package com.towerSharing.backend.service;
 
-import com.towerSharing.backend.dto.*;
-import com.towerSharing.backend.model.*;
-import com.towerSharing.backend.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.towerSharing.backend.dto.AdminDashboardDto;
+import com.towerSharing.backend.dto.DashboardSummaryDto;
+import com.towerSharing.backend.dto.DisasterMonitoringDashboardDto;
+import com.towerSharing.backend.dto.MaintenanceReportDashboardDto;
+import com.towerSharing.backend.dto.RevenueLeaseDashboardDto;
+import com.towerSharing.backend.dto.TowerUtilizationDashboardDto;
+import com.towerSharing.backend.model.DisasterIncident;
+import com.towerSharing.backend.model.EmergencySharing;
+import com.towerSharing.backend.model.EmergencyStatus;
+import com.towerSharing.backend.model.IncidentStatus;
+import com.towerSharing.backend.model.InventoryItem;
+import com.towerSharing.backend.model.LeaseStatus;
+import com.towerSharing.backend.model.Operator;
+import com.towerSharing.backend.model.RepairInventoryUsage;
+import com.towerSharing.backend.model.RepairRequest;
+import com.towerSharing.backend.model.RepairStatus;
+import com.towerSharing.backend.model.SharingStatus;
+import com.towerSharing.backend.model.SiteManagerRequest;
+import com.towerSharing.backend.model.SiteManagerRequestStatus;
+import com.towerSharing.backend.model.Tower;
+import com.towerSharing.backend.model.TowerLease;
+import com.towerSharing.backend.model.TowerStatus;
+import com.towerSharing.backend.model.TowerTransaction;
+import com.towerSharing.backend.model.TransactionStatus;
+import com.towerSharing.backend.model.User;
+import com.towerSharing.backend.model.UserRole;
+import com.towerSharing.backend.repository.DisasterIncidentRepository;
+import com.towerSharing.backend.repository.EmergencySharingRepository;
+import com.towerSharing.backend.repository.InventoryItemRepository;
+import com.towerSharing.backend.repository.OperatorRepository;
+import com.towerSharing.backend.repository.RepairInventoryUsageRepository;
+import com.towerSharing.backend.repository.RepairRequestRepository;
+import com.towerSharing.backend.repository.SiteManagerRequestRepository;
+import com.towerSharing.backend.repository.TowerLeaseRepository;
+import com.towerSharing.backend.repository.TowerRepository;
+import com.towerSharing.backend.repository.TowerTransactionRepository;
+import com.towerSharing.backend.repository.UserRepository;
 
 @Service
 public class DashboardService {
@@ -63,9 +98,22 @@ public class DashboardService {
         long inactiveTowers = towers.stream().filter(t -> t.getStatus() == TowerStatus.DISASTER_AFFECTED || t.getStatus() == TowerStatus.INACTIVE_DAMAGED).count();
 
         long operatorManagers = userRepository.countByOperatorAndRole(operator, UserRole.OPERATOR_MANAGER);
-        long pendingRequests = registrationRequestRepository.findByOperatorAndStatus(operator, SiteManagerRequestStatus.PENDING).size();
-        List<SiteManagerRequest> recentRequests = registrationRequestRepository.findByOperatorAndStatus(operator, SiteManagerRequestStatus.PENDING);
+        long pendingRequests =
+        registrationRequestRepository
+            .findByOperatorAndRequestedRoleAndStatus(
+                operator,
+                UserRole.OPERATOR_MANAGER,
+                SiteManagerRequestStatus.PENDING
+            )
+            .size();
 
+List<SiteManagerRequest> recentRequests =
+    registrationRequestRepository
+        .findByOperatorAndRequestedRoleAndStatus(
+            operator,
+            UserRole.OPERATOR_MANAGER,
+            SiteManagerRequestStatus.PENDING
+        );
         return new AdminDashboardDto(
                 operator.getName(),
                 operator.getCode(),

@@ -1,11 +1,12 @@
 package com.towerSharing.backend.repository;
 
-import com.towerSharing.backend.model.TowerTransaction;
-import com.towerSharing.backend.model.TransactionStatus;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.towerSharing.backend.model.TowerTransaction;
+import com.towerSharing.backend.model.TransactionStatus;
 
 @Repository
 public interface TowerTransactionRepository extends JpaRepository<TowerTransaction, Long> {
@@ -14,5 +15,9 @@ public interface TowerTransactionRepository extends JpaRepository<TowerTransacti
     List<TowerTransaction> findByStatus(TransactionStatus status);
     long countByStatus(TransactionStatus status);
     List<TowerTransaction> findByTowerId(Long towerId);
+    List<TowerTransaction> findBySellerOperatorIdAndStatus(
+        Long sellerId,
+        TransactionStatus status
+);
 }
 

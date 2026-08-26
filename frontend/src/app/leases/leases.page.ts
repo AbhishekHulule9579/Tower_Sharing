@@ -176,6 +176,12 @@ export class LeasesPage implements OnInit, OnDestroy {
       return;
     }
 
+    const towerLabel = selectedTower ? `"${selectedTower.name}" (${selectedTower.towerCode})` : 'this tower';
+    const ownerName = selectedTower?.ownerOperator?.name || 'the owner operator';
+    if (!window.confirm(`Are you sure you want to SUBMIT a lease request for ${towerLabel} from ${ownerName} for ${this.leaseForm.months} month(s)?`)) {
+      return;
+    }
+
     this.leaseService.requestLease(this.leaseForm).subscribe({
       next: () => {
         this.snackBar.open('Lease request submitted successfully and is pending owner approval.', 'Close', {
@@ -197,6 +203,18 @@ export class LeasesPage implements OnInit, OnDestroy {
   }
 
   public approveLease(id: number, approved: boolean): void {
+    const lease = this.leases.find((l) => l.id === id);
+    const towerName = lease?.tower?.name || lease?.tower?.towerCode || 'this tower';
+    const lesseeName = lease?.lesseeOperator?.name || 'the requesting operator';
+    const actionUpper = approved ? 'APPROVE and ACTIVATE' : 'REJECT';
+    const confirmPrompt = approved
+      ? `Are you sure you want to ${actionUpper} the lease request for "${towerName}" from ${lesseeName}?`
+      : `Are you sure you want to ${actionUpper} the lease request for "${towerName}" from ${lesseeName}?`;
+
+    if (!window.confirm(confirmPrompt)) {
+      return;
+    }
+
     this.leaseService.approveLease(id, approved, approved ? 'Approved by owner' : 'Rejected by owner').subscribe({
       next: () => {
         this.snackBar.open(
@@ -214,6 +232,13 @@ export class LeasesPage implements OnInit, OnDestroy {
   }
 
   public terminateLease(id: number): void {
+    const lease = this.leases.find((l) => l.id === id);
+    const towerName = lease?.tower?.name || lease?.tower?.towerCode || 'this tower';
+
+    if (!window.confirm(`Are you sure you want to TERMINATE the active lease contract for "${towerName}"? This action will end shared capacity operations.`)) {
+      return;
+    }
+
     this.leaseService.terminateLease(id).subscribe({
       next: () => {
         this.snackBar.open('Lease terminated successfully.', 'Close', { duration: 3000 });

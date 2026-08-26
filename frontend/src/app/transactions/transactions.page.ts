@@ -46,6 +46,7 @@ export class TransactionsPage implements OnInit, OnDestroy {
   isOperatorUser = false;
   private authSubscription?: Subscription;
 
+
   transactionForm: any = {
     towerId: null,
     buyerOperatorId: null,
@@ -156,6 +157,12 @@ export class TransactionsPage implements OnInit, OnDestroy {
       return;
     }
 
+    const towerLabel = selectedTower ? `"${selectedTower.name}" (${selectedTower.towerCode})` : 'this tower';
+    const sellerName = selectedTower?.ownerOperator?.name || 'seller operator';
+    if (!window.confirm(`Are you sure you want to PURCHASE tower ${towerLabel} from ${sellerName} for ₹${this.transactionForm.agreedPrice.toLocaleString()}?`)) {
+      return;
+    }
+
     this.transactionService.buyTower(this.transactionForm).subscribe({
       next: () => {
         this.snackBar.open('Tower purchase recorded successfully.', 'Close', { duration: 3000 });
@@ -170,4 +177,16 @@ export class TransactionsPage implements OnInit, OnDestroy {
       error: () => this.snackBar.open('Unable to submit purchase.', 'Close', { duration: 3000 })
     });
   }
+public selectedTower: any = null;
+
+onTowerSelected(): void {
+  this.selectedTower = this.saleTowers.find(
+    t => t.id === this.transactionForm.towerId
+  );
+
+  if (this.selectedTower) {
+    this.transactionForm.agreedPrice =
+      this.selectedTower.salePrice || 0;
+  }
+}
 }

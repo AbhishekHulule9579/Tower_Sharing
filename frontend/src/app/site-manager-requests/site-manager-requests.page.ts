@@ -57,41 +57,60 @@ export class SiteManagerRequestsPage implements OnInit {
   }
 
   approve(id: number): void {
+    const target = this.requests.find((r) => r.id === id);
+    const candidateName = target?.fullName || target?.name || target?.username || 'this applicant';
+    const roleLabel = target?.requestedRole === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager';
+    const stateLabel = target?.state ? ` for ${target.state}` : '';
+
+    if (!window.confirm(`Are you sure you want to APPROVE the ${roleLabel} registration request for "${candidateName}"${stateLabel}?`)) {
+      return;
+    }
+
     this.errorMessage = '';
     this.successMessage = '';
     this.processingRequestId = id;
     this.authService.approveSiteManagerRequest(id).subscribe({
       next: () => {
         this.processingRequestId = null;
-        this.successMessage = 'Registration request approved successfully. User account is now active!';
+        this.successMessage = `Registration request for "${candidateName}" approved successfully. User account is now active!`;
         this.loadRequests();
       },
       error: (error) => {
         this.processingRequestId = null;
-        this.errorMessage =
-          typeof error?.error === 'string'
-            ? error.error
-            : 'Unable to approve this registration request. Please try again.';
+        const msg =
+          (typeof error?.error === 'string' ? error.error : error?.error?.message) ||
+          error?.message ||
+          'Unable to approve this registration request. Please try again.';
+        this.errorMessage = msg;
       }
     });
   }
 
   reject(id: number): void {
+    const target = this.requests.find((r) => r.id === id);
+    const candidateName = target?.fullName || target?.name || target?.username || 'this applicant';
+    const roleLabel = target?.requestedRole === 'OPERATOR_MANAGER' ? 'Operations Manager' : 'Site Manager';
+
+    if (!window.confirm(`Are you sure you want to REJECT the ${roleLabel} registration request for "${candidateName}"?`)) {
+      return;
+    }
+
     this.errorMessage = '';
     this.successMessage = '';
     this.processingRequestId = id;
     this.authService.rejectSiteManagerRequest(id).subscribe({
       next: () => {
         this.processingRequestId = null;
-        this.successMessage = 'Registration request has been rejected.';
+        this.successMessage = `Registration request for "${candidateName}" has been rejected.`;
         this.loadRequests();
       },
       error: (error) => {
         this.processingRequestId = null;
-        this.errorMessage =
-          typeof error?.error === 'string'
-            ? error.error
-            : 'Unable to reject this registration request. Please try again.';
+        const msg =
+          (typeof error?.error === 'string' ? error.error : error?.error?.message) ||
+          error?.message ||
+          'Unable to reject this registration request. Please try again.';
+        this.errorMessage = msg;
       }
     });
   }

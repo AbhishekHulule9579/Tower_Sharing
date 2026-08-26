@@ -173,11 +173,21 @@ export class RegisterPage implements OnInit {
       return;
     }
 
+    // const cleanPhone = this.phoneNumber.replace(/[\s-]/g, '');
+    // if (!/^\d{10}$/.test(cleanPhone)) {
+    //   this.errorMessage = 'Phone number must be exactly 10 digits.';
+    //   return;
+    // }
+    
+    //added here
+
     const cleanPhone = this.phoneNumber.replace(/[\s-]/g, '');
-    if (!/^\d{10}$/.test(cleanPhone)) {
-      this.errorMessage = 'Phone number must be exactly 10 digits.';
+
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      this.errorMessage = 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.';
       return;
     }
+
 
     if (this.password.length < 6) {
       this.errorMessage = 'Password must be at least 6 characters long.';

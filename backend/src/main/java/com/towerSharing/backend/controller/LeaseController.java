@@ -1,5 +1,20 @@
 package com.towerSharing.backend.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.towerSharing.backend.config.JwtUtil;
 import com.towerSharing.backend.dto.LeaseApprovalDto;
 import com.towerSharing.backend.dto.LeaseRequestDto;
@@ -8,12 +23,6 @@ import com.towerSharing.backend.model.User;
 import com.towerSharing.backend.model.UserRole;
 import com.towerSharing.backend.repository.UserRepository;
 import com.towerSharing.backend.service.LeaseService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/leases")
@@ -34,8 +43,27 @@ public class LeaseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TowerLease>> getAllLeases() {
-        return ResponseEntity.ok(leaseService.getAllLeases());
+    public ResponseEntity<List<TowerLease>> getLeases(
+            @RequestHeader("Authorization") String authorization) {
+    
+        User actor = getUserFromToken(authorization);
+    
+        if (actor != null
+                && actor.getOperator() != null
+                && (actor.getRole() == UserRole.OPERATOR_MANAGER
+                    || actor.getRole() == UserRole.ADMIN
+                    || actor.getRole() == UserRole.SITE_MANAGER)) {
+    
+            return ResponseEntity.ok(
+                    leaseService.getLeasesForOperator(
+                            actor.getOperator().getId()
+                    )
+            );
+        }
+    
+        return ResponseEntity.ok(
+                leaseService.getAllLeases()
+        );
     }
 
     @GetMapping("/{id}")

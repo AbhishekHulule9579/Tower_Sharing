@@ -83,7 +83,7 @@ export class App {
     { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
     { label: 'Towers', path: '/towers', icon: '📡' },
     { label: 'Operators & Managers', path: '/operators', icon: '🏢' },
-    { label: 'Site Manager Requests', path: '/site-manager-requests', icon: '✓' }
+    { label: 'Operator Manager Requests', path: '/site-manager-requests', icon: '✓' }
   ];
 
   get navItems(): AppNavItem[] {

@@ -1,13 +1,14 @@
 package com.towerSharing.backend.repository;
 
-import com.towerSharing.backend.model.SharingStatus;
-import com.towerSharing.backend.model.Tower;
-import com.towerSharing.backend.model.TowerStatus;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.towerSharing.backend.model.SharingStatus;
+import com.towerSharing.backend.model.Tower;
+import com.towerSharing.backend.model.TowerStatus;
 
 @Repository
 public interface TowerRepository extends JpaRepository<Tower, Long> {
@@ -18,4 +19,13 @@ public interface TowerRepository extends JpaRepository<Tower, Long> {
     List<Tower> findBySharingStatus(SharingStatus sharingStatus);
     long countBySharingStatus(SharingStatus sharingStatus);
     List<Tower> findByCity(String city);
+    List<Tower> findByState(String state);
+    List<Tower> findBySharingStatusAndState(
+        SharingStatus sharingStatus,
+        String state
+);
+    List<Tower> findBySharingStatusAndOwnerOperatorIdNot(
+    SharingStatus sharingStatus,
+    Long operatorId
+);
 }

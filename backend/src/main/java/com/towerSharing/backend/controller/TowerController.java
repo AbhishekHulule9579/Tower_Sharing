@@ -1,17 +1,27 @@
 package com.towerSharing.backend.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.towerSharing.backend.config.JwtUtil;
 import com.towerSharing.backend.model.Tower;
 import com.towerSharing.backend.model.User;
 import com.towerSharing.backend.model.UserRole;
 import com.towerSharing.backend.repository.UserRepository;
 import com.towerSharing.backend.service.TowerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/towers")
@@ -106,10 +116,6 @@ public class TowerController {
         return ResponseEntity.ok(towerService.getTowersByOperator(operatorId));
     }
 
-    @GetMapping("/available-lease")
-    public ResponseEntity<List<Tower>> getAvailableForLease() {
-        return ResponseEntity.ok(towerService.getAvailableForLease());
-    }
 
     @GetMapping("/available-sale")
     public ResponseEntity<List<Tower>> getAvailableForSale() {
@@ -128,5 +134,26 @@ public class TowerController {
             return null;
         }
         return userRepository.findByUsername(username).orElse(null);
+    }
+
+    @GetMapping("/available-lease")
+    public ResponseEntity<List<Tower>> getAvailableForLease(
+            @RequestHeader(name = "Authorization", required = false)
+            String authorization) {
+    
+        User actor = getUserFromToken(authorization);
+    
+        if (actor != null && actor.getOperator() != null) {
+    
+            return ResponseEntity.ok(
+                    towerService.getAvailableForLeaseExcludingOperator(
+                            actor.getOperator().getId()
+                    )
+            );
+        }
+    
+        return ResponseEntity.ok(
+                towerService.getAvailableForLease()
+        );
     }
 }

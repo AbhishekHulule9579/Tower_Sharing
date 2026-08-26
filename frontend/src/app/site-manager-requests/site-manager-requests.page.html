@@ -5,7 +5,7 @@
         <div class="header-icon">👨‍💼</div>
         <div>
           <h2>{{ isAdmin ? (operatorName + ' Registration Access Requests') : 'Registration Access Requests' }}</h2>
-          <p>{{ isAdmin ? ('Validate and approve incoming Site Manager and Operations Manager registrations for ' + operatorName + '.') : ('Approve pending Site Manager registrations for ' + (userRole === 'OPERATOR_MANAGER' ? operatorName : 'the platform') + '.') }}</p>
+          <p>{{ isAdmin ? ('Validate and approve incoming Operations Manager registrations for ' + operatorName + '.') : ('Approve pending Site Manager registrations for ' + (userRole === 'OPERATOR_MANAGER' ? operatorName : 'the platform') + '.') }}</p>
         </div>
       </div>
     </div>
