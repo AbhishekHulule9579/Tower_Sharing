@@ -66,8 +66,6 @@ export class TowersPage implements OnInit, OnDestroy {
     location: '',
     city: '',
     state: '',
-    latitude: 0,
-    longitude: 0,
     totalCapacity: 0,
     currentOccupancy: 0,
     ownerOperatorId: null,
@@ -124,8 +122,13 @@ export class TowersPage implements OnInit, OnDestroy {
   }
 
   private syncPredefinedOperator(): void {
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId && !this.selectedTower) {
-      this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+    if (!this.isAdmin && this.isOperatorUser && !this.selectedTower) {
+      if (this.currentUser?.operatorId) {
+        this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+      }
+      if (this.currentUser?.state) {
+        this.towerForm.state = this.currentUser.state;
+      }
     }
   }
 
@@ -248,8 +251,13 @@ export class TowersPage implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
-      this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+    if (!this.isAdmin && this.isOperatorUser) {
+      if (this.currentUser?.operatorId) {
+        this.towerForm.ownerOperatorId = this.currentUser.operatorId;
+      }
+      if (this.currentUser?.state) {
+        this.towerForm.state = this.currentUser.state;
+      }
     }
 
     const validationError = this.validateTower();
@@ -271,6 +279,11 @@ export class TowersPage implements OnInit, OnDestroy {
           'error',
           'You are only authorized to modify towers belonging to your operator company.'
         );
+        return;
+      }
+
+      const towerLabel = `"${this.towerForm.name || this.selectedTower.name}" (${this.towerForm.towerCode || this.selectedTower.towerCode})`;
+      if (!window.confirm(`Are you sure you want to save the changes for tower ${towerLabel}?`)) {
         return;
       }
 
@@ -368,24 +381,6 @@ export class TowersPage implements OnInit, OnDestroy {
       return 'Sale Price cannot be negative.';
     }
 
-    if (
-      this.towerForm.latitude === null ||
-      this.towerForm.latitude === '' ||
-      this.towerForm.latitude < -90 ||
-      this.towerForm.latitude > 90
-    ) {
-      return 'Latitude must be between -90 and 90.';
-    }
-
-    if (
-      this.towerForm.longitude === null ||
-      this.towerForm.longitude === '' ||
-      this.towerForm.longitude < -180 ||
-      this.towerForm.longitude > 180
-    ) {
-      return 'Longitude must be between -180 and 180.';
-    }
-
     return null;
   }
 
@@ -398,6 +393,11 @@ export class TowersPage implements OnInit, OnDestroy {
       return;
     }
 
+    const towerLabel = tower ? `"${tower.name}" (${tower.towerCode})` : 'this tower';
+    if (!window.confirm(`Are you sure you want to edit tower ${towerLabel}?`)) {
+      return;
+    }
+
     this.selectedTower = tower;
 
     this.towerForm = {
@@ -405,9 +405,7 @@ export class TowersPage implements OnInit, OnDestroy {
       name: tower.name || '',
       location: tower.location || '',
       city: tower.city || '',
-      state: tower.state || '',
-      latitude: tower.latitude ?? 0,
-      longitude: tower.longitude ?? 0,
+      state: tower.state || this.currentUser?.state || '',
       totalCapacity: tower.totalCapacity ?? 0,
       currentOccupancy: tower.currentOccupancy ?? 0,
       ownerOperatorId: tower.ownerOperator?.id ?? null,
@@ -476,14 +474,17 @@ export class TowersPage implements OnInit, OnDestroy {
         ? this.currentUser.operatorId
         : null;
 
+    const defaultState =
+      !this.isAdmin && this.isOperatorUser && this.currentUser?.state
+        ? this.currentUser.state
+        : '';
+
     this.towerForm = {
       towerCode: '',
       name: '',
       location: '',
       city: '',
-      state: '',
-      latitude: 0,
-      longitude: 0,
+      state: defaultState,
       totalCapacity: 0,
       currentOccupancy: 0,
       ownerOperatorId: defaultOwnerId,

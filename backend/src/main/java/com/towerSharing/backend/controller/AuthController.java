@@ -88,6 +88,18 @@ public class AuthController {
         return ResponseEntity.ok(new LoginResponseDto(user, token));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        User user = getUserFromToken(authorization);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid token.");
+        }
+        String token = authorization != null && authorization.startsWith("Bearer ")
+                ? authorization.substring(7)
+                : authorization;
+        return ResponseEntity.ok(new LoginResponseDto(user, token));
+    }
+
     @PostMapping("/site-manager-requests")
     public ResponseEntity<?> createSiteManagerRequest(@RequestBody SiteManagerRequestCreateDto request) {
         String fullName = request.getFullName();

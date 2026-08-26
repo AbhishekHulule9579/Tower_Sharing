@@ -44,19 +44,27 @@ public class LeaseService {
                 .orElseThrow(() -> new RuntimeException("Lease not found with id: " + id));
     }
     public List<TowerLease> getLeasesForOperator(Long operatorId) {
+        List<TowerLease> leases = new ArrayList<>();
+        List<TowerLease> lesseeLeases = leaseRepository.findByLesseeOperatorId(operatorId);
+        List<TowerLease> lessorLeases = leaseRepository.findByLessorOperatorId(operatorId);
 
-    List<TowerLease> leases = new ArrayList<>();
-
-    leases.addAll(
-        leaseRepository.findByLesseeOperatorId(operatorId)
-    );
-
-    leases.addAll(
-        leaseRepository.findByLessorOperatorId(operatorId)
-    );
-
-    return leases;
-}
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        if (lesseeLeases != null) {
+            for (TowerLease l : lesseeLeases) {
+                if (l != null && l.getId() != null && seen.add(l.getId())) {
+                    leases.add(l);
+                }
+            }
+        }
+        if (lessorLeases != null) {
+            for (TowerLease l : lessorLeases) {
+                if (l != null && l.getId() != null && seen.add(l.getId())) {
+                    leases.add(l);
+                }
+            }
+        }
+        return leases;
+    }
 
     @Transactional
     public TowerLease requestLease(LeaseRequestDto dto) {

@@ -12,6 +12,7 @@ export interface AuthUser {
   username?: string;
   email: string;
   role: string;
+  state?: string;
   operatorId?: number;
   operatorCode?: string;
   operatorName?: string;
@@ -27,13 +28,40 @@ export class AuthService {
 
   readonly currentUser$ = this.userSubject.asObservable();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    if (this.isAuthenticated()) {
+      this.refreshProfile();
+    }
+  }
+
+  refreshProfile(): void {
+    const token = this.userSubject.value?.token;
+    if (!token) return;
+    this.http.get<AuthUser>(`${this.api}/me`, this.getAuthOptions()).subscribe({
+      next: (freshUser) => {
+        if (freshUser) {
+          const current = this.userSubject.value;
+          const merged: AuthUser = {
+            ...current,
+            ...freshUser,
+            token: current?.token || freshUser.token
+          };
+          this.saveUserToStorage(merged);
+          this.userSubject.next(merged);
+        }
+      },
+      error: () => {}
+    });
+  }
 
   login(email: string, password: string, role: string): Observable<AuthUser> {
     return this.http.post<AuthUser>(`${this.api}/login`, { email, password, role }).pipe(
       tap((user) => {
         if (!user.fullName && user.username) user.fullName = user.username;
         if (!user.name) user.name = user.fullName;
+        if (!user.state && user.role !== 'ADMIN') {
+          user.state = this.inferStateFromUser(user);
+        }
         this.saveUserToStorage(user);
         this.userSubject.next(user);
       })
@@ -75,6 +103,17 @@ export class AuthService {
     return this.http.post<any>(`${this.api}/site-manager-requests/${requestId}/reject`, {}, this.getAuthOptions());
   }
 
+  inferStateFromUser(user: Partial<AuthUser>): string {
+    if (user.state) return user.state;
+    const email = (user.email || '').toLowerCase();
+    const name = (user.fullName || user.username || '').toLowerCase();
+    if (email.includes('jio') || email.includes('mumbai') || name.includes('mumbai') || name.includes('jio')) return 'Maharashtra';
+    if (email.includes('airtel') || email.includes('delhi') || name.includes('delhi') || name.includes('airtel')) return 'Delhi';
+    if (email.includes('vi') || email.includes('chennai') || name.includes('chennai') || name.includes('vi')) return 'Tamil Nadu';
+    if (email.includes('bsnl') || email.includes('blr') || email.includes('bangalore') || name.includes('bsnl')) return 'Karnataka';
+    return '';
+  }
+
   private getAuthOptions() {
     const token = this.userSubject.value?.token;
     if (!token) {
@@ -99,7 +138,13 @@ export class AuthService {
     }
     try {
       const raw = sessionStorage.getItem(this.storageKey);
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const user: AuthUser = JSON.parse(raw);
+      if (user && !user.state && user.role !== 'ADMIN') {
+        user.state = this.inferStateFromUser(user);
+        this.saveUserToStorage(user);
+      }
+      return user;
     } catch {
       return null;
     }

@@ -9,12 +9,12 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterLink, RouterLinkActive, RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterModule, RouterOutlet } from '@angular/router';
 
 import { environment } from '../environments/environment';
 import { BackendStatusService } from './core/backend-status.service';
 import { LoadingService } from './core/loading.service';
-import { AuthService } from './services/auth.service';
+import { AuthService, AuthUser } from './services/auth.service';
 
 export interface AppNavItem {
   label: string;
@@ -50,6 +50,7 @@ export class App {
   @ViewChild(MatDrawer) private drawer?: MatDrawer;
 
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   protected readonly loadingService = inject(LoadingService);
   protected readonly backendStatus = inject(BackendStatusService);
 
@@ -64,8 +65,6 @@ export class App {
     { label: 'Leases', path: '/leases', icon: '🤝', badge: 0, badgeColor: 'accent' },
     { label: 'Transactions', path: '/transactions', icon: '💰' },
     { label: 'Disasters', path: '/disasters', icon: '🚨', badge: 0, badgeColor: 'warn' },
-    { label: 'Maintenance', path: '/maintenance', icon: '🔧', badge: 0, badgeColor: 'warn' },
-    { label: 'Operators & Managers', path: '/operators', icon: '🏢' },
     { label: 'Site Manager Requests', path: '/site-manager-requests', icon: '✓' }
   ];
 
@@ -97,8 +96,35 @@ export class App {
     return this.operatorManagerNavItems;
   }
 
+  getUserDisplayName(user: AuthUser | null): string {
+    if (!user) return '';
+    return user.fullName || user.name || user.username || '';
+  }
+
+  getUserState(user: AuthUser | null): string {
+    if (!user || user.role === 'ADMIN') return '';
+    if (user.state) return user.state;
+    return this.authService.inferStateFromUser(user);
+  }
+
+  getUserRoleSubtitle(user: AuthUser | null): string {
+    if (!user) return '';
+    const opPrefix = user.operatorName ? `${user.operatorName} ` : '';
+    if (user.role === 'OPERATOR_MANAGER') {
+      return `${opPrefix}Operations Manager`;
+    }
+    if (user.role === 'SITE_MANAGER') {
+      return `${opPrefix}Site Manager`;
+    }
+    if (user.role === 'ADMIN') {
+      return `${opPrefix}Administrator`;
+    }
+    return user.role;
+  }
+
   logout(): void {
     this.authService.logout();
+    this.router.navigate(['/']);
   }
 
   toggleNavigation(): void {

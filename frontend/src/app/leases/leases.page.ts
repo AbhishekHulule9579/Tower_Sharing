@@ -97,6 +97,18 @@ export class LeasesPage implements OnInit, OnDestroy {
     return this.currentUser?.operatorName || this.currentUser?.operatorCode || '';
   }
 
+  public getDisplayedLeases(): any[] {
+    if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
+      const opId = this.currentUser.operatorId;
+      return this.leases.filter((l) => {
+        const ownerId = l.tower?.ownerOperator?.id || l.lessorOperator?.id;
+        const lesseeId = l.lesseeOperator?.id;
+        return ownerId === opId || lesseeId === opId;
+      });
+    }
+    return this.leases;
+  }
+
   public getSelectableTowers(): any[] {
     if (!this.isAdmin && this.isOperatorUser && this.currentUser?.operatorId) {
       return this.allAvailableLeaseTowers.filter(

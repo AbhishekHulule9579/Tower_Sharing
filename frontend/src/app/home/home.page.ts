@@ -52,6 +52,6 @@ export class HomePage implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
     this.currentUser = null;
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

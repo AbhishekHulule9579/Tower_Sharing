@@ -12,6 +12,7 @@ public class LoginResponseDto {
     private Long operatorId;
     private String operatorCode;
     private String operatorName;
+    private String state;
     private String token;
 
     public LoginResponseDto() {}
@@ -26,6 +27,7 @@ public class LoginResponseDto {
         this.operatorId = user.getOperator() != null ? user.getOperator().getId() : null;
         this.operatorCode = user.getOperator() != null ? user.getOperator().getCode() : null;
         this.operatorName = user.getOperator() != null ? user.getOperator().getName() : null;
+        this.state = user.getState();
         this.token = token;
     }
 
@@ -99,6 +101,14 @@ public class LoginResponseDto {
 
     public void setOperatorName(String operatorName) {
         this.operatorName = operatorName;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public String getToken() {

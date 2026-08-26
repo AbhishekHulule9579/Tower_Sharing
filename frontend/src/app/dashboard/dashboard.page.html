@@ -183,7 +183,7 @@
           </div>
         </mat-card>
 
-        <mat-card class="stat-card stat-inventory" [class.has-alert]="summary.openRepairs > 0" routerLink="/maintenance">
+        <mat-card class="stat-card stat-inventory" *ngIf="currentUser?.role !== 'OPERATOR_MANAGER'" [class.has-alert]="summary.openRepairs > 0" routerLink="/maintenance">
           <div class="stat-card-header">
             <div class="stat-info">
               <span class="stat-card-title">OPEN REPAIRS</span>

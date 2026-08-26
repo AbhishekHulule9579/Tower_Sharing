@@ -150,12 +150,17 @@
 
           <div class="user-details">
 
-            <strong>
-              {{ user.fullName || user.name || user.username }}
-            </strong>
+            <div class="user-name-line">
+              <strong class="user-name">
+                {{ getUserDisplayName(user) }}
+              </strong>
+              <span class="user-state-pill" *ngIf="user.role !== 'ADMIN' && getUserState(user)">
+                📍 {{ getUserState(user) }}
+              </span>
+            </div>
 
-            <span>
-              {{ user.role }}
+            <span class="user-role-label">
+              {{ getUserRoleSubtitle(user) }}
             </span>
 
           </div>

@@ -106,8 +106,48 @@
 .topbar-user {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: rgba(226, 232, 240, 0.9);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.user-name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.user-state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+  border: 1px solid rgba(147, 197, 253, 0.4);
+  padding: 1px 7px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.user-role-label {
+  font-size: 0.76rem;
+  color: rgba(203, 213, 225, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .content-shell {
